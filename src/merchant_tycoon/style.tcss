@@ -1,0 +1,241 @@
+Screen {
+    layout: vertical;
+}
+
+StatsPanel {
+    background: $primary;
+    color: $text;
+    padding: 1;
+    text-style: bold;
+    height: auto;
+}
+
+TabbedContent {
+    height: 1fr;
+}
+
+TabPane {
+    layout: horizontal;
+    padding: 1;
+}
+
+MarketPanel {
+    border: solid $accent;
+    padding: 1;
+    width: 1fr;
+}
+
+InventoryPanel {
+    border: solid $accent;
+    padding: 1;
+    width: 1fr;
+}
+
+/* Goods trade actions panel (right column on Goods tab) */
+GoodsTradeActionsPanel {
+    border: solid $accent;
+    padding: 1;
+    width: 1fr;
+}
+
+#goods-right-col {
+    width: 1fr;
+}
+
+#goods-trade-actions-bar {
+    height: auto;
+    align-horizontal: right;
+    content-align: right middle;
+}
+
+/* Compact Buy/Sell buttons for goods (match investments) */
+#goods-buy-btn {
+    margin-right: 1;
+}
+#goods-buy-btn, #goods-sell-btn {
+    height: 3;
+    padding: 0 1;
+}
+
+ExchangePricesPanel {
+    border: solid $accent;
+    padding: 1;
+    width: 1fr;
+}
+
+InvestmentsPanel {
+    border: solid $accent;
+    padding: 1;
+    width: 1fr;
+}
+
+TradeActionsPanel {
+    border: solid $accent;
+    padding: 1;
+    width: 1fr;
+}
+#investments-right-col {
+    width: 1fr;
+}
+#trade-actions-bar {
+    height: auto;
+    align-horizontal: right;
+    content-align: right middle;
+}
+
+MessageLog {
+    border: solid $accent;
+    padding: 1;
+    height: 8;
+}
+
+#market-header, #inventory-header, #exchange-prices-header, #investments-header, #trade-actions-header, #log-header {
+    text-style: bold;
+    color: $accent;
+    margin-bottom: 1;
+}
+
+#market-list, #inventory-list, #exchange-prices-list, #investments-list {
+    height: auto;
+}
+
+/* Exchange Prices footer/action bar */
+#exchange-prices-list {
+    height: 1fr;
+}
+
+/* Space between Buy and Sell buttons */
+#exchange-buy-btn {
+    margin-right: 1;
+}
+
+/* Make Buy/Sell buttons compact (keep labels visible) */
+#exchange-buy-btn, #exchange-sell-btn {
+    height: 3;
+    padding: 0 1;
+}
+
+#log-content {
+    height: 3;
+    overflow-y: auto;
+}
+
+/* Modal styles */
+#input-modal, #city-modal, #buy-modal, #sell-modal {
+    width: 60;
+    height: auto;
+    border: thick $accent;
+    background: $surface;
+    padding: 1 2;
+}
+
+#inventory-details-modal {
+    width: 90;
+    height: 35;
+    border: thick $accent;
+    background: $surface;
+    padding: 1 2;
+    layout: vertical;
+}
+
+#details-content {
+    width: 100%;
+    height: 28;
+    border: solid $primary;
+    margin: 1 0;
+    padding: 1;
+    background: $panel;
+}
+
+#details-instructions {
+    text-style: italic;
+    color: $text-muted;
+}
+
+/* Modal common selectors */
+#modal-title {
+    text-style: bold;
+    color: $accent;
+    text-align: center;
+    margin-bottom: 1;
+}
+
+#modal-buttons {
+    height: auto;
+    margin-top: 1;
+}
+
+#modal-buttons Button {
+    width: 1fr;
+    margin: 0 1;
+}
+
+#city-list {
+    height: auto;
+    max-height: 10;
+    margin: 1 0;
+}
+
+/* Help modal styles */
+#help-modal {
+    width: 90;
+    height: 40;
+    border: thick $accent;
+    background: $surface;
+    padding: 1 2;
+    layout: vertical;
+}
+
+#help-content {
+    width: 100%;
+    height: 30;
+    margin: 1 0;
+    padding: 1;
+    border: solid $primary;
+    background: $panel;
+}
+
+/* Alert modal styles */
+AlertModal {
+    align: center middle;
+}
+
+#alert-modal-negative {
+    width: 70;
+    height: auto;
+    border: thick $error;
+    background: $surface;
+    padding: 1 2;
+}
+
+#alert-modal-positive {
+    width: 70;
+    height: auto;
+    border: thick $success;
+    background: $surface;
+    padding: 1 2;
+}
+
+#alert-message {
+    margin: 1 0;
+    padding: 1;
+    background: $panel;
+    color: $text;
+}
+
+.section-header {
+    text-style: bold;
+    color: $accent;
+    background: $primary-darken-2;
+    padding: 0 1;
+}
+
+.lot-info {
+    padding-left: 2;
+    color: $text;
+}
+
+.profit-info {
+    padding-left: 4;
+    color: $success;
+}
