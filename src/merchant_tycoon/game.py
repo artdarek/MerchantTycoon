@@ -5,6 +5,7 @@ Buy low, sell high, travel between cities, manage loans, survive random events!
 """
 
 import random
+from datetime import datetime
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional
 from textual.app import App, ComposeResult
@@ -588,6 +589,86 @@ class ExchangePricesPanel(Static):
             container.mount(line)
 
 
+class TradeActionsPanel(Static):
+    """Compact panel with Buy/Sell buttons for assets"""
+
+    def __init__(self, engine: GameEngine):
+        super().__init__()
+        self.engine = engine
+
+    def compose(self) -> ComposeResult:
+        yield Label("🛒 TRADE", id="trade-actions-header")
+        with Horizontal(id="trade-actions-bar"):
+            # Reuse existing IDs so compact button CSS applies
+            yield Button("Buy", id="exchange-buy-btn", variant="success")
+            yield Button("Sell", id="exchange-sell-btn", variant="error", disabled=not bool(self.engine.state.portfolio))
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        if event.button.id == "exchange-buy-btn":
+            try:
+                self.app.push_screen(BuyAssetModal(self.engine, self.app._handle_asset_trade))
+            except Exception:
+                pass
+        elif event.button.id == "exchange-sell-btn":
+            try:
+                if not self.engine.state.portfolio:
+                    self.app.game_log("No assets to sell!")
+                else:
+                    self.app.push_screen(SellAssetModal(self.engine, self.app._handle_asset_trade))
+            except Exception:
+                pass
+
+    def update_trade_actions(self):
+        # Keep Sell disabled when no assets
+        try:
+            sell_btn = self.query_one("#exchange-sell-btn", Button)
+            sell_btn.disabled = not bool(self.engine.state.portfolio)
+        except Exception:
+            pass
+
+
+class GoodsTradeActionsPanel(Static):
+    """Compact panel with Buy/Sell buttons for goods"""
+
+    def __init__(self, engine: GameEngine):
+        super().__init__()
+        self.engine = engine
+
+    def compose(self) -> ComposeResult:
+        yield Label("🛒 TRADE GOODS", id="goods-trade-actions-header")
+        with Horizontal(id="goods-trade-actions-bar"):
+            yield Button("Buy", id="goods-buy-btn", variant="success")
+            yield Button(
+                "Sell",
+                id="goods-sell-btn",
+                variant="error",
+                disabled=not bool(self.engine.state.inventory),
+            )
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        if event.button.id == "goods-buy-btn":
+            try:
+                self.app.push_screen(BuyModal(self.engine, self.app._handle_buy))
+            except Exception:
+                pass
+        elif event.button.id == "goods-sell-btn":
+            try:
+                if not self.engine.state.inventory:
+                    self.app.game_log("No goods to sell!")
+                else:
+                    self.app.push_screen(SellModal(self.engine, self.app._handle_sell))
+            except Exception:
+                pass
+
+    def update_trade_actions(self):
+        # Disable Sell when there are no goods in inventory
+        try:
+            sell_btn = self.query_one("#goods-sell-btn", Button)
+            sell_btn.disabled = not bool(self.engine.state.inventory)
+        except Exception:
+            pass
+
+
 class InvestmentsPanel(Static):
     """Display player investments (stocks and commodities)"""
 
@@ -645,10 +726,12 @@ class MessageLog(Static):
 
     def __init__(self):
         super().__init__()
-        self.messages: List[str] = ["Welcome to Merchant Tycoon!"]
+        # Start with a welcome message tagged with time and the starting day
+        ts = datetime.now().strftime("%H:%M:%S")
+        self.messages: List[str] = [f"[{ts}] Day 1: Welcome to Merchant Tycoon!"]
 
     def compose(self) -> ComposeResult:
-        yield Label("📜 LOG", id="log-header")
+        yield Label("📜 MESSAGES", id="log-header")
         yield ScrollableContainer(id="log-content")
 
     def add_message(self, msg: str):
@@ -963,138 +1046,6 @@ class InventoryDetailsModal(ModalScreen):
         self.dismiss()
 
 
-class ExchangeModal(ModalScreen):
-    """Modal for trading stocks and commodities"""
-
-    BINDINGS = [
-        ("escape", "dismiss_modal", "Close"),
-    ]
-
-    def __init__(self, engine: GameEngine):
-        super().__init__()
-        self.engine = engine
-
-    def compose(self) -> ComposeResult:
-        with Vertical(id="exchange-modal"):
-            yield Label("📈 STOCK EXCHANGE", id="modal-title")
-            yield Label("Trade stocks & commodities (safe from random events!)", id="exchange-subtitle")
-
-            with Horizontal(id="exchange-actions"):
-                yield Button("Buy", variant="success", id="buy-asset-btn")
-                yield Button("Sell", variant="error", id="sell-asset-btn")
-
-            yield ScrollableContainer(id="exchange-content")
-            yield Button("Close (ESC)", variant="primary", id="close-btn")
-
-    def on_mount(self) -> None:
-        self._update_exchange()
-
-    def _update_exchange(self):
-        container = self.query_one("#exchange-content", ScrollableContainer)
-        container.remove_children()
-
-        # Stocks section
-        container.mount(Label(""))
-        container.mount(Label(" 📊 STOCKS ", classes="section-header"))
-        container.mount(Label(""))
-
-        for stock in STOCKS:
-            price = self.engine.asset_prices[stock.symbol]
-            owned = self.engine.state.portfolio.get(stock.symbol, 0)
-
-            # Price trend
-            trend = ""
-            if stock.symbol in self.engine.previous_asset_prices:
-                prev = self.engine.previous_asset_prices[stock.symbol]
-                if price > prev:
-                    change = ((price - prev) / prev * 100)
-                    trend = f" [green]▲+{change:.0f}%[/green]"
-                elif price < prev:
-                    change = ((prev - price) / prev * 100)
-                    trend = f" [red]▼-{change:.0f}%[/red]"
-                else:
-                    trend = " [dim]─[/dim]"
-
-            # Profit/loss if owned
-            profit_str = ""
-            if owned > 0:
-                lots = self.engine.state.get_investment_lots_for_asset(stock.symbol)
-                cost = sum(lot.quantity * lot.purchase_price for lot in lots)
-                value = owned * price
-                profit = value - cost
-                profit_pct = (profit / cost * 100) if cost > 0 else 0
-
-                if profit > 0:
-                    profit_str = f" [green]▲+${profit:,} (+{profit_pct:.0f}%)[/green]"
-                elif profit < 0:
-                    profit_str = f" [red]▼${profit:,} ({profit_pct:.0f}%)[/red]"
-
-            container.mount(Label(
-                f"{stock.symbol:6} {stock.name:16} ${price:6,}{trend:12}  own: {owned:4}{profit_str}",
-                markup=True
-            ))
-
-        # Commodities section
-        container.mount(Label(""))
-        container.mount(Label(""))
-        container.mount(Label(" 🌾 COMMODITIES ", classes="section-header"))
-        container.mount(Label(""))
-
-        for commodity in COMMODITIES:
-            price = self.engine.asset_prices[commodity.symbol]
-            owned = self.engine.state.portfolio.get(commodity.symbol, 0)
-
-            # Price trend
-            trend = ""
-            if commodity.symbol in self.engine.previous_asset_prices:
-                prev = self.engine.previous_asset_prices[commodity.symbol]
-                if price > prev:
-                    change = ((price - prev) / prev * 100)
-                    trend = f" [green]▲+{change:.0f}%[/green]"
-                elif price < prev:
-                    change = ((prev - price) / prev * 100)
-                    trend = f" [red]▼-{change:.0f}%[/red]"
-                else:
-                    trend = " [dim]─[/dim]"
-
-            # Profit/loss if owned
-            profit_str = ""
-            if owned > 0:
-                lots = self.engine.state.get_investment_lots_for_asset(commodity.symbol)
-                cost = sum(lot.quantity * lot.purchase_price for lot in lots)
-                value = owned * price
-                profit = value - cost
-                profit_pct = (profit / cost * 100) if cost > 0 else 0
-
-                if profit > 0:
-                    profit_str = f" [green]▲+${profit:,} (+{profit_pct:.0f}%)[/green]"
-                elif profit < 0:
-                    profit_str = f" [red]▼${profit:,} ({profit_pct:.0f}%)[/red]"
-
-            container.mount(Label(
-                f"{commodity.symbol:6} {commodity.name:16} ${price:6,}{trend:12}  own: {owned:4}{profit_str}",
-                markup=True
-            ))
-
-    def on_button_pressed(self, event: Button.Pressed) -> None:
-        if event.button.id == "close-btn":
-            self.dismiss()
-        elif event.button.id == "buy-asset-btn":
-            self.app.push_screen(BuyAssetModal(self.engine, self._handle_trade))
-        elif event.button.id == "sell-asset-btn":
-            if not self.engine.state.portfolio:
-                self.app.game_log("No assets to sell!")
-            else:
-                self.app.push_screen(SellAssetModal(self.engine, self._handle_trade))
-
-    def _handle_trade(self, msg: str):
-        """Refresh exchange after trade and display message"""
-        self._update_exchange()
-        self.app.game_log(msg)
-        self.app.refresh_all()
-
-    def action_dismiss_modal(self) -> None:
-        self.dismiss()
 
 
 class BuyAssetModal(ModalScreen):
@@ -1235,7 +1186,7 @@ class HelpModal(ModalScreen):
                 yield Label("")
 
                 yield Label(" 📈 STOCK EXCHANGE ", classes="section-header")
-                yield Label("  • Exchange (E) to trade stocks & commodities")
+                yield Label("  • Use Buy/Sell in the TRADE box (above YOUR INVESTMENTS) or press B/S on the Investments tab")
                 yield Label("  • Investments are SAFE from random events!")
                 yield Label("  • Watch price trends: ▲ up, ▼ down, ─ stable")
                 yield Label("  • Diversify your portfolio for better returns")
@@ -1346,6 +1297,32 @@ class MerchantTycoon(App):
         width: 1fr;
     }
 
+    /* Goods trade actions panel (right column on Goods tab) */
+    GoodsTradeActionsPanel {
+        border: solid $accent;
+        padding: 1;
+        width: 1fr;
+    }
+
+    #goods-right-col {
+        width: 1fr;
+    }
+
+    #goods-trade-actions-bar {
+        height: auto;
+        align-horizontal: right;
+        content-align: right middle;
+    }
+
+    /* Compact Buy/Sell buttons for goods (match investments) */
+    #goods-buy-btn {
+        margin-right: 1;
+    }
+    #goods-buy-btn, #goods-sell-btn {
+        height: 3;
+        padding: 0 1;
+    }
+
     ExchangePricesPanel {
         border: solid $accent;
         padding: 1;
@@ -1358,13 +1335,27 @@ class MerchantTycoon(App):
         width: 1fr;
     }
 
+    TradeActionsPanel {
+        border: solid $accent;
+        padding: 1;
+        width: 1fr;
+    }
+    #investments-right-col {
+        width: 1fr;
+    }
+    #trade-actions-bar {
+        height: auto;
+        align-horizontal: right;
+        content-align: right middle;
+    }
+
     MessageLog {
         border: solid $accent;
         padding: 1;
         height: 8;
     }
 
-    #market-header, #inventory-header, #exchange-prices-header, #investments-header, #log-header {
+    #market-header, #inventory-header, #exchange-prices-header, #investments-header, #trade-actions-header, #log-header {
         text-style: bold;
         color: $accent;
         margin-bottom: 1;
@@ -1372,6 +1363,22 @@ class MerchantTycoon(App):
 
     #market-list, #inventory-list, #exchange-prices-list, #investments-list {
         height: auto;
+    }
+
+    /* Exchange Prices footer/action bar */
+    #exchange-prices-list {
+        height: 1fr;
+    }
+
+    /* Space between Buy and Sell buttons */
+    #exchange-buy-btn {
+        margin-right: 1;
+    }
+
+    /* Make Buy/Sell buttons compact (keep labels visible) */
+    #exchange-buy-btn, #exchange-sell-btn {
+        height: 3;
+        padding: 0 1;
     }
 
     #log-content {
@@ -1541,7 +1548,6 @@ class MerchantTycoon(App):
         Binding("l", "loan", "Loan"),
         Binding("r", "repay", "Repay"),
         Binding("i", "details", "Inventory"),
-        Binding("e", "exchange", "Exchange"),
         Binding("h", "help", "Help"),
     ]
 
@@ -1553,7 +1559,9 @@ class MerchantTycoon(App):
         self.market_panel = None
         self.inventory_panel = None
         self.exchange_prices_panel = None
+        self.trade_actions_panel = None
         self.investments_panel = None
+        self.goods_trade_actions_panel = None
 
     def compose(self) -> ComposeResult:
         yield Header()
@@ -1561,10 +1569,14 @@ class MerchantTycoon(App):
         with TabbedContent(initial="goods-tab"):
             with TabPane("📦 Goods", id="goods-tab"):
                 yield MarketPanel(self.engine)
-                yield InventoryPanel(self.engine)
+                with Vertical(id="goods-right-col"):
+                    yield GoodsTradeActionsPanel(self.engine)
+                    yield InventoryPanel(self.engine)
             with TabPane("💼 Investments", id="investments-tab"):
                 yield ExchangePricesPanel(self.engine)
-                yield InvestmentsPanel(self.engine)
+                with Vertical(id="investments-right-col"):
+                    yield TradeActionsPanel(self.engine)
+                    yield InvestmentsPanel(self.engine)
         yield MessageLog()
         yield Footer()
 
@@ -1575,7 +1587,13 @@ class MerchantTycoon(App):
         self.market_panel = self.query_one(MarketPanel)
         self.inventory_panel = self.query_one(InventoryPanel)
         self.exchange_prices_panel = self.query_one(ExchangePricesPanel)
+        self.trade_actions_panel = self.query_one(TradeActionsPanel)
         self.investments_panel = self.query_one(InvestmentsPanel)
+        # New: goods trade panel reference
+        try:
+            self.goods_trade_actions_panel = self.query_one(GoodsTradeActionsPanel)
+        except Exception:
+            self.goods_trade_actions_panel = None
         self.refresh_all()
 
     def refresh_all(self):
@@ -1587,17 +1605,35 @@ class MerchantTycoon(App):
             self.inventory_panel.update_inventory()
         if self.exchange_prices_panel:
             self.exchange_prices_panel.update_exchange_prices()
+        if self.trade_actions_panel:
+            self.trade_actions_panel.update_trade_actions()
+        if self.goods_trade_actions_panel:
+            self.goods_trade_actions_panel.update_trade_actions()
         if self.investments_panel:
             self.investments_panel.update_investments()
 
     def game_log(self, msg: str):
+        # Prefix each log entry with timestamp and the in-game day number
+        day = self.engine.state.day
+        ts = datetime.now().strftime("%H:%M:%S")
         if self.message_log:
-            self.message_log.add_message(msg)
+            self.message_log.add_message(f"[{ts}] Day {day}: {msg}")
 
     def action_buy(self):
-        """Buy goods"""
-        modal = BuyModal(self.engine, self._handle_buy)
-        self.push_screen(modal)
+        """Context-aware Buy: goods or assets depending on active tab"""
+        try:
+            tabbed = self.query_one(TabbedContent)
+            active = getattr(tabbed, "active", None)
+        except Exception:
+            active = None
+
+        if active == "investments-tab":
+            # Open assets buy modal when Investments tab is active
+            self.push_screen(BuyAssetModal(self.engine, self._handle_asset_trade))
+        else:
+            # Default to goods
+            modal = BuyModal(self.engine, self._handle_buy)
+            self.push_screen(modal)
 
     def _handle_buy(self, product: str, quantity: int):
         """Handle buy transaction"""
@@ -1610,13 +1646,26 @@ class MerchantTycoon(App):
         self.refresh_all()
 
     def action_sell(self):
-        """Sell goods"""
-        if not self.engine.state.inventory:
-            self.game_log("No goods to sell!")
-            return
+        """Context-aware Sell: goods or assets depending on active tab"""
+        try:
+            tabbed = self.query_one(TabbedContent)
+            active = getattr(tabbed, "active", None)
+        except Exception:
+            active = None
 
-        modal = SellModal(self.engine, self._handle_sell)
-        self.push_screen(modal)
+        if active == "investments-tab":
+            # Selling assets
+            if not self.engine.state.portfolio:
+                self.game_log("No assets to sell!")
+                return
+            self.push_screen(SellAssetModal(self.engine, self._handle_asset_trade))
+        else:
+            # Selling goods
+            if not self.engine.state.inventory:
+                self.game_log("No goods to sell!")
+                return
+            modal = SellModal(self.engine, self._handle_sell)
+            self.push_screen(modal)
 
     def _handle_sell(self, product: str, quantity: int):
         """Handle sell transaction"""
@@ -1625,6 +1674,11 @@ class MerchantTycoon(App):
             return
 
         success, msg = self.engine.sell(product, quantity)
+        self.game_log(msg)
+        self.refresh_all()
+
+    def _handle_asset_trade(self, msg: str):
+        """Handle result message from asset buy/sell modals"""
         self.game_log(msg)
         self.refresh_all()
 
@@ -1703,10 +1757,6 @@ class MerchantTycoon(App):
         modal = InventoryDetailsModal(self.engine)
         self.push_screen(modal)
 
-    def action_exchange(self):
-        """Open the stock exchange"""
-        modal = ExchangeModal(self.engine)
-        self.push_screen(modal)
 
     def action_help(self):
         """Show game instructions"""
