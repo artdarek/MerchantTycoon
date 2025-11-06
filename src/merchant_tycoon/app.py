@@ -12,7 +12,7 @@ from textual.app import App, ComposeResult
 from textual.containers import Vertical
 from textual.widgets import Header, Footer, TabbedContent, TabPane
 from textual.binding import Binding
-from .engine import GameEngine
+from .engine import GameEngine, GameState
 from .models import CITIES
 # UI modules extracted in Stage 3
 from .ui.panels import (
@@ -37,6 +37,14 @@ from .ui.modals import (
     SellAssetModal,
     HelpModal,
     AlertModal,
+    ConfirmModal,
+)
+from .savegame import (
+    is_save_present,
+    load_game,
+    apply_loaded_game,
+    save_game as save_game_to_disk,
+    delete_save as delete_save_from_disk,
 )
 
 
@@ -55,6 +63,8 @@ class MerchantTycoon(App):
         Binding("r", "repay", "Repay"),
         Binding("i", "details", "Inventory"),
         Binding("h", "help", "Help"),
+        Binding("a", "save", "Save"),
+        Binding("n", "new_game", "New Game"),
     ]
 
     def __init__(self):
@@ -100,6 +110,20 @@ class MerchantTycoon(App):
             self.goods_trade_actions_panel = self.query_one(GoodsTradeActionsPanel)
         except Exception:
             self.goods_trade_actions_panel = None
+
+        # Auto-load savegame if present
+        try:
+            if is_save_present():
+                data = load_game()
+                if data and apply_loaded_game(self.engine, data):
+                    msgs = data.get("messages") or []
+                    if self.message_log and msgs:
+                        self.message_log.set_messages(msgs)
+                    self.game_log("Loaded savegame.")
+        except Exception:
+            # Ignore autoload errors and start a fresh game
+            pass
+
         self.refresh_all()
 
     def refresh_all(self):
@@ -267,6 +291,43 @@ class MerchantTycoon(App):
         """Show game instructions"""
         modal = HelpModal()
         self.push_screen(modal)
+
+    def action_save(self):
+        """Save current game to disk (single slot)."""
+        try:
+            msgs = self.message_log.messages if self.message_log else []
+            ok, msg = save_game_to_disk(self.engine, msgs)
+            if ok:
+                self.game_log("Game saved.")
+            else:
+                self.game_log(msg)
+        except Exception as e:
+            self.game_log(f"Save failed: {e}")
+
+    def action_new_game(self):
+        """Ask for confirmation, then delete save and reset state."""
+        def _confirm_new():
+            try:
+                # Delete save file if exists
+                delete_save_from_disk()
+            except Exception:
+                pass
+            # Reset engine state in-place (keep object for UI references)
+            self.engine.state = GameState()
+            self.engine.generate_prices()
+            self.engine.generate_asset_prices()
+            # Reset messages to default welcome
+            if self.message_log:
+                self.message_log.reset_messages()
+            self.game_log("New game started.")
+            self.refresh_all()
+
+        confirm = ConfirmModal(
+            "Start New Game",
+            "Start a new game? This will delete the current save.",
+            on_confirm=_confirm_new,
+        )
+        self.push_screen(confirm)
 
 
 def main():
