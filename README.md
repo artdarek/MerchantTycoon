@@ -44,7 +44,7 @@ pip install -e .
 merchant-tycoon
 ```
 
-**Option 2: Run directly**
+**Option 2: Run as Python module**
 ```bash
 # Clone the repository
 git clone https://github.com/artdarek/MerchantTycoon.git
@@ -53,8 +53,8 @@ cd MerchantTycoon
 # Install dependencies
 pip install textual
 
-# Run the game
-python3 merchant_tycoon.py
+# Run the game as a module
+python -m merchant_tycoon
 ```
 
 ### Controls
