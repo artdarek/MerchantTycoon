@@ -318,6 +318,17 @@ class MessageLog(Static):
             self.messages = self.messages[:10]  # Keep first 10 (newest)
         self._update_display()
 
+    def set_messages(self, messages: List[str]):
+        """Replace the log with provided messages (newest first)."""
+        self.messages = list(messages[:10]) if messages else []
+        self._update_display()
+
+    def reset_messages(self):
+        """Reset messages to the default welcome line for Day 1."""
+        ts = datetime.now().strftime("%H:%M:%S")
+        self.messages = [f"[{ts}] Day 1: Welcome to Merchant Tycoon!"]
+        self._update_display()
+
     def _update_display(self):
         container = self.query_one("#log-content", ScrollableContainer)
         container.remove_children()

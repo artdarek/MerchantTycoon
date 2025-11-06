@@ -20,6 +20,7 @@ from .modals import (
     SellAssetModal,
     HelpModal,
     AlertModal,
+    ConfirmModal,
 )
 
 __all__ = [
@@ -43,4 +44,5 @@ __all__ = [
     "SellAssetModal",
     "HelpModal",
     "AlertModal",
+    "ConfirmModal",
 ]
