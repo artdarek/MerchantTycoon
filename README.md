@@ -31,14 +31,14 @@ The game combines:
 
 ### Installation
 
-**Option 1: Install with pip (recommended)**
+**Option 1: Install with uv (recommended)**
 ```bash
 # Clone the repository
 git clone https://github.com/artdarek/MerchantTycoon.git
 cd MerchantTycoon
 
 # Install the game and dependencies
-pip install -e .
+uv pip install -e .
 
 # Run the game
 merchant-tycoon
@@ -51,11 +51,49 @@ git clone https://github.com/artdarek/MerchantTycoon.git
 cd MerchantTycoon
 
 # Install dependencies
-pip install textual
+uv pip install textual
 
 # Run the game as a module
 python -m merchant_tycoon
 ```
+
+**Option 3: Using Makefile (developer-friendly)**
+```bash
+# Clone the repository
+git clone https://github.com/artdarek/MerchantTycoon.git
+cd MerchantTycoon
+
+# See all available commands
+make help
+
+# Create virtual environment
+make venv
+
+# Activate the virtual environment
+source .venv/bin/activate
+
+# Sync dependencies (creates uv.lock and installs exact versions)
+make sync
+
+# Or install in development mode (editable)
+make install-dev
+
+# Run the game
+make run
+
+# Update dependencies to latest versions
+make upgrade
+
+# Clean build artifacts and venv
+make clean
+```
+
+> **Note**: This project uses [uv](https://github.com/astral-sh/uv) - a fast Python package installer written in Rust. If you don't have uv installed, you can install it with: `curl -LsSf https://astral.sh/uv/install.sh | sh`
+>
+> **Dependency Management Tips**:
+> - `make sync` - Install dependencies from uv.lock (reproducible builds)
+> - `make upgrade` - Upgrade all packages to latest compatible versions
+> - `make install-dev` - Install in editable mode (for development)
 
 ### Controls
 

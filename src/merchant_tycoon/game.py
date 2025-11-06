@@ -270,8 +270,8 @@ class GameEngine:
 
         return True, f"Sold {quantity}x {good_name} for ${total_value}"
 
-    def travel(self, city_index: int) -> tuple[bool, str, Optional[str]]:
-        """Travel to a new city"""
+    def travel(self, city_index: int) -> tuple[bool, str, Optional[tuple[str, bool]]]:
+        """Travel to a new city. Returns (success, message, event_data) where event_data is (event_msg, is_positive)"""
         if city_index == self.state.current_city:
             return False, "Already in this city!", None
 
@@ -284,16 +284,16 @@ class GameEngine:
             self.state.debt += interest
 
         # Random event (only affects goods, not investments!)
-        event_msg = self._random_event()
+        event_data = self._random_event()
 
         # Generate new prices for goods and assets
         self.generate_prices()
         self.generate_asset_prices()
 
-        return True, f"Traveled to {CITIES[city_index].name}", event_msg
+        return True, f"Traveled to {CITIES[city_index].name}", event_data
 
-    def _random_event(self) -> Optional[str]:
-        """Generate random travel events"""
+    def _random_event(self) -> Optional[tuple[str, bool]]:
+        """Generate random travel events. Returns (message, is_positive) or None"""
         event_chance = random.random()
 
         if event_chance < 0.15:  # 15% chance of bad event
@@ -306,24 +306,24 @@ class GameEngine:
                 self.state.inventory[good] -= lost
                 if self.state.inventory[good] <= 0:
                     del self.state.inventory[good]
-                return f"🚨 ROBBED! Lost {lost}x {good}!"
+                return (f"🚨 ROBBED! Lost {lost}x {good}!", False)
 
             elif event_type == 'confiscation' and self.state.inventory:
                 # Lose all of one type
                 good = random.choice(list(self.state.inventory.keys()))
                 lost = self.state.inventory[good]
                 del self.state.inventory[good]
-                return f"🚔 CONFISCATED! Lost all {lost}x {good}!"
+                return (f"🚔 CONFISCATED! Lost all {lost}x {good}!", False)
 
             elif event_type == 'damage':
                 damage = random.randint(100, 500)
                 self.state.cash -= damage
-                return f"💥 ACCIDENT! Paid ${damage} in damages!"
+                return (f"💥 ACCIDENT! Paid ${damage} in damages!", False)
 
         elif event_chance < 0.20:  # 5% chance of good event
             bonus = random.randint(200, 800)
             self.state.cash += bonus
-            return f"✨ LUCKY FIND! Found ${bonus}!"
+            return (f"✨ LUCKY FIND! Found ${bonus}!", True)
 
         return None
 
@@ -652,9 +652,9 @@ class MessageLog(Static):
         yield ScrollableContainer(id="log-content")
 
     def add_message(self, msg: str):
-        self.messages.append(msg)
+        self.messages.insert(0, msg)  # Add new messages at the beginning
         if len(self.messages) > 10:
-            self.messages = self.messages[-10:]
+            self.messages = self.messages[:10]  # Keep first 10 (newest)
         self._update_display()
 
     def _update_display(self):
@@ -1279,6 +1279,36 @@ class HelpModal(ModalScreen):
         self.dismiss()
 
 
+class AlertModal(ModalScreen):
+    """Modal for displaying alerts/notifications"""
+
+    BINDINGS = [
+        ("escape", "dismiss_modal", "Close"),
+        ("enter", "dismiss_modal", "Close"),
+    ]
+
+    def __init__(self, title: str, message: str, is_positive: bool = False):
+        super().__init__()
+        self.alert_title = title
+        self.alert_message = message
+        self.is_positive = is_positive
+
+    def compose(self) -> ComposeResult:
+        modal_id = "alert-modal-positive" if self.is_positive else "alert-modal-negative"
+        with Container(id=modal_id):
+            yield Label(self.alert_title, id="modal-title")
+            yield Label(self.alert_message, id="alert-message")
+            yield Button("OK (ENTER)", variant="primary", id="ok-btn")
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        if event.button.id == "ok-btn":
+            self.dismiss()
+
+    def action_dismiss_modal(self) -> None:
+        """Close the modal when ESC or ENTER is pressed"""
+        self.dismiss()
+
+
 class MerchantTycoon(App):
     """Main game application"""
 
@@ -1330,8 +1360,13 @@ class MerchantTycoon(App):
         margin-bottom: 1;
     }
 
-    #market-list, #inventory-list, #exchange-prices-list, #investments-list, #log-content {
+    #market-list, #inventory-list, #exchange-prices-list, #investments-list {
         height: auto;
+    }
+
+    #log-content {
+        height: 3;
+        overflow-y: auto;
     }
 
     /* Modal styles */
@@ -1458,6 +1493,34 @@ class MerchantTycoon(App):
         border: solid $primary;
         background: $panel;
     }
+
+    /* Alert modal styles */
+    AlertModal {
+        align: center middle;
+    }
+
+    #alert-modal-negative {
+        width: 70;
+        height: auto;
+        border: thick $error;
+        background: $surface;
+        padding: 1 2;
+    }
+
+    #alert-modal-positive {
+        width: 70;
+        height: auto;
+        border: thick $success;
+        background: $surface;
+        padding: 1 2;
+    }
+
+    #alert-message {
+        margin: 1 0;
+        padding: 1;
+        background: $panel;
+        color: $text;
+    }
     """
 
     BINDINGS = [
@@ -1559,11 +1622,15 @@ class MerchantTycoon(App):
 
     def _handle_travel(self, city_index: int):
         """Handle travel to new city"""
-        success, msg, event_msg = self.engine.travel(city_index)
+        success, msg, event_data = self.engine.travel(city_index)
         if success:
             self.game_log(msg)
-            if event_msg:
-                self.game_log(event_msg)
+            if event_data:
+                event_msg, is_positive = event_data
+                self.game_log(event_msg)  # Log for history
+                title = "✨ Good News!" if is_positive else "⚠️ Bad News!"
+                modal = AlertModal(title, event_msg, is_positive)
+                self.push_screen(modal)
             self.refresh_all()
         else:
             self.game_log(msg)
