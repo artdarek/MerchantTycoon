@@ -129,7 +129,7 @@ This game was **100% created using Claude Code** - Anthropic's AI-powered coding
 
 ### Development Process
 
-The entire development was done through natural language conversations in Polish and English. The development process included:
+The entire development was done through natural language conversations. The development process included:
 
 1. **Initial Concept**: "Let's create a terminal trading game"
 2. **Iterative Development**: Feature by feature through conversation
@@ -144,19 +144,10 @@ The entire development was done through natural language conversations in Polish
    - Created help system
 
 5. **Polish & UX**:
-   - Changed keybindings for better UX (D→I for Inventory)
+   - Changed keybindings for better UX
    - Fixed data alignment in tables
-   - Removed unnecessary UI elements (textarea in exchange modal)
+   - Removed unnecessary UI elements
    - Added proper column formatting
-
-### Example Development Conversations
-
-Some actual requests during development:
-- _"dodajmy pod YOUR INVENTORY panel z podobnymi informacjami ale dotyczacymi zakupionych naszych inwestycji na giełdzie"_ (Let's add panel below inventory for our stock investments)
-- _"lets change Stocks names into real ones like Google, Facebook, Apple, Microsoft"_
-- _"in EXCHANGE PANEL data are not aligned correctly its messy please make it straight like in table"_
-- _"stock exchange modal ma jakies textarea ktore nie jest potrzebne chyba?"_ (The exchange modal has some textarea that isn't needed?)
-- _"dodajmy opcje w stopce help... i opiszmy na czym polega gra"_ (Let's add help option in footer and describe how the game works)
 
 ### No Manual Coding
 
@@ -170,7 +161,6 @@ Some actual requests during development:
 This project showcases:
 - **Natural Language Programming**: Building software by describing what you want
 - **Iterative Development**: Refining features through conversation
-- **Bilingual Development**: Working in both Polish and English seamlessly
 - **AI-Human Collaboration**: Combining human creativity with AI implementation
 - **Rapid Prototyping**: From concept to working game in a single session
 
