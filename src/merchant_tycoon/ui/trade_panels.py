@@ -16,7 +16,7 @@ class TradeActionsPanel(Static):
         self.engine = engine
 
     def compose(self) -> ComposeResult:
-        yield Label("🛒 TRADE", id="trade-actions-header")
+        yield Label("🛒 TRADE STOCKS", id="trade-actions-header", classes="panel-title")
         with Horizontal(id="trade-actions-bar"):
             # Reuse existing IDs so compact button CSS applies
             yield Button("Buy", id="exchange-buy-btn", variant="success")
@@ -56,7 +56,7 @@ class GoodsTradeActionsPanel(Static):
         self.engine = engine
 
     def compose(self) -> ComposeResult:
-        yield Label("🛒 TRADE GOODS", id="goods-trade-actions-header")
+        yield Label("🛒 TRADE GOODS", id="goods-trade-actions-header", classes="panel-title")
         with Horizontal(id="goods-trade-actions-bar"):
             yield Button("Buy", id="goods-buy-btn", variant="success")
             yield Button(

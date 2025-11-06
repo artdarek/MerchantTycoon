@@ -89,9 +89,9 @@ MessageLog {
     height: 8;
 }
 
-#market-header, #inventory-header, #exchange-prices-header, #investments-header, #trade-actions-header, #log-header {
+.panel-title {
     text-style: bold;
-    color: $accent;
+    color: $text;
     margin-bottom: 1;
 }
 
@@ -238,4 +238,24 @@ AlertModal {
 .profit-info {
     padding-left: 4;
     color: $success;
+}
+
+
+/* Market table sizing */
+#market-table {
+    height: 1fr;
+}
+
+#inventory-table {
+    height: auto;
+}
+
+
+/* Exchange/Investments tables sizing */
+#exchange-table {
+    height: 1fr;
+}
+
+#portfolio-table {
+    height: auto;
 }
