@@ -9,7 +9,7 @@ from dataclasses import dataclass, field
 from typing import Dict, List, Optional
 from textual.app import App, ComposeResult
 from textual.containers import Container, Horizontal, Vertical, ScrollableContainer
-from textual.widgets import Header, Footer, Static, Label, Button, Input, Select, OptionList
+from textual.widgets import Header, Footer, Static, Label, Button, Input, Select, OptionList, TabbedContent, TabPane
 from textual.widgets.option_list import Option
 from textual.binding import Binding
 from textual.screen import ModalScreen
@@ -1314,44 +1314,54 @@ class MerchantTycoon(App):
 
     CSS = """
     Screen {
-        layout: grid;
-        grid-size: 2 4;
-        grid-rows: auto 1fr 1fr auto;
+        layout: vertical;
     }
 
     StatsPanel {
-        column-span: 2;
         background: $primary;
         color: $text;
         padding: 1;
         text-style: bold;
+        height: auto;
+    }
+
+    TabbedContent {
+        height: 1fr;
+    }
+
+    TabPane {
+        layout: horizontal;
+        padding: 1;
     }
 
     MarketPanel {
         border: solid $accent;
         padding: 1;
+        width: 1fr;
     }
 
     InventoryPanel {
         border: solid $accent;
         padding: 1;
+        width: 1fr;
     }
 
     ExchangePricesPanel {
         border: solid $accent;
         padding: 1;
+        width: 1fr;
     }
 
     InvestmentsPanel {
         border: solid $accent;
         padding: 1;
+        width: 1fr;
     }
 
     MessageLog {
-        column-span: 2;
         border: solid $accent;
         padding: 1;
-        max-height: 12;
+        height: 8;
     }
 
     #market-header, #inventory-header, #exchange-prices-header, #investments-header, #log-header {
@@ -1548,10 +1558,13 @@ class MerchantTycoon(App):
     def compose(self) -> ComposeResult:
         yield Header()
         yield StatsPanel(self.engine)
-        yield MarketPanel(self.engine)
-        yield InventoryPanel(self.engine)
-        yield ExchangePricesPanel(self.engine)
-        yield InvestmentsPanel(self.engine)
+        with TabbedContent(initial="goods-tab"):
+            with TabPane("📦 Goods", id="goods-tab"):
+                yield MarketPanel(self.engine)
+                yield InventoryPanel(self.engine)
+            with TabPane("💼 Investments", id="investments-tab"):
+                yield ExchangePricesPanel(self.engine)
+                yield InvestmentsPanel(self.engine)
         yield MessageLog()
         yield Footer()
 
