@@ -31,7 +31,25 @@ The game combines:
 
 ### Installation
 
+**Option 1: Install with pip (recommended)**
 ```bash
+# Clone the repository
+git clone https://github.com/artdarek/MerchantTycoon.git
+cd MerchantTycoon
+
+# Install the game and dependencies
+pip install -e .
+
+# Run the game
+merchant-tycoon
+```
+
+**Option 2: Run directly**
+```bash
+# Clone the repository
+git clone https://github.com/artdarek/MerchantTycoon.git
+cd MerchantTycoon
+
 # Install dependencies
 pip install textual
 

@@ -1,0 +1,42 @@
+[project]
+name = "merchant-tycoon"
+version = "1.0.0"
+description = "A terminal-based trading game - buy low, sell high, and become a merchant tycoon!"
+authors = [
+    {name = "artdarek", email = "artdarek@gmail.com"}
+]
+readme = "README.md"
+requires-python = ">=3.8"
+license = {text = "MIT"}
+keywords = ["game", "trading", "terminal", "tui", "textual"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: End Users/Desktop",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Games/Entertainment :: Simulation",
+]
+
+dependencies = [
+    "textual>=0.47.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/artdarek/MerchantTycoon"
+Repository = "https://github.com/artdarek/MerchantTycoon"
+Issues = "https://github.com/artdarek/MerchantTycoon/issues"
+
+[project.scripts]
+merchant-tycoon = "merchant_tycoon:main"
+
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+py-modules = ["merchant_tycoon"]

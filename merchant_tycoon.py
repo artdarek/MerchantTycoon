@@ -1634,6 +1634,11 @@ class MerchantTycoon(App):
         self.push_screen(modal)
 
 
-if __name__ == "__main__":
+def main():
+    """Entry point for the game"""
     app = MerchantTycoon()
     app.run()
+
+
+if __name__ == "__main__":
+    main()
