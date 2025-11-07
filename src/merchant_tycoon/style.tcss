@@ -100,6 +100,7 @@ InvestmentsPanel {
     border: solid $accent;
     padding: 1;
     width: 1fr;
+    height: 1fr;
 }
 
 TradeActionsPanel {
@@ -285,7 +286,7 @@ AlertModal {
 }
 
 #portfolio-table {
-    height: auto;
+    height: 1fr;
 }
 
 

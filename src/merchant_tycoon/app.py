@@ -444,6 +444,7 @@ class MerchantTycoon(App):
             "🏦 Deposit to Bank",
             f"Cash available: ${cash:,}\nHow much to deposit?",
             self._handle_bank_deposit,
+            default_value=str(cash),
         )
         self.push_screen(modal)
 
@@ -467,6 +468,7 @@ class MerchantTycoon(App):
             "🏦 Withdraw from Bank",
             f"Bank balance: ${bal:,}\nHow much to withdraw?",
             self._handle_bank_withdraw,
+            default_value=str(bal),
         )
         self.push_screen(modal)
 

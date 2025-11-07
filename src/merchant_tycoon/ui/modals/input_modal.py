@@ -7,17 +7,18 @@ from textual.screen import ModalScreen
 class InputModal(ModalScreen):
     """Generic input modal"""
 
-    def __init__(self, title: str, prompt: str, callback):
+    def __init__(self, title: str, prompt: str, callback, default_value: str = ""):
         super().__init__()
         self.modal_title = title
         self.modal_prompt = prompt
         self.callback = callback
+        self.default_value = default_value
 
     def compose(self) -> ComposeResult:
         with Container(id="input-modal"):
             yield Label(self.modal_title, id="modal-title")
             yield Label(self.modal_prompt)
-            yield Input(placeholder="Enter value...", id="modal-input")
+            yield Input(placeholder="Enter value...", value=self.default_value, id="modal-input")
             with Horizontal(id="modal-buttons"):
                 yield Button("Confirm", variant="primary", id="confirm-btn")
                 yield Button("Cancel", variant="default", id="cancel-btn")

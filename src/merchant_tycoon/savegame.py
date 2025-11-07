@@ -283,26 +283,27 @@ def apply_loaded_game(engine: GameEngine, data: Dict[str, Any]) -> bool:
         s = data.get("state", {})
         p = data.get("prices", {})
 
-        # Replace state in-place
-        new_state = GameState()
-        new_state.cash = int(s.get("cash", new_state.cash))
-        new_state.debt = int(s.get("debt", new_state.debt))
-        new_state.day = int(s.get("day", new_state.day))
-        new_state.current_city = int(s.get("current_city", new_state.current_city))
-        new_state.inventory = dict(s.get("inventory", {}))
-        new_state.max_inventory = int(s.get("max_inventory", new_state.max_inventory))
-        new_state.purchase_lots = _dicts_to_lots(list(s.get("purchase_lots", [])))
-        new_state.transaction_history = _dicts_to_txs(list(s.get("transaction_history", [])))
-        new_state.portfolio = dict(s.get("portfolio", {}))
-        new_state.investment_lots = _dicts_to_inv_lots(list(s.get("investment_lots", [])))
-        
+        # Update existing state object in-place to preserve service references
+        # DO NOT replace engine.state - services hold references to it!
+        state = engine.state
+        state.cash = int(s.get("cash", state.cash))
+        state.debt = int(s.get("debt", state.debt))
+        state.day = int(s.get("day", state.day))
+        state.current_city = int(s.get("current_city", state.current_city))
+        state.inventory = dict(s.get("inventory", {}))
+        state.max_inventory = int(s.get("max_inventory", state.max_inventory))
+        state.purchase_lots = _dicts_to_lots(list(s.get("purchase_lots", [])))
+        state.transaction_history = _dicts_to_txs(list(s.get("transaction_history", [])))
+        state.portfolio = dict(s.get("portfolio", {}))
+        state.investment_lots = _dicts_to_inv_lots(list(s.get("investment_lots", [])))
+
         # Loans (explicit multi-loan support). Legacy single-loan synthesis removed.
         has_loans_key = "loans" in s
         try:
             loans_list = _dicts_to_loans(list(s.get("loans", [])))
         except Exception:
             loans_list = []
-        new_state.loans = loans_list
+        state.loans = loans_list
 
         # Bank (optional for backward compatibility)
         bank_data = s.get("bank")
@@ -315,7 +316,7 @@ def apply_loaded_game(engine: GameEngine, data: Dict[str, Any]) -> bool:
                             tx_type=str(d.get("type", "")),
                             amount=int(d.get("amount", 0)),
                             balance_after=int(d.get("balance_after", 0)),
-                            day=int(d.get("day", new_state.day)),
+                            day=int(d.get("day", state.day)),
                             title=str(d.get("title", "")),
                         )
                     )
@@ -334,32 +335,34 @@ def apply_loaded_game(engine: GameEngine, data: Dict[str, Any]) -> bool:
                 rate_daily = float(bank_data.get("rate", 0.0005))
             except Exception:
                 rate_daily = rate_annual / 365.0
-            new_state.bank = BankAccount(
+            state.bank = BankAccount(
                 balance=int(bank_data.get("balance", 0)),
                 interest_rate_daily=rate_daily,
                 interest_rate_annual=rate_annual,
                 accrued_interest=float(bank_data.get("accrued", 0.0)),
-                last_interest_day=int(bank_data.get("last_day", new_state.day)),
+                last_interest_day=int(bank_data.get("last_day", state.day)),
                 transactions=txs,
             )
         else:
             # Defaults if not present
-            new_state.bank = BankAccount(
+            state.bank = BankAccount(
                 balance=0,
                 interest_rate_daily=0.0005,
                 interest_rate_annual=0.02,
                 accrued_interest=0.0,
-                last_interest_day=new_state.day,
+                last_interest_day=state.day,
                 transactions=[],
             )
 
-        engine.state = new_state
-
-        # Prices
-        engine.prices = dict(p.get("goods", {}))
-        engine.previous_prices = dict(p.get("goods_prev", {}))
-        engine.asset_prices = dict(p.get("assets", {}))
-        engine.previous_asset_prices = dict(p.get("assets_prev", {}))
+        # Prices - update in-place to preserve service references
+        engine.prices.clear()
+        engine.prices.update(dict(p.get("goods", {})))
+        engine.previous_prices.clear()
+        engine.previous_prices.update(dict(p.get("goods_prev", {})))
+        engine.asset_prices.clear()
+        engine.asset_prices.update(dict(p.get("assets", {})))
+        engine.previous_asset_prices.clear()
+        engine.previous_asset_prices.update(dict(p.get("assets_prev", {})))
 
         # Restore current global loan rates if present (optional fields)
         try:

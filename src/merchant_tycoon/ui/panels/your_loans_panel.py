@@ -51,8 +51,13 @@ class YourLoansPanel(Static):
             table.add_row("-", "(no loans)", "", "", "", "")
             return
 
-        # Newest first by day
-        loans.sort(key=lambda ln: getattr(ln, 'day_taken', 0), reverse=True)
+        # Newest first by day; for same day, keep newer insertions first
+        indexed = [(i, ln) for i, ln in enumerate(loans)]
+        try:
+            indexed.sort(key=lambda pair: (getattr(pair[1], 'day_taken', 0), pair[0]), reverse=True)
+            loans = [ln for _, ln in indexed]
+        except Exception:
+            loans.sort(key=lambda ln: getattr(ln, 'day_taken', 0), reverse=True)
         for ln in loans:
             day = getattr(ln, 'day_taken', 0)
             principal = getattr(ln, 'principal', 0)

@@ -42,12 +42,15 @@ class AccountTransactionsPanel(Static):
             table.add_row("-", "(no transactions)", "", "", "")
             return
 
-        # Show last 100 transactions, newest to oldest
+        # Show last 100 transactions, newest to oldest (day desc, then insertion order desc)
         txs = bank.transactions[-100:]
-        # Sort by day descending; if equal day, preserve original relative order by reversing slice order
+        # Use index within the sliced window to break ties for same day (later index = newer)
+        indexed = [(i, tx) for i, tx in enumerate(txs)]
         try:
-            txs = sorted(txs, key=lambda t: getattr(t, 'day', 0), reverse=True)
+            indexed.sort(key=lambda pair: (getattr(pair[1], 'day', 0), pair[0]), reverse=True)
+            txs = [tx for _, tx in indexed]
         except Exception:
+            # Fallback: simple reverse if anything goes wrong
             txs = list(reversed(txs))
         for tx in txs:
             # Color by type

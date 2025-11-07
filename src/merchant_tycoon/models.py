@@ -86,7 +86,7 @@ CRYPTO: List[Asset] = [
     Asset("Bitcoin", "BTC", 35000, 0.7, "crypto"),
     Asset("Ethereum", "ETH", 2000, 0.8, "crypto"),
     Asset("Solana", "SOL", 80, 0.9, "crypto"),
-    Asset("Dogecoin", "DOGE", 1, 0.9, "crypto"),
+    Asset("Dogecoin", "DOGE", 5, 1.0, "crypto"),  # Price range $1-$10 (base 5, variance 1.0)
 ]
 
 
