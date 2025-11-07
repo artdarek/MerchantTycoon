@@ -7,7 +7,7 @@ from textual.widgets import Static, Label, DataTable
 from rich.text import Text
 
 from ..engine import GameEngine
-from ..models import GOODS, STOCKS, COMMODITIES, CITIES
+from ..models import GOODS, STOCKS, COMMODITIES, CRYPTO, CITIES
 
 
 class StatsPanel(Static):
@@ -31,7 +31,7 @@ class StatsPanel(Static):
             if symbol in self.engine.asset_prices:
                 portfolio_value += quantity * self.engine.asset_prices[symbol]
 
-        stats_text = f"""💰 Cash: ${state.cash:,}  |  💼 Investments: ${portfolio_value:,}  |  🏦 Debt: ${state.debt:,}  |  📅 Day: {state.day}  |  📍 {city.name}  |  📦 Cargo: {inventory_count}/{state.max_inventory}"""
+        stats_text = f"""💰 Cash: ${state.cash:,}  |  💼 Investments: ${portfolio_value:,}  |  🏦 Debt: ${state.debt:,}  |  📅 Day: {state.day}  |  📍 {city.name}, {city.country}  |  📦 Cargo: {inventory_count}/{state.max_inventory}"""
 
         label = self.query_one("#stats-content", Label)
         label.update(stats_text)
@@ -175,7 +175,7 @@ class ExchangePricesPanel(Static):
         # Initialize columns once
         if not getattr(self, "_exchange_table_initialized", False):
             table.clear(columns=True)
-            table.add_columns("Asset", "Price", "Change", "Have", "Type")
+            table.add_columns("Symbol", "Name", "Price", "Change", "Have", "Type")
             try:
                 table.cursor_type = "row"
                 table.show_header = True
@@ -208,18 +208,30 @@ class ExchangePricesPanel(Static):
                     else:
                         change_cell = Text("─", style="dim")
 
+            # Format price based on asset type
+            if asset_type == "crypto" and price < 10:
+                price_str = f"${price:.2f}"
+            else:
+                price_str = f"${price:,}"
+
+            # Display asset type
+            type_display = "Stock" if asset_type == "stock" else "Commodity" if asset_type == "commodity" else "Crypto"
+
             table.add_row(
-                f"{name} ({symbol})",
-                f"${price:,}",
+                symbol,
+                name,
+                price_str,
                 change_cell,
                 str(owned),
-                "Stock" if asset_type == "stock" else "Commodity",
+                type_display,
             )
 
         for stock in STOCKS:
             add_asset_row(stock.name, stock.symbol, stock.asset_type)
         for commodity in COMMODITIES:
             add_asset_row(commodity.name, commodity.symbol, commodity.asset_type)
+        for crypto in CRYPTO:
+            add_asset_row(crypto.name, crypto.symbol, crypto.asset_type)
 
 
 class InvestmentsPanel(Static):
@@ -258,7 +270,7 @@ class InvestmentsPanel(Static):
             table.add_row("(no investments)", "", "", "", "", "", "", "")
             return
 
-        all_assets = STOCKS + COMMODITIES
+        all_assets = STOCKS + COMMODITIES + CRYPTO
 
         for symbol in sorted(self.engine.state.portfolio.keys()):
             quantity = self.engine.state.portfolio.get(symbol, 0)

@@ -9,6 +9,7 @@ from .models import (
     GOODS,
     STOCKS,
     COMMODITIES,
+    CRYPTO,
     CITIES,
 )
 
@@ -74,10 +75,12 @@ class GameEngine:
         self.previous_asset_prices = self.asset_prices.copy()
 
         # Generate prices for all assets
-        all_assets = STOCKS + COMMODITIES
+        all_assets = STOCKS + COMMODITIES + CRYPTO
         for asset in all_assets:
             variance = random.uniform(1 - asset.price_variance, 1 + asset.price_variance)
-            self.asset_prices[asset.symbol] = int(asset.base_price * variance)
+            # For crypto with very low prices (like DOGE), use float precision
+            price = asset.base_price * variance
+            self.asset_prices[asset.symbol] = round(price, 2) if asset.asset_type == "crypto" and price < 10 else int(price)
 
     def buy(self, good_name: str, quantity: int) -> tuple[bool, str]:
         """Buy goods"""
@@ -190,7 +193,8 @@ class GameEngine:
         self.generate_prices()
         self.generate_asset_prices()
 
-        return True, f"Traveled to {CITIES[city_index].name}", event_data
+        city = CITIES[city_index]
+        return True, f"Traveled to {city.name}, {city.country}", event_data
 
     def _random_event(self) -> Optional[tuple[str, bool]]:
         """Generate random travel events. Returns (message, is_positive) or None"""

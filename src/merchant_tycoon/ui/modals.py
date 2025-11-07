@@ -7,7 +7,7 @@ from textual.widgets.option_list import Option
 from textual.screen import ModalScreen
 
 from ..engine import GameEngine
-from ..models import City, GOODS, STOCKS, COMMODITIES
+from ..models import City, GOODS, STOCKS, COMMODITIES, CRYPTO
 
 
 class InputModal(ModalScreen):
@@ -60,9 +60,9 @@ class CitySelectModal(ModalScreen):
             options = []
             for i, city in enumerate(self.cities):
                 if i == self.current_city:
-                    options.append(Option(f"{city.name} (current)", id=str(i), disabled=True))
+                    options.append(Option(f"{city.name}, {city.country} (current)", id=str(i), disabled=True))
                 else:
-                    options.append(Option(city.name, id=str(i)))
+                    options.append(Option(f"{city.name}, {city.country}", id=str(i)))
             yield OptionList(*options, id="city-list")
             yield Button("Cancel", variant="default", id="cancel-btn")
 
@@ -82,6 +82,7 @@ class BuyModal(ModalScreen):
         super().__init__()
         self.engine = engine
         self.callback = callback
+        self.max_quantities = {}  # Store max quantity for each product
 
     def compose(self) -> ComposeResult:
         with Container(id="buy-modal"):
@@ -98,6 +99,9 @@ class BuyModal(ModalScreen):
                 # Calculate actual max (limited by inventory space)
                 max_buyable = min(max_affordable, available_space)
 
+                # Store max quantity for this product
+                self.max_quantities[good.name] = max_buyable
+
                 options.append((
                     f"{good.name} - ${price:,} (max: {max_buyable})",
                     good.name
@@ -111,6 +115,13 @@ class BuyModal(ModalScreen):
             with Horizontal(id="modal-buttons"):
                 yield Button("Buy", variant="primary", id="confirm-btn")
                 yield Button("Cancel", variant="default", id="cancel-btn")
+
+    def on_select_changed(self, event: Select.Changed) -> None:
+        """Auto-fill quantity when product is selected"""
+        if event.select.id == "product-select" and event.value:
+            max_qty = self.max_quantities.get(event.value, 0)
+            input_widget = self.query_one("#quantity-input", Input)
+            input_widget.value = str(max_qty)
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "confirm-btn":
@@ -152,6 +163,7 @@ class SellModal(ModalScreen):
         super().__init__()
         self.engine = engine
         self.callback = callback
+        self.max_quantities = {}  # Store max quantity for each product
 
     def compose(self) -> ComposeResult:
         with Container(id="sell-modal"):
@@ -162,6 +174,10 @@ class SellModal(ModalScreen):
             for good_name, quantity in self.engine.state.inventory.items():
                 price = self.engine.prices[good_name]
                 total_value = quantity * price
+
+                # Store max quantity for this product
+                self.max_quantities[good_name] = quantity
+
                 options.append((
                     f"{good_name} - ${price:,}/unit (have: {quantity}, worth ${total_value:,})",
                     good_name
@@ -175,6 +191,13 @@ class SellModal(ModalScreen):
             with Horizontal(id="modal-buttons"):
                 yield Button("Sell", variant="primary", id="confirm-btn")
                 yield Button("Cancel", variant="default", id="cancel-btn")
+
+    def on_select_changed(self, event: Select.Changed) -> None:
+        """Auto-fill quantity when product is selected"""
+        if event.select.id == "product-select" and event.value:
+            max_qty = self.max_quantities.get(event.value, 0)
+            input_widget = self.query_one("#quantity-input", Input)
+            input_widget.value = str(max_qty)
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "confirm-btn":
@@ -316,20 +339,37 @@ class BuyAssetModal(ModalScreen):
         super().__init__()
         self.engine = engine
         self.callback = callback
+        self.max_quantities = {}  # Store max quantity for each asset
 
     def compose(self) -> ComposeResult:
         with Container(id="buy-modal"):
             yield Label("💰 Buy Assets", id="modal-title")
 
             options = []
-            all_assets = STOCKS + COMMODITIES
+            all_assets = STOCKS + COMMODITIES + CRYPTO
             for asset in all_assets:
                 price = self.engine.asset_prices[asset.symbol]
                 max_affordable = self.engine.state.cash // price if price > 0 else 0
-                asset_type_icon = "📊" if asset.asset_type == "stock" else "🌾"
+
+                # Store max quantity for this asset
+                self.max_quantities[asset.symbol] = max_affordable
+
+                # Choose icon based on asset type
+                if asset.asset_type == "stock":
+                    asset_type_icon = "📊"
+                elif asset.asset_type == "commodity":
+                    asset_type_icon = "🌾"
+                else:  # crypto
+                    asset_type_icon = "₿"
+
+                # Format price based on asset type
+                if asset.asset_type == "crypto" and price < 10:
+                    price_str = f"${price:.2f}"
+                else:
+                    price_str = f"${price:,}"
 
                 options.append((
-                    f"{asset_type_icon} {asset.symbol} - {asset.name} @ ${price:,} (max: {max_affordable})",
+                    f"{asset_type_icon} {asset.symbol} - {asset.name} @ {price_str} (max: {max_affordable})",
                     asset.symbol
                 ))
 
@@ -341,6 +381,13 @@ class BuyAssetModal(ModalScreen):
             with Horizontal(id="modal-buttons"):
                 yield Button("Buy", variant="primary", id="confirm-btn")
                 yield Button("Cancel", variant="default", id="cancel-btn")
+
+    def on_select_changed(self, event: Select.Changed) -> None:
+        """Auto-fill quantity when asset is selected"""
+        if event.select.id == "asset-select" and event.value:
+            max_qty = self.max_quantities.get(event.value, 0)
+            input_widget = self.query_one("#quantity-input", Input)
+            input_widget.value = str(max_qty)
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "confirm-btn":
@@ -370,6 +417,7 @@ class SellAssetModal(ModalScreen):
         super().__init__()
         self.engine = engine
         self.callback = callback
+        self.max_quantities = {}  # Store max quantity for each asset
 
     def compose(self) -> ComposeResult:
         with Container(id="sell-modal"):
@@ -380,14 +428,35 @@ class SellAssetModal(ModalScreen):
                 price = self.engine.asset_prices[symbol]
                 total_value = quantity * price
 
+                # Store max quantity for this asset
+                self.max_quantities[symbol] = quantity
+
                 # Find asset info
-                all_assets = STOCKS + COMMODITIES
+                all_assets = STOCKS + COMMODITIES + CRYPTO
                 asset = next((a for a in all_assets if a.symbol == symbol), None)
-                asset_type_icon = "📊" if asset and asset.asset_type == "stock" else "🌾"
+
+                # Choose icon based on asset type
+                if asset and asset.asset_type == "stock":
+                    asset_type_icon = "📊"
+                elif asset and asset.asset_type == "commodity":
+                    asset_type_icon = "🌾"
+                elif asset and asset.asset_type == "crypto":
+                    asset_type_icon = "₿"
+                else:
+                    asset_type_icon = "❓"
+
                 asset_name = asset.name if asset else symbol
 
+                # Format price based on asset type
+                if asset and asset.asset_type == "crypto" and price < 10:
+                    price_str = f"${price:.2f}"
+                    total_str = f"${total_value:.2f}"
+                else:
+                    price_str = f"${price:,}"
+                    total_str = f"${total_value:,}"
+
                 options.append((
-                    f"{asset_type_icon} {symbol} - {asset_name} @ ${price:,}/unit (have: {quantity}, worth ${total_value:,})",
+                    f"{asset_type_icon} {symbol} - {asset_name} @ {price_str}/unit (have: {quantity}, worth {total_str})",
                     symbol
                 ))
 
@@ -399,6 +468,13 @@ class SellAssetModal(ModalScreen):
             with Horizontal(id="modal-buttons"):
                 yield Button("Sell", variant="primary", id="confirm-btn")
                 yield Button("Cancel", variant="default", id="cancel-btn")
+
+    def on_select_changed(self, event: Select.Changed) -> None:
+        """Auto-fill quantity when asset is selected"""
+        if event.select.id == "asset-select" and event.value:
+            max_qty = self.max_quantities.get(event.value, 0)
+            input_widget = self.query_one("#quantity-input", Input)
+            input_widget.value = str(max_qty)
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "confirm-btn":

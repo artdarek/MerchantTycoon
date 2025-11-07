@@ -43,6 +43,10 @@ GOODS: List[Good] = [
     Good("Laptop", 1500),
     Good("Tablet", 500),
     Good("Console", 450),
+    Good("Headphones", 150),
+    Good("Smartwatch", 400),
+    Good("VR Headset", 700),
+    Good("Coffee Machine", 450),
 ]
 
 
@@ -61,6 +65,14 @@ STOCKS: List[Asset] = [
     Asset("Meta", "META", 80, 0.5, "stock"),
     Asset("Apple", "AAPL", 120, 0.7, "stock"),
     Asset("Microsoft", "MSFT", 200, 0.4, "stock"),
+    Asset("Amazon", "AMZN", 180, 0.6, "stock"),
+    Asset("Netflix", "NFLX", 90, 0.8, "stock"),
+    Asset("NVIDIA", "NVDA", 250, 0.9, "stock"),
+    Asset("Tesla", "TSLA", 160, 0.8, "stock"),
+    Asset("AMD", "AMD", 110, 0.7, "stock"),
+    Asset("Oracle", "ORCL", 95, 0.5, "stock"),
+    Asset("Adobe", "ADBE", 140, 0.6, "stock"),
+    Asset("Intel", "INTC", 85, 0.6, "stock"),
 ]
 
 COMMODITIES: List[Asset] = [
@@ -68,6 +80,13 @@ COMMODITIES: List[Asset] = [
     Asset("Oil", "OIL", 75, 0.8, "commodity"),
     Asset("Silver", "SILV", 25, 0.4, "commodity"),
     Asset("Copper", "COPP", 8, 0.5, "commodity"),
+]
+
+CRYPTO: List[Asset] = [
+    Asset("Bitcoin", "BTC", 35000, 0.7, "crypto"),
+    Asset("Ethereum", "ETH", 2000, 0.8, "crypto"),
+    Asset("Solana", "SOL", 80, 0.9, "crypto"),
+    Asset("Dogecoin", "DOGE", 1, 0.9, "crypto"),
 ]
 
 
@@ -84,18 +103,42 @@ class InvestmentLot:
 class City:
     """Represents a city/location"""
     name: str
+    country: str
     price_multiplier: Dict[str, float]  # Per-good multipliers
 
 
 CITIES: List[City] = [
-    City("Warsaw", {"TV": 1.0, "Computer": 1.0, "Printer": 1.0, "Phone": 1.0,
-          "Camera": 1.0, "Laptop": 1.0, "Tablet": 1.0, "Console": 1.0}),
-    City("Berlin", {"TV": 0.8, "Computer": 1.2, "Printer": 0.9, "Phone": 1.1,
-          "Camera": 0.85, "Laptop": 1.15, "Tablet": 0.95, "Console": 1.05}),
-    City("Prague", {"TV": 1.1, "Computer": 0.9, "Printer": 1.2, "Phone": 0.95,
-          "Camera": 1.1, "Laptop": 0.85, "Tablet": 1.05, "Console": 0.9}),
-    City("Vienna", {"TV": 0.95, "Computer": 1.1, "Printer": 0.85, "Phone": 1.2,
-          "Camera": 1.0, "Laptop": 1.05, "Tablet": 1.1, "Console": 0.95}),
-    City("Budapest", {"TV": 1.2, "Computer": 0.85, "Printer": 1.1, "Phone": 0.9,
-          "Camera": 1.15, "Laptop": 0.9, "Tablet": 0.85, "Console": 1.1}),
+    City("Warsaw", "Poland", {"TV": 1.0, "Computer": 1.0, "Printer": 1.0, "Phone": 1.0,
+          "Camera": 1.0, "Laptop": 1.0, "Tablet": 1.0, "Console": 1.0,
+          "Headphones": 1.0, "Smartwatch": 1.0, "VR Headset": 1.0, "Coffee Machine": 1.0}),
+    City("Berlin", "Germany", {"TV": 0.8, "Computer": 1.2, "Printer": 0.9, "Phone": 1.1,
+          "Camera": 0.85, "Laptop": 1.15, "Tablet": 0.95, "Console": 1.05,
+          "Headphones": 0.85, "Smartwatch": 1.1, "VR Headset": 0.9, "Coffee Machine": 1.05}),
+    City("Prague", "Czech Republic", {"TV": 1.1, "Computer": 0.9, "Printer": 1.2, "Phone": 0.95,
+          "Camera": 1.1, "Laptop": 0.85, "Tablet": 1.05, "Console": 0.9,
+          "Headphones": 1.15, "Smartwatch": 0.95, "VR Headset": 1.2, "Coffee Machine": 0.9}),
+    City("Vienna", "Austria", {"TV": 0.95, "Computer": 1.1, "Printer": 0.85, "Phone": 1.2,
+          "Camera": 1.0, "Laptop": 1.05, "Tablet": 1.1, "Console": 0.95,
+          "Headphones": 0.9, "Smartwatch": 1.15, "VR Headset": 1.05, "Coffee Machine": 0.8}),
+    City("Budapest", "Hungary", {"TV": 1.2, "Computer": 0.85, "Printer": 1.1, "Phone": 0.9,
+          "Camera": 1.15, "Laptop": 0.9, "Tablet": 0.85, "Console": 1.1,
+          "Headphones": 1.2, "Smartwatch": 0.85, "VR Headset": 1.1, "Coffee Machine": 1.15}),
+    City("Paris", "France", {"TV": 0.9, "Computer": 1.15, "Printer": 0.95, "Phone": 1.05,
+          "Camera": 1.2, "Laptop": 1.1, "Tablet": 1.0, "Console": 0.85,
+          "Headphones": 0.95, "Smartwatch": 1.2, "VR Headset": 0.85, "Coffee Machine": 0.75}),
+    City("London", "United Kingdom", {"TV": 0.85, "Computer": 1.25, "Printer": 1.0, "Phone": 1.15,
+          "Camera": 0.9, "Laptop": 1.2, "Tablet": 1.05, "Console": 0.95,
+          "Headphones": 1.0, "Smartwatch": 1.1, "VR Headset": 1.15, "Coffee Machine": 1.1}),
+    City("Rome", "Italy", {"TV": 1.05, "Computer": 0.95, "Printer": 1.15, "Phone": 0.9,
+          "Camera": 1.15, "Laptop": 0.9, "Tablet": 0.95, "Console": 1.0,
+          "Headphones": 1.1, "Smartwatch": 0.9, "VR Headset": 1.0, "Coffee Machine": 0.7}),
+    City("Amsterdam", "Netherlands", {"TV": 0.95, "Computer": 1.1, "Printer": 0.9, "Phone": 1.05,
+          "Camera": 0.95, "Laptop": 1.15, "Tablet": 1.1, "Console": 1.05,
+          "Headphones": 0.85, "Smartwatch": 1.05, "VR Headset": 1.1, "Coffee Machine": 0.85}),
+    City("Barcelona", "Spain", {"TV": 1.15, "Computer": 0.85, "Printer": 1.05, "Phone": 0.95,
+          "Camera": 1.05, "Laptop": 0.95, "Tablet": 0.9, "Console": 1.15,
+          "Headphones": 1.05, "Smartwatch": 0.95, "VR Headset": 0.9, "Coffee Machine": 0.9}),
+    City("Stockholm", "Sweden", {"TV": 0.75, "Computer": 1.3, "Printer": 0.85, "Phone": 1.2,
+          "Camera": 0.8, "Laptop": 1.25, "Tablet": 1.15, "Console": 0.9,
+          "Headphones": 0.8, "Smartwatch": 1.25, "VR Headset": 1.05, "Coffee Machine": 1.05}),
 ]
