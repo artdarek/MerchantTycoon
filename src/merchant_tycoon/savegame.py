@@ -180,6 +180,7 @@ def save_game(engine: GameEngine, messages: List[str]) -> Tuple[bool, str]:
                 "amount": tx.amount,
                 "balance_after": tx.balance_after,
                 "day": tx.day,
+                "title": getattr(tx, "title", ""),
             }
             for tx in bank.transactions
         ]
@@ -283,6 +284,7 @@ def apply_loaded_game(engine: GameEngine, data: Dict[str, Any]) -> bool:
                             amount=int(d.get("amount", 0)),
                             balance_after=int(d.get("balance_after", 0)),
                             day=int(d.get("day", new_state.day)),
+                            title=str(d.get("title", "")),
                         )
                     )
                 except Exception:

@@ -106,6 +106,7 @@ class BankTransaction:
     amount: int
     balance_after: int
     day: int
+    title: str = ""
 
 
 @dataclass

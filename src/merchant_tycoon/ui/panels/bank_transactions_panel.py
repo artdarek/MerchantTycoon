@@ -23,7 +23,7 @@ class AccountTransactionsPanel(Static):
         # Init columns once
         if not getattr(self, '_bank_table_initialized', False):
             table.clear(columns=True)
-            table.add_columns("Day", "Type", "Amount", "Balance After")
+            table.add_columns("Day", "Type", "Amount", "Balance After", "Title")
             try:
                 table.cursor_type = "row"
                 table.show_header = True
@@ -39,7 +39,7 @@ class AccountTransactionsPanel(Static):
             table.clear()
 
         if not bank.transactions:
-            table.add_row("-", "(no transactions)", "", "")
+            table.add_row("-", "(no transactions)", "", "", "")
             return
 
         # Show last 100 transactions, newest to oldest
@@ -58,9 +58,12 @@ class AccountTransactionsPanel(Static):
             else:
                 ttype = Text("deposit", style="cyan")
 
+            title = getattr(tx, "title", "") or ""
+
             table.add_row(
                 str(tx.day),
                 ttype,
                 f"${tx.amount:,}",
                 f"${tx.balance_after:,}",
+                title,
             )

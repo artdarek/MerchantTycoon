@@ -15,6 +15,7 @@ from .models import (
     CRYPTO,
     CITIES,
 )
+from .events import TravelEventSystem
 
 
 @dataclass
@@ -36,6 +37,8 @@ class GameState:
     bank: BankAccount = field(default_factory=BankAccount)
     # Loans (multi-loan support)
     loans: List[Loan] = field(default_factory=list)
+    # One-day price modifiers for specific goods (applied on next price generation)
+    price_modifiers: Dict[str, float] = field(default_factory=dict)
 
     def get_inventory_count(self) -> int:
         return sum(self.inventory.values())
@@ -96,13 +99,14 @@ class GameEngine:
         bank = self.state.bank
         bank.balance += amount
         bank.transactions.append(
-            BankTransaction(
-                tx_type="deposit",
-                amount=amount,
-                balance_after=bank.balance,
-                day=self.state.day,
+                BankTransaction(
+                    tx_type="deposit",
+                    amount=amount,
+                    balance_after=bank.balance,
+                    day=self.state.day,
+                    title="Personal savings",
+                )
             )
-        )
         return True, f"Deposited ${amount:,} to bank"
 
     def withdraw_from_bank(self, amount: int) -> tuple[bool, str]:
@@ -115,13 +119,14 @@ class GameEngine:
         bank.balance -= amount
         self.state.cash += amount
         bank.transactions.append(
-            BankTransaction(
-                tx_type="withdraw",
-                amount=amount,
-                balance_after=bank.balance,
-                day=self.state.day,
+                BankTransaction(
+                    tx_type="withdraw",
+                    amount=amount,
+                    balance_after=bank.balance,
+                    day=self.state.day,
+                    title="Personal withdrawal",
+                )
             )
-        )
         return True, f"Withdrew ${amount:,} from bank"
 
     def accrue_bank_interest(self) -> None:
@@ -149,6 +154,7 @@ class GameEngine:
                         amount=credit,
                         balance_after=bank.balance,
                         day=bank.last_interest_day + i + 1,
+                        title="Daily interest",
                     )
                 )
         bank.last_interest_day = current_day
@@ -162,7 +168,19 @@ class GameEngine:
         for good in GOODS:
             variance = random.uniform(1 - good.price_variance, 1 + good.price_variance)
             city_mult = city.price_multiplier[good.name]
-            self.prices[good.name] = int(good.base_price * city_mult * variance)
+            base_price = good.base_price * city_mult * variance
+            # Apply one-day modifier if present
+            try:
+                modifier = float(self.state.price_modifiers.get(good.name, 1.0))
+            except Exception:
+                modifier = 1.0
+            price = int(max(1, base_price * modifier))
+            self.prices[good.name] = price
+        # Clear one-day modifiers after they take effect
+        try:
+            self.state.price_modifiers.clear()
+        except Exception:
+            self.state.price_modifiers = {}
 
     def generate_asset_prices(self):
         """Generate random prices for stocks and commodities"""
@@ -311,39 +329,14 @@ class GameEngine:
         return True, f"Traveled to {city.name}, {city.country}", event_data
 
     def _random_event(self) -> Optional[tuple[str, bool]]:
-        """Generate random travel events. Returns (message, is_positive) or None"""
-        event_chance = random.random()
-
-        if event_chance < 0.15:  # 15% chance of bad event
-            event_type = random.choice(["robbery", "confiscation", "damage"])
-
-            if event_type == "robbery" and self.state.inventory:
-                # Lose random goods
-                good = random.choice(list(self.state.inventory.keys()))
-                lost = random.randint(1, max(1, self.state.inventory[good] // 2))
-                self.state.inventory[good] -= lost
-                if self.state.inventory[good] <= 0:
-                    del self.state.inventory[good]
-                return (f"🚨 ROBBED! Lost {lost}x {good}!", False)
-
-            elif event_type == "confiscation" and self.state.inventory:
-                # Lose all of one type
-                good = random.choice(list(self.state.inventory.keys()))
-                lost = self.state.inventory[good]
-                del self.state.inventory[good]
-                return (f"🚔 CONFISCATED! Lost all {lost}x {good}!", False)
-
-            elif event_type == "damage":
-                damage = random.randint(100, 500)
-                self.state.cash -= damage
-                return (f"💥 ACCIDENT! Paid ${damage} in damages!", False)
-
-        elif event_chance < 0.20:  # 5% chance of good event
-            bonus = random.randint(200, 800)
-            self.state.cash += bonus
-            return (f"✨ LUCKY FIND! Found ${bonus}!", True)
-
-        return None
+        """Generate a weighted random travel event. Returns (message, is_positive) or None.
+        Delegates to TravelEventSystem to keep engine slim.
+        """
+        try:
+            return TravelEventSystem().trigger(self)
+        except Exception:
+            # Fail-safe: no event if anything goes wrong
+            return None
 
     def take_loan(self, amount: int) -> tuple[bool, str]:
         """Take a loan from the bank. Creates a new Loan entry."""
