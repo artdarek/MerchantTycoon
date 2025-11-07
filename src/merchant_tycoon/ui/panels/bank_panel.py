@@ -16,7 +16,7 @@ class AccountBalancePanel(Static):
         yield Label("🏦 ACCOUNT BALANCE", id="bank-header", classes="panel-title")
         with Horizontal(id="bank-summary"):
             yield Label("Balance: $0", id="bank-balance")
-            yield Label("Daily Rate: 0.00%", id="bank-rate")
+            yield Label("APR: 0.00% (Daily: 0.0000%)", id="bank-rate")
             yield Label("Accrued: $0", id="bank-accrued")
 
     def update_bank(self) -> None:
@@ -27,5 +27,10 @@ class AccountBalancePanel(Static):
         acc_lbl = self.query_one('#bank-accrued', Label)
 
         bal_lbl.update(f"Balance: ${bank.balance:,}")
-        rate_lbl.update(f"Daily Rate: {bank.interest_rate_daily * 100:.3f}%")
+        try:
+            apr = float(getattr(bank, 'interest_rate_annual', 0.02))
+        except Exception:
+            apr = 0.02
+        daily = self.engine.get_bank_daily_rate()
+        rate_lbl.update(f"APR: {apr * 100:.2f}% (Daily: {daily * 100:.4f}%)")
         acc_lbl.update(f"Accrued: ${int(bank.accrued_interest):,}" if bank.accrued_interest >= 1 else "Accrued: <$1")

@@ -66,28 +66,64 @@ class GameEngine:
         self.previous_asset_prices: Dict[str, int] = {}
         self.generate_prices()
         self.generate_asset_prices()
-        self.interest_rate = 0.10  # Daily loan interest rate (will be randomized each travel)
+        # Loan interest (offer of the day)
+        self.loan_apr_today = 0.10  # Annual APR offer for new loans
+        self.interest_rate = self.loan_apr_today / 365.0  # Legacy daily rate for compatibility
         # Initialize bank last interest day to current day at start
         if self.state.bank.last_interest_day == 0:
             self.state.bank.last_interest_day = self.state.day
+        # Sync legacy daily rate field from APR on startup for consistency
+        try:
+            _ = self.get_bank_daily_rate()
+        except Exception:
+            pass
         # Ensure aggregate debt synchronized with loans list
         self._sync_total_debt()
 
-    def randomize_daily_rates(self) -> None:
-        """Randomize bank and global loan daily interest rates for the new day.
-        Range: 1% to 20% (0.01 to 0.20).
-        Note: Existing loans keep their own fixed `rate_daily` captured at creation.
+    def get_bank_daily_rate(self) -> float:
+        """Return today's bank daily rate derived from APR on a 365-day basis.
+        Maintains legacy `interest_rate_daily` field for backward compatibility.
         """
-        # Randomize bank daily rate
+        bank = self.state.bank
         try:
-            self.state.bank.interest_rate_daily = random.uniform(0.01, 0.20)
+            annual = float(getattr(bank, "interest_rate_annual", 0.0))
         except Exception:
-            self.state.bank.interest_rate_daily = 0.01
-        # Randomize global loan daily rate (used only for NEW loans created today)
+            annual = 0.0
+        daily = 0.0
+        if annual and annual > 0:
+            daily = annual / 365.0
+        else:
+            # fallback to legacy stored daily rate
+            try:
+                daily = float(getattr(bank, "interest_rate_daily", 0.0005))
+            except Exception:
+                daily = 0.0005
+        # keep legacy field in sync for any existing UI/saves
         try:
-            self.interest_rate = random.uniform(0.01, 0.20)
+            bank.interest_rate_daily = daily
         except Exception:
-            self.interest_rate = 0.10
+            pass
+        return daily
+
+    def randomize_daily_rates(self) -> None:
+        """Randomize bank APR and today's loan APR offer for the new day.
+        Bank APR: 1% to 3% (0.01 to 0.03) — displayed as APR, accrued daily (APR/365).
+        Loan APR offer for new loans: 1% to 20% (0.01 to 0.20). Existing loans keep their own APR.
+        """
+        # Randomize bank APR (savings interest)
+        try:
+            self.state.bank.interest_rate_annual = random.uniform(0.01, 0.03)
+        except Exception:
+            self.state.bank.interest_rate_annual = 0.02
+        # Sync legacy daily for compatibility
+        _ = self.get_bank_daily_rate()
+        # Randomize today's loan APR offer (used only for NEW loans created today)
+        try:
+            self.loan_apr_today = random.uniform(0.01, 0.20)
+        except Exception:
+            self.loan_apr_today = 0.10
+        # Keep legacy daily rate for compatibility with older UI/save keys
+        self.interest_rate = self.loan_apr_today / 365.0
 
     def deposit_to_bank(self, amount: int) -> tuple[bool, str]:
         """Deposit cash to bank account."""
@@ -140,7 +176,7 @@ class GameEngine:
         if days_to_process <= 0:
             bank.last_interest_day = current_day
             return
-        rate = bank.interest_rate_daily
+        rate = self.get_bank_daily_rate()
         for i in range(days_to_process):
             # Accrue interest on starting-of-day balance (compounding via credited amounts)
             bank.accrued_interest += bank.balance * rate
@@ -291,6 +327,26 @@ class GameEngine:
         if city_index == self.state.current_city:
             return False, "Already in this city!", None
 
+        # Calculate travel fee: $100 base + $1 per unit of cargo currently carried
+        origin_city = CITIES[self.state.current_city]
+        destination_city = CITIES[city_index]
+        try:
+            cargo_units = int(self.state.get_inventory_count())
+        except Exception:
+            cargo_units = sum(self.state.inventory.values()) if isinstance(self.state.inventory, dict) else 0
+        travel_fee = 100 + cargo_units
+
+        # Ensure player can afford the travel fee
+        if self.state.cash < travel_fee:
+            return False, (
+                f"Not enough cash to travel! Travel fee from {origin_city.name} to {destination_city.name} is ${travel_fee}. "
+                f"You have ${self.state.cash}."
+            ), None
+
+        # Deduct travel fee
+        self.state.cash -= travel_fee
+
+        # Proceed with travel: advance day and change city
         self.state.current_city = city_index
         self.state.day += 1
 
@@ -300,18 +356,32 @@ class GameEngine:
         except Exception:
             pass
 
-        # Apply per-loan interest using today's randomized loan rate
+        # Apply per-loan interest using each loan's APR/365 with fractional carry
         if self.state.loans:
             for loan in self.state.loans:
-                if loan.remaining > 0:
-                    # Accrue using the loan's own fixed daily rate captured at creation
+                if getattr(loan, 'remaining', 0) > 0:
+                    # Determine daily rate from this loan's APR; fall back to legacy daily
                     try:
-                        rate = float(getattr(loan, "rate_daily", self.interest_rate))
+                        apr = float(getattr(loan, 'rate_annual', 0.0))
                     except Exception:
-                        rate = self.interest_rate
-                    interest = int(loan.remaining * rate)
-                    if interest > 0:
-                        loan.remaining += interest
+                        apr = 0.0
+                    if not apr or apr <= 0:
+                        try:
+                            daily_rate = float(getattr(loan, 'rate_daily', self.interest_rate))
+                        except Exception:
+                            daily_rate = self.interest_rate
+                    else:
+                        daily_rate = apr / 365.0
+                    # Accrue fractional interest then credit whole units to remaining
+                    try:
+                        loan.accrued_interest = float(getattr(loan, 'accrued_interest', 0.0))
+                    except Exception:
+                        loan.accrued_interest = 0.0
+                    loan.accrued_interest += loan.remaining * daily_rate
+                    credit = int(loan.accrued_interest)
+                    if credit > 0:
+                        loan.remaining += credit
+                        loan.accrued_interest -= credit
             # Sync aggregate debt to sum of remaining
             self._sync_total_debt()
 
@@ -325,8 +395,12 @@ class GameEngine:
         self.generate_prices()
         self.generate_asset_prices()
 
-        city = CITIES[city_index]
-        return True, f"Traveled to {city.name}, {city.country}", event_data
+        city = destination_city
+        msg = (
+            f"Traveled to {city.name}, {city.country}. "
+            f"Travel fee charged: ${travel_fee} for route {origin_city.name} → {destination_city.name}"
+        )
+        return True, msg, event_data
 
     def _random_event(self) -> Optional[tuple[str, bool]]:
         """Generate a weighted random travel event. Returns (message, is_positive) or None.
@@ -345,6 +419,12 @@ class GameEngine:
         if amount > 10000:
             return False, "Maximum loan is $10,000"
 
+        # Determine today's APR offer (fallback to legacy daily if needed)
+        try:
+            apr = float(getattr(self, "loan_apr_today", 0.10))
+        except Exception:
+            apr = 0.10
+        daily = apr / 365.0
         # Create loan with incremental ID
         next_id = (max((ln.loan_id for ln in self.state.loans), default=0) + 1)
         loan = Loan(
@@ -352,15 +432,17 @@ class GameEngine:
             principal=amount,
             remaining=amount,
             repaid=0,
-            rate_daily=self.interest_rate,
+            rate_daily=daily,  # legacy compatibility
             day_taken=self.state.day,
+            rate_annual=apr,
+            accrued_interest=0.0,
         )
         self.state.loans.append(loan)
 
         # Apply funds to cash and sync aggregate debt
         self.state.cash += amount
         self._sync_total_debt()
-        return True, f"Loan approved! Received ${amount:,} ({int(self.interest_rate*100)}% daily interest)"
+        return True, f"Loan approved! Received ${amount:,} (APR {apr*100:.2f}% | Daily {daily*100:.4f}%)"
 
     def repay_loan_for(self, loan_id: int, amount: int) -> tuple[bool, str]:
         """Repay a specific loan by ID.

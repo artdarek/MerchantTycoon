@@ -260,7 +260,7 @@ class TravelEventSystem:
             good = random.choice(GOODS).name
             mult = 0.05  # 95% off
             state.price_modifiers[good] = mult
-            return (f"🤝 Jako stały klient otrzymujesz 95% rabatu na {good} (tylko dziś)!", True)
+            return (f"🤝 LOYAL CUSTOMER! As a valued customer you get 95% discount on {good} (today only)!", True)
 
         # Build event table with explicit can/apply and weights (no side effects during can)
         class _Evt:

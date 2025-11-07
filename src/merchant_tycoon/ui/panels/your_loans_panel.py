@@ -28,7 +28,7 @@ class YourLoansPanel(Static):
                     table.clear()
                 except Exception:
                     pass
-            table.add_columns("Day", "Amount", "Paid", "Remain", "Rate", "Status")
+            table.add_columns("Day", "Amount", "Paid", "Remain", "Rate (APR | Daily)", "Status")
             try:
                 table.cursor_type = "row"
                 table.show_header = True
@@ -64,17 +64,26 @@ class YourLoansPanel(Static):
             else:
                 status_cell = Text("Not Paid", style="yellow")
 
-            # Display per-loan daily interest rate as a percentage (integer percent)
+            # Display per-loan APR and derived daily rate
             try:
-                rate_pct = f"{float(getattr(ln, 'rate_daily', 0.0)) * 100:.0f}%"
+                apr = float(getattr(ln, 'rate_annual', 0.0))
             except Exception:
-                rate_pct = "0%"
+                apr = 0.0
+            if not apr or apr <= 0:
+                try:
+                    daily = float(getattr(ln, 'rate_daily', 0.0))
+                except Exception:
+                    daily = 0.0
+                apr = daily * 365.0 if daily > 0 else 0.0
+            else:
+                daily = apr / 365.0
+            rate_cell = f"{apr*100:.2f}% | {daily*100:.4f}%"
 
             table.add_row(
                 str(day),
                 f"${int(principal):,}",
                 f"${int(repaid):,}",
                 f"${int(remaining):,}",
-                rate_pct,
+                rate_cell,
                 status_cell,
             )

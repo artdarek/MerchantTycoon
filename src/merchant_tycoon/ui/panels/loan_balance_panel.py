@@ -16,7 +16,7 @@ class LoanBalancePanel(Static):
         yield Label("💳 LOAN BALANCE", id="loan-header", classes="panel-title")
         with Horizontal(id="loan-summary"):
             yield Label("Debt: $0", id="loan-debt")
-            yield Label("Current Daily Rate: 0.00%", id="loan-rate")
+            yield Label("Today's Loan Offer: APR 0.00% (Daily 0.0000%)", id="loan-rate")
 
     def update_loan(self) -> None:
         state = self.engine.state
@@ -25,9 +25,10 @@ class LoanBalancePanel(Static):
         rate_lbl = self.query_one('#loan-rate', Label)
 
         debt_lbl.update(f"Debt: ${state.debt:,}")
-        # Engine interest_rate is decimal (e.g., 0.10 for 10%)
+        # Display today's loan offer APR and derived daily rate
         try:
-            rate = float(getattr(self.engine, 'interest_rate', 0.0))
+            apr = float(getattr(self.engine, 'loan_apr_today', 0.10))
         except Exception:
-            rate = 0.0
-        rate_lbl.update(f"Current daily rate: {rate * 100:.0f}%")
+            apr = 0.10
+        daily = apr / 365.0
+        rate_lbl.update(f"Today's Loan Offer: APR {apr * 100:.2f}% (Daily {daily * 100:.4f}%)")

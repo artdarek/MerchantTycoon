@@ -132,7 +132,10 @@ def _loans_to_dicts(loans: List[Loan]) -> List[Dict[str, Any]]:
                     "principal": int(getattr(ln, "principal", 0)),
                     "remaining": int(getattr(ln, "remaining", 0)),
                     "repaid": int(getattr(ln, "repaid", 0)),
+                    # Persist both APR and legacy daily for compatibility
+                    "rate_annual": float(getattr(ln, "rate_annual", 0.0)),
                     "rate_daily": float(getattr(ln, "rate_daily", 0.0)),
+                    "accrued_interest": float(getattr(ln, "accrued_interest", 0.0)),
                     "day_taken": int(getattr(ln, "day_taken", 0)),
                 }
             )
@@ -146,14 +149,40 @@ def _dicts_to_loans(items: List[Dict[str, Any]]) -> List[Loan]:
     result: List[Loan] = []
     for d in items or []:
         try:
+            # Prefer APR if present; otherwise derive from legacy daily
+            try:
+                rate_annual = float(d.get("rate_annual"))
+            except Exception:
+                rate_annual = None
+            try:
+                rate_daily_legacy = float(d.get("rate_daily", 0.0))
+            except Exception:
+                rate_daily_legacy = 0.0
+            if rate_annual is None or rate_annual <= 0:
+                if rate_daily_legacy > 0:
+                    rate_annual = rate_daily_legacy * 365.0
+                else:
+                    rate_annual = 0.10  # sensible default APR for legacy saves
+            # Clamp APR to agreed range 1%–20%
+            try:
+                rate_annual = max(0.01, min(0.20, rate_annual))
+            except Exception:
+                rate_annual = 0.10
+            # Accrued fractional interest carry-over (optional)
+            try:
+                accrued = float(d.get("accrued_interest", 0.0))
+            except Exception:
+                accrued = 0.0
             result.append(
                 Loan(
                     loan_id=int(d.get("loan_id", 0)),
                     principal=int(d.get("principal", 0)),
                     remaining=int(d.get("remaining", 0)),
                     repaid=int(d.get("repaid", 0)),
-                    rate_daily=float(d.get("rate_daily", 0.0)),
+                    rate_daily=rate_daily_legacy if rate_daily_legacy > 0 else rate_annual / 365.0,
                     day_taken=int(d.get("day_taken", 0)),
+                    rate_annual=rate_annual,
+                    accrued_interest=accrued,
                 )
             )
         except Exception:
@@ -200,12 +229,15 @@ def save_game(engine: GameEngine, messages: List[str]) -> Tuple[bool, str]:
                 "investment_lots": _inv_lots_to_dicts(state.investment_lots),
                 # Loans list (multi-loan support). Optional for backward compatibility.
                 "loans": _loans_to_dicts(state.loans),
-                # Current global loan daily rate (optional; defaults on load if missing)
-                "loan_rate_daily": float(getattr(engine, "interest_rate", 0.10)),
+                # Current global loan rates offer (optional; defaults on load if missing)
+                "loan_rate_annual": float(getattr(engine, "loan_apr_today", 0.10)),
+                "loan_rate_daily": float(getattr(engine, "interest_rate", 0.10)),  # legacy
                 # New optional bank section (backward compatible)
                 "bank": {
                     "balance": bank.balance,
-                    "rate": bank.interest_rate_daily,
+                    # Persist both annual APR and legacy daily rate for backward compatibility
+                    "rate_annual": getattr(bank, "interest_rate_annual", 0.02),
+                    "rate": getattr(bank, "interest_rate_daily", 0.0005),
                     "accrued": bank.accrued_interest,
                     "last_day": bank.last_interest_day,
                     "transactions": bank_txs,
@@ -289,9 +321,23 @@ def apply_loaded_game(engine: GameEngine, data: Dict[str, Any]) -> bool:
                     )
                 except Exception:
                     continue
+            # Prefer annual rate if present; keep legacy daily for backward compatibility
+            try:
+                rate_annual = float(bank_data.get("rate_annual"))
+            except Exception:
+                rate_annual = None
+            if rate_annual is None or rate_annual <= 0:
+                # If only legacy daily provided, we will not upscale *365; per user we use a sensible default APR
+                rate_annual = 0.02
+            # Set daily from provided legacy if any; otherwise derive from APR
+            try:
+                rate_daily = float(bank_data.get("rate", 0.0005))
+            except Exception:
+                rate_daily = rate_annual / 365.0
             new_state.bank = BankAccount(
                 balance=int(bank_data.get("balance", 0)),
-                interest_rate_daily=float(bank_data.get("rate", 0.0005)),
+                interest_rate_daily=rate_daily,
+                interest_rate_annual=rate_annual,
                 accrued_interest=float(bank_data.get("accrued", 0.0)),
                 last_interest_day=int(bank_data.get("last_day", new_state.day)),
                 transactions=txs,
@@ -301,6 +347,7 @@ def apply_loaded_game(engine: GameEngine, data: Dict[str, Any]) -> bool:
             new_state.bank = BankAccount(
                 balance=0,
                 interest_rate_daily=0.0005,
+                interest_rate_annual=0.02,
                 accrued_interest=0.0,
                 last_interest_day=new_state.day,
                 transactions=[],
@@ -314,11 +361,20 @@ def apply_loaded_game(engine: GameEngine, data: Dict[str, Any]) -> bool:
         engine.asset_prices = dict(p.get("assets", {}))
         engine.previous_asset_prices = dict(p.get("assets_prev", {}))
 
-        # Restore current global loan rate if present (optional field)
+        # Restore current global loan rates if present (optional fields)
         try:
-            engine.interest_rate = float(s.get("loan_rate_daily", getattr(engine, "interest_rate", 0.10)))
+            engine.loan_apr_today = float(s.get("loan_rate_annual", getattr(engine, "loan_apr_today", 0.10)))
         except Exception:
-            pass
+            # fallback if only daily provided
+            try:
+                engine.loan_apr_today = float(s.get("loan_rate_daily", 0.10)) * 365.0
+            except Exception:
+                engine.loan_apr_today = getattr(engine, "loan_apr_today", 0.10)
+        # Keep legacy daily rate synchronized for compatibility
+        try:
+            engine.interest_rate = float(s.get("loan_rate_daily", engine.loan_apr_today / 365.0))
+        except Exception:
+            engine.interest_rate = engine.loan_apr_today / 365.0
 
         # Ensure aggregate debt is consistent when loans are present
         if getattr(engine.state, "loans", None):
