@@ -590,8 +590,40 @@ class MerchantTycoon(App):
         self.push_screen(confirm)
 
     def action_quit(self):
-        """Quit the game application."""
-        self.exit()
+        """Show quit modal with two explicit options: Save&Quit or Just quit!"""
+        def _save_and_quit():
+            # Save game, then exit regardless of save outcome
+            try:
+                msgs = self.message_log.messages if self.message_log else []
+                ok, msg = save_game_to_disk(self.engine, msgs)
+                if ok:
+                    self.game_log("Game saved.")
+                else:
+                    self.game_log(msg)
+            except Exception as e:
+                self.game_log(f"Save failed: {e}")
+            finally:
+                try:
+                    self.exit()
+                except Exception:
+                    pass
+
+        def _just_quit():
+            # Exit immediately, do not write save file
+            try:
+                self.exit()
+            except Exception:
+                pass
+
+        confirm = ConfirmModal(
+            "Quit Game",
+            "Do you want to save your progress before exit?",
+            on_confirm=_save_and_quit,
+            on_cancel=_just_quit,
+            confirm_label="Save and exit",
+            cancel_label="Exit",
+        )
+        self.push_screen(confirm)
 
 
 def main():

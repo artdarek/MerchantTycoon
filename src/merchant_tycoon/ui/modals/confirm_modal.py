@@ -5,27 +5,29 @@ from textual.screen import ModalScreen
 
 
 class ConfirmModal(ModalScreen):
-    """Simple confirmation modal with Yes/No buttons."""
+    """Simple confirmation modal with configurable button labels (defaults Yes/No)."""
 
     BINDINGS = [
         ("enter", "confirm", "Yes"),
         ("escape", "cancel", "No"),
     ]
 
-    def __init__(self, title: str, message: str, on_confirm, on_cancel=None):
+    def __init__(self, title: str, message: str, on_confirm, on_cancel=None, *, confirm_label: str = "Yes", cancel_label: str = "No"):
         super().__init__()
         self._title = title
         self._message = message
         self._on_confirm = on_confirm
         self._on_cancel = on_cancel
+        self._confirm_label = confirm_label
+        self._cancel_label = cancel_label
 
     def compose(self) -> ComposeResult:
         with Container(id="confirm-modal"):
             yield Label(self._title, id="modal-title")
             yield Label(self._message)
             with Horizontal(id="modal-buttons"):
-                yield Button("Yes", id="yes-btn", variant="primary")
-                yield Button("No", id="no-btn", variant="default")
+                yield Button(self._confirm_label, id="yes-btn", variant="primary")
+                yield Button(self._cancel_label, id="no-btn", variant="default")
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "yes-btn":
