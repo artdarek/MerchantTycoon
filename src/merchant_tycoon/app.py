@@ -404,7 +404,7 @@ class MerchantTycoon(App):
                     msgs = data.get("messages") or []
                     if self.message_log and msgs:
                         self.message_log.set_messages(msgs)
-                    self.game_log("Game loaded successfully.")
+                    self.game_log("Loaded savegame.")
                     self.refresh_all()
                 else:
                     self.game_log("Failed to load save file.")
