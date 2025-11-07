@@ -1,0 +1,80 @@
+from textual.app import ComposeResult
+from textual.widgets import Static, Label, DataTable
+from rich.text import Text
+
+from ...engine import GameEngine
+
+
+class YourLoansPanel(Static):
+    """Display a list of player's loans in a table."""
+
+    def __init__(self, engine: GameEngine):
+        super().__init__()
+        self.engine = engine
+
+    def compose(self) -> ComposeResult:
+        yield Label("📋 YOUR LOANS", id="your-loans-header", classes="panel-title")
+        yield DataTable(id="your-loans-table")
+
+    def update_loans(self) -> None:
+        table = self.query_one('#your-loans-table', DataTable)
+
+        # Initialize columns once
+        if not getattr(self, "_your_loans_table_initialized", False):
+            try:
+                table.clear(columns=True)
+            except Exception:
+                try:
+                    table.clear()
+                except Exception:
+                    pass
+            table.add_columns("Day", "Amount", "Paid", "Remain", "Rate", "Status")
+            try:
+                table.cursor_type = "row"
+                table.show_header = True
+                table.zebra_stripes = True
+            except Exception:
+                pass
+            self._your_loans_table_initialized = True
+
+        # Clear existing rows
+        try:
+            table.clear(rows=True)
+        except Exception:
+            try:
+                table.clear()
+            except Exception:
+                pass
+
+        loans = list(self.engine.state.loans or [])
+        if not loans:
+            table.add_row("-", "(no loans)", "", "", "", "")
+            return
+
+        # Newest first by day
+        loans.sort(key=lambda ln: getattr(ln, 'day_taken', 0), reverse=True)
+        for ln in loans:
+            day = getattr(ln, 'day_taken', 0)
+            principal = getattr(ln, 'principal', 0)
+            repaid = getattr(ln, 'repaid', 0)
+            remaining = getattr(ln, 'remaining', 0)
+
+            if remaining <= 0:
+                status_cell = Text("Fully Paid", style="green")
+            else:
+                status_cell = Text("Not Paid", style="yellow")
+
+            # Display per-loan daily interest rate as a percentage (integer percent)
+            try:
+                rate_pct = f"{float(getattr(ln, 'rate_daily', 0.0)) * 100:.0f}%"
+            except Exception:
+                rate_pct = "0%"
+
+            table.add_row(
+                str(day),
+                f"${int(principal):,}",
+                f"${int(repaid):,}",
+                f"${int(remaining):,}",
+                rate_pct,
+                status_cell,
+            )

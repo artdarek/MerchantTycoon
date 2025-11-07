@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import List, Tuple, Optional, Dict, Any
 
 from .engine import GameEngine, GameState
-from .models import PurchaseLot, Transaction, InvestmentLot
+from .models import PurchaseLot, Transaction, InvestmentLot, BankTransaction, BankAccount, Loan
 
 
 SCHEMA_VERSION = 1
@@ -120,6 +120,47 @@ def _dicts_to_inv_lots(items: List[Dict[str, Any]]) -> List[InvestmentLot]:
     return result
 
 
+# --- Loans converters ---
+
+def _loans_to_dicts(loans: List[Loan]) -> List[Dict[str, Any]]:
+    items: List[Dict[str, Any]] = []
+    for ln in loans or []:
+        try:
+            items.append(
+                {
+                    "loan_id": int(getattr(ln, "loan_id", 0)),
+                    "principal": int(getattr(ln, "principal", 0)),
+                    "remaining": int(getattr(ln, "remaining", 0)),
+                    "repaid": int(getattr(ln, "repaid", 0)),
+                    "rate_daily": float(getattr(ln, "rate_daily", 0.0)),
+                    "day_taken": int(getattr(ln, "day_taken", 0)),
+                }
+            )
+        except Exception:
+            # Skip malformed entries
+            continue
+    return items
+
+
+def _dicts_to_loans(items: List[Dict[str, Any]]) -> List[Loan]:
+    result: List[Loan] = []
+    for d in items or []:
+        try:
+            result.append(
+                Loan(
+                    loan_id=int(d.get("loan_id", 0)),
+                    principal=int(d.get("principal", 0)),
+                    remaining=int(d.get("remaining", 0)),
+                    repaid=int(d.get("repaid", 0)),
+                    rate_daily=float(d.get("rate_daily", 0.0)),
+                    day_taken=int(d.get("day_taken", 0)),
+                )
+            )
+        except Exception:
+            continue
+    return result
+
+
 def save_game(engine: GameEngine, messages: List[str]) -> Tuple[bool, str]:
     """Persist the current game to JSON file.
 
@@ -131,6 +172,18 @@ def save_game(engine: GameEngine, messages: List[str]) -> Tuple[bool, str]:
         path = get_save_path()
 
         state = engine.state
+        bank = state.bank
+        # Convert bank transactions to dicts
+        bank_txs = [
+            {
+                "type": tx.tx_type,
+                "amount": tx.amount,
+                "balance_after": tx.balance_after,
+                "day": tx.day,
+            }
+            for tx in bank.transactions
+        ]
+
         payload = {
             "schema_version": SCHEMA_VERSION,
             "state": {
@@ -144,6 +197,18 @@ def save_game(engine: GameEngine, messages: List[str]) -> Tuple[bool, str]:
                 "transaction_history": _tx_to_dicts(state.transaction_history),
                 "portfolio": dict(state.portfolio),
                 "investment_lots": _inv_lots_to_dicts(state.investment_lots),
+                # Loans list (multi-loan support). Optional for backward compatibility.
+                "loans": _loans_to_dicts(state.loans),
+                # Current global loan daily rate (optional; defaults on load if missing)
+                "loan_rate_daily": float(getattr(engine, "interest_rate", 0.10)),
+                # New optional bank section (backward compatible)
+                "bank": {
+                    "balance": bank.balance,
+                    "rate": bank.interest_rate_daily,
+                    "accrued": bank.accrued_interest,
+                    "last_day": bank.last_interest_day,
+                    "transactions": bank_txs,
+                },
             },
             "prices": {
                 "goods": dict(engine.prices),
@@ -197,6 +262,47 @@ def apply_loaded_game(engine: GameEngine, data: Dict[str, Any]) -> bool:
         new_state.transaction_history = _dicts_to_txs(list(s.get("transaction_history", [])))
         new_state.portfolio = dict(s.get("portfolio", {}))
         new_state.investment_lots = _dicts_to_inv_lots(list(s.get("investment_lots", [])))
+        
+        # Loans (explicit multi-loan support). Legacy single-loan synthesis removed.
+        has_loans_key = "loans" in s
+        try:
+            loans_list = _dicts_to_loans(list(s.get("loans", [])))
+        except Exception:
+            loans_list = []
+        new_state.loans = loans_list
+
+        # Bank (optional for backward compatibility)
+        bank_data = s.get("bank")
+        if bank_data:
+            txs: List[BankTransaction] = []
+            for d in bank_data.get("transactions", []):
+                try:
+                    txs.append(
+                        BankTransaction(
+                            tx_type=str(d.get("type", "")),
+                            amount=int(d.get("amount", 0)),
+                            balance_after=int(d.get("balance_after", 0)),
+                            day=int(d.get("day", new_state.day)),
+                        )
+                    )
+                except Exception:
+                    continue
+            new_state.bank = BankAccount(
+                balance=int(bank_data.get("balance", 0)),
+                interest_rate_daily=float(bank_data.get("rate", 0.0005)),
+                accrued_interest=float(bank_data.get("accrued", 0.0)),
+                last_interest_day=int(bank_data.get("last_day", new_state.day)),
+                transactions=txs,
+            )
+        else:
+            # Defaults if not present
+            new_state.bank = BankAccount(
+                balance=0,
+                interest_rate_daily=0.0005,
+                accrued_interest=0.0,
+                last_interest_day=new_state.day,
+                transactions=[],
+            )
 
         engine.state = new_state
 
@@ -205,6 +311,26 @@ def apply_loaded_game(engine: GameEngine, data: Dict[str, Any]) -> bool:
         engine.previous_prices = dict(p.get("goods_prev", {}))
         engine.asset_prices = dict(p.get("assets", {}))
         engine.previous_asset_prices = dict(p.get("assets_prev", {}))
+
+        # Restore current global loan rate if present (optional field)
+        try:
+            engine.interest_rate = float(s.get("loan_rate_daily", getattr(engine, "interest_rate", 0.10)))
+        except Exception:
+            pass
+
+        # Ensure aggregate debt is consistent when loans are present
+        if getattr(engine.state, "loans", None):
+            try:
+                engine._sync_total_debt()
+            except Exception:
+                pass
+
+        # Accrue any missed interest up to the loaded current day (idempotent)
+        try:
+            engine.accrue_bank_interest()
+        except Exception:
+            pass
+
         return True
     except Exception:
         return False

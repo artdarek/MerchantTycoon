@@ -154,7 +154,7 @@ MessageLog {
 }
 
 /* Modal styles */
-#input-modal, #city-modal, #buy-modal, #sell-modal, #confirm-modal {
+#input-modal, #city-modal, #buy-modal, #sell-modal, #confirm-modal, #repay-modal {
     width: 60;
     height: auto;
     border: thick $accent;
@@ -286,4 +286,114 @@ AlertModal {
 
 #portfolio-table {
     height: auto;
+}
+
+
+/* --- Bank tab styles (mirror Investments tab) --- */
+AccountBalancePanel {
+    border: solid $accent;
+    padding: 1;
+    width: 1fr;
+}
+
+AccountActionsPanel {
+    border: solid $accent;
+    padding: 1;
+    width: 1fr;
+}
+
+#bank-right-col {
+    width: 1fr;
+}
+
+#bank-left-col {
+    width: 1fr;
+}
+
+#bank-actions-bar {
+    height: auto;
+    align-horizontal: right;
+    content-align: right middle;
+}
+
+/* Compact buttons like other action panels */
+#bank-deposit-btn {
+    margin-right: 1;
+}
+#bank-deposit-btn, #bank-withdraw-btn {
+    height: 3;
+    padding: 0 1;
+}
+
+/* Bank summary row and table sizing */
+#bank-summary {
+    height: auto;
+    content-align: left middle;
+}
+
+#bank-summary > Label {
+    margin-right: 2;
+}
+
+AccountTransactionsPanel {
+    border: solid $accent;
+    padding: 1;
+    width: 1fr;
+    height: 1fr;
+}
+
+#bank-transactions {
+    height: 1fr;
+}
+
+
+/* --- Loan actions styles (mirror Bank actions) --- */
+LoanActionsPanel {
+    border: solid $accent;
+    padding: 1;
+    width: 1fr;
+}
+
+#loan-actions-bar {
+    height: auto;
+    align-horizontal: right;
+    content-align: right middle;
+}
+
+#loan-take-btn {
+    margin-right: 1;
+}
+
+#loan-take-btn, #loan-repay-btn {
+    height: 3;
+    padding: 0 1;
+}
+
+/* --- Loan balance panel (under Loan actions) --- */
+LoanBalancePanel {
+    border: solid $accent;
+    padding: 1;
+    width: 1fr;
+}
+
+#loan-summary {
+    height: auto;
+    content-align: left middle;
+}
+
+#loan-summary > Label {
+    margin-right: 2;
+}
+
+
+/* --- Your Loans panel (table under loan balance) --- */
+YourLoansPanel {
+    border: solid $accent;
+    padding: 1;
+    width: 1fr;
+    height: 1fr;
+}
+
+#your-loans-table {
+    height: 1fr;
 }

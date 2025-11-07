@@ -6,6 +6,9 @@ from .models import (
     PurchaseLot,
     Transaction,
     InvestmentLot,
+    BankAccount,
+    BankTransaction,
+    Loan,
     GOODS,
     STOCKS,
     COMMODITIES,
@@ -29,6 +32,10 @@ class GameState:
     # Investment portfolio
     portfolio: Dict[str, int] = field(default_factory=dict)  # {symbol: quantity}
     investment_lots: List[InvestmentLot] = field(default_factory=list)
+    # Bank account
+    bank: BankAccount = field(default_factory=BankAccount)
+    # Loans (multi-loan support)
+    loans: List[Loan] = field(default_factory=list)
 
     def get_inventory_count(self) -> int:
         return sum(self.inventory.values())
@@ -56,7 +63,95 @@ class GameEngine:
         self.previous_asset_prices: Dict[str, int] = {}
         self.generate_prices()
         self.generate_asset_prices()
-        self.interest_rate = 0.10  # 10% per day
+        self.interest_rate = 0.10  # Daily loan interest rate (will be randomized each travel)
+        # Initialize bank last interest day to current day at start
+        if self.state.bank.last_interest_day == 0:
+            self.state.bank.last_interest_day = self.state.day
+        # Ensure aggregate debt synchronized with loans list
+        self._sync_total_debt()
+
+    def randomize_daily_rates(self) -> None:
+        """Randomize bank and global loan daily interest rates for the new day.
+        Range: 1% to 20% (0.01 to 0.20).
+        Note: Existing loans keep their own fixed `rate_daily` captured at creation.
+        """
+        # Randomize bank daily rate
+        try:
+            self.state.bank.interest_rate_daily = random.uniform(0.01, 0.20)
+        except Exception:
+            self.state.bank.interest_rate_daily = 0.01
+        # Randomize global loan daily rate (used only for NEW loans created today)
+        try:
+            self.interest_rate = random.uniform(0.01, 0.20)
+        except Exception:
+            self.interest_rate = 0.10
+
+    def deposit_to_bank(self, amount: int) -> tuple[bool, str]:
+        """Deposit cash to bank account."""
+        if amount <= 0:
+            return False, "Amount must be positive"
+        if amount > self.state.cash:
+            return False, f"Not enough cash! Have ${self.state.cash:,}"
+        self.state.cash -= amount
+        bank = self.state.bank
+        bank.balance += amount
+        bank.transactions.append(
+            BankTransaction(
+                tx_type="deposit",
+                amount=amount,
+                balance_after=bank.balance,
+                day=self.state.day,
+            )
+        )
+        return True, f"Deposited ${amount:,} to bank"
+
+    def withdraw_from_bank(self, amount: int) -> tuple[bool, str]:
+        """Withdraw cash from bank account (no overdraft)."""
+        if amount <= 0:
+            return False, "Amount must be positive"
+        bank = self.state.bank
+        if amount > bank.balance:
+            return False, f"Not enough bank balance! Have ${bank.balance:,}"
+        bank.balance -= amount
+        self.state.cash += amount
+        bank.transactions.append(
+            BankTransaction(
+                tx_type="withdraw",
+                amount=amount,
+                balance_after=bank.balance,
+                day=self.state.day,
+            )
+        )
+        return True, f"Withdrew ${amount:,} from bank"
+
+    def accrue_bank_interest(self) -> None:
+        """Accrue and credit daily compounding bank interest up to current day.
+        Credits only whole currency units; fractional part is carried in accrued_interest.
+        """
+        bank = self.state.bank
+        current_day = self.state.day
+        # Process days strictly after last_interest_day up to current_day (inclusive step-by-step)
+        days_to_process = current_day - bank.last_interest_day
+        if days_to_process <= 0:
+            bank.last_interest_day = current_day
+            return
+        rate = bank.interest_rate_daily
+        for i in range(days_to_process):
+            # Accrue interest on starting-of-day balance (compounding via credited amounts)
+            bank.accrued_interest += bank.balance * rate
+            credit = int(bank.accrued_interest)
+            if credit > 0:
+                bank.balance += credit
+                bank.accrued_interest -= credit
+                bank.transactions.append(
+                    BankTransaction(
+                        tx_type="interest",
+                        amount=credit,
+                        balance_after=bank.balance,
+                        day=bank.last_interest_day + i + 1,
+                    )
+                )
+        bank.last_interest_day = current_day
 
     def generate_prices(self):
         """Generate random prices for current city"""
@@ -181,10 +276,29 @@ class GameEngine:
         self.state.current_city = city_index
         self.state.day += 1
 
-        # Apply interest if there's debt
-        if self.state.debt > 0:
-            interest = int(self.state.debt * self.interest_rate)
-            self.state.debt += interest
+        # Randomize daily interest rates for this new day (1%–20%)
+        try:
+            self.randomize_daily_rates()
+        except Exception:
+            pass
+
+        # Apply per-loan interest using today's randomized loan rate
+        if self.state.loans:
+            for loan in self.state.loans:
+                if loan.remaining > 0:
+                    # Accrue using the loan's own fixed daily rate captured at creation
+                    try:
+                        rate = float(getattr(loan, "rate_daily", self.interest_rate))
+                    except Exception:
+                        rate = self.interest_rate
+                    interest = int(loan.remaining * rate)
+                    if interest > 0:
+                        loan.remaining += interest
+            # Sync aggregate debt to sum of remaining
+            self._sync_total_debt()
+
+        # Accrue bank interest for the day advance (daily compounding)
+        self.accrue_bank_interest()
 
         # Random event (only affects goods, not investments!)
         event_data = self._random_event()
@@ -232,28 +346,75 @@ class GameEngine:
         return None
 
     def take_loan(self, amount: int) -> tuple[bool, str]:
-        """Take a loan from the bank"""
+        """Take a loan from the bank. Creates a new Loan entry."""
         if amount <= 0:
             return False, "Invalid loan amount"
         if amount > 10000:
             return False, "Maximum loan is $10,000"
 
-        self.state.cash += amount
-        self.state.debt += amount
-        return True, f"Loan approved! Received ${amount} (10% daily interest)"
+        # Create loan with incremental ID
+        next_id = (max((ln.loan_id for ln in self.state.loans), default=0) + 1)
+        loan = Loan(
+            loan_id=next_id,
+            principal=amount,
+            remaining=amount,
+            repaid=0,
+            rate_daily=self.interest_rate,
+            day_taken=self.state.day,
+        )
+        self.state.loans.append(loan)
 
-    def repay_loan(self, amount: int) -> tuple[bool, str]:
-        """Repay loan"""
+        # Apply funds to cash and sync aggregate debt
+        self.state.cash += amount
+        self._sync_total_debt()
+        return True, f"Loan approved! Received ${amount:,} ({int(self.interest_rate*100)}% daily interest)"
+
+    def repay_loan_for(self, loan_id: int, amount: int) -> tuple[bool, str]:
+        """Repay a specific loan by ID.
+        Validates amount and cash, applies repayment to the targeted loan,
+        updates aggregate debt, and returns a user-facing message.
+        """
+        # Basic validations
         if amount <= 0:
             return False, "Invalid amount"
         if amount > self.state.cash:
-            return False, f"Not enough cash! Have ${self.state.cash}"
-        if amount > self.state.debt:
-            return False, f"Debt is only ${self.state.debt}"
+            return False, f"Not enough cash! Have ${self.state.cash:,}"
+        # Find loan
+        loan = next((ln for ln in self.state.loans if ln.loan_id == loan_id), None)
+        if loan is None:
+            return False, "Selected loan not found"
+        if loan.remaining <= 0:
+            return False, "This loan is already fully repaid"
+        # Clamp to remaining
+        pay = min(int(amount), int(loan.remaining))
+        if pay <= 0:
+            return False, "Nothing to repay"
+        # Apply repayment
+        self.state.cash -= pay
+        loan.remaining -= pay
+        loan.repaid += pay
+        # Sync aggregate debt
+        self._sync_total_debt()
+        msg_suffix = " (fully repaid)" if loan.remaining == 0 else ""
+        return True, f"Paid ${pay:,} towards Loan #{loan.loan_id}. Remaining: ${loan.remaining:,}{msg_suffix}"
 
-        self.state.cash -= amount
-        self.state.debt -= amount
-        return True, f"Paid ${amount} towards debt. Remaining: ${self.state.debt}"
+    def repay_loan(self, amount: int) -> tuple[bool, str]:
+        """Repay loan (legacy aggregate).
+        Applies repayment to the oldest active loan for backward compatibility.
+        """
+        if amount <= 0:
+            return False, "Invalid amount"
+        if amount > self.state.cash:
+            return False, f"Not enough cash! Have ${self.state.cash:,}"
+        if self.state.debt <= 0:
+            return False, "No debt to repay"
+        # Pick oldest active loan
+        active = [ln for ln in self.state.loans if ln.remaining > 0]
+        if not active:
+            return False, "No active loans to repay"
+        active.sort(key=lambda ln: ln.day_taken)
+        target = active[0]
+        return self.repay_loan_for(target.loan_id, amount)
 
     def buy_asset(self, symbol: str, quantity: int) -> tuple[bool, str]:
         """Buy stocks or commodities"""
@@ -318,3 +479,24 @@ class GameEngine:
             del self.state.portfolio[symbol]
 
         return True, f"Sold {quantity}x {symbol} for ${total_value:,}"
+
+    def _sync_total_debt(self) -> int:
+        """Recompute aggregate debt from the loans list and assign to state.debt.
+        Returns the computed total. Safe if loans list is missing or empty.
+        """
+        # Get loans list defensively
+        try:
+            loans = getattr(self.state, "loans", []) or []
+        except Exception:
+            loans = []
+        total = 0
+        try:
+            for ln in loans:
+                rem = getattr(ln, "remaining", 0)
+                if rem and rem > 0:
+                    total += int(rem)
+        except Exception:
+            # If anything goes wrong, keep best-effort total
+            pass
+        self.state.debt = int(total)
+        return self.state.debt

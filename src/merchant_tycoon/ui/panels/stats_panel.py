@@ -26,7 +26,10 @@ class StatsPanel(Static):
             if symbol in self.engine.asset_prices:
                 portfolio_value += quantity * self.engine.asset_prices[symbol]
 
-        stats_text = f"""💰 Cash: ${state.cash:,}  |  💼 Investments: ${portfolio_value:,}  |  🏦 Debt: ${state.debt:,}  |  📅 Day: {state.day}  |  📍 {city.name}, {city.country}  |  📦 Cargo: {inventory_count}/{state.max_inventory}"""
+        # Bank balance (added to header after Cash)
+        bank_balance = state.bank.balance if hasattr(state, "bank") and state.bank is not None else 0
+
+        stats_text = f"""💰 Cash: ${state.cash:,}  |  🏦 Bank: ${bank_balance:,}  |  💼 Investments: ${portfolio_value:,}  |  🏦 Debt: ${state.debt:,}  |  📅 Day: {state.day}  |  📍 {city.name}, {city.country}  |  📦 Cargo: {inventory_count}/{state.max_inventory}"""
 
         label = self.query_one("#stats-content", Label)
         label.update(stats_text)

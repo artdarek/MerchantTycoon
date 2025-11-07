@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Dict, List
 
 
@@ -97,6 +97,36 @@ class InvestmentLot:
     quantity: int
     purchase_price: int
     day: int
+
+
+@dataclass
+class BankTransaction:
+    """Represents a bank transaction"""
+    tx_type: str  # "deposit" | "withdraw" | "interest"
+    amount: int
+    balance_after: int
+    day: int
+
+
+@dataclass
+class BankAccount:
+    """Represents player's bank account"""
+    balance: int = 0
+    interest_rate_daily: float = 0.0005
+    accrued_interest: float = 0.0
+    last_interest_day: int = 0
+    transactions: List[BankTransaction] = field(default_factory=list)
+
+
+@dataclass
+class Loan:
+    """Represents a single loan instance with its own rate and lifecycle."""
+    loan_id: int
+    principal: int
+    remaining: int
+    repaid: int
+    rate_daily: float
+    day_taken: int
 
 
 @dataclass

@@ -24,6 +24,12 @@ from .ui.panels import (
     MessageLog,
     TradeActionsPanel,
     GoodsTradeActionsPanel,
+    AccountBalancePanel,
+    AccountActionsPanel,
+    AccountTransactionsPanel,
+    LoanActionsPanel,
+    LoanBalancePanel,
+    YourLoansPanel,
 )
 from .ui.modals import (
     InputModal,
@@ -37,6 +43,7 @@ from .ui.modals import (
     HelpModal,
     AlertModal,
     ConfirmModal,
+    LoanRepayModal,
 )
 from .savegame import (
     is_save_present,
@@ -109,6 +116,14 @@ class MerchantTycoon(App):
         Binding("i", "investment_transactions", "Transactions"),
     ]
 
+    # Contextual bindings for Bank tab
+    BANK_BINDINGS = [
+        Binding("d", "bank_deposit", "Deposit"),
+        Binding("w", "bank_withdraw", "Withdraw"),
+        Binding("l", "loan", "Loan"),
+        Binding("r", "repay", "Repay"),
+    ]
+
     def __init__(self):
         super().__init__()
         self.engine = GameEngine()
@@ -120,6 +135,12 @@ class MerchantTycoon(App):
         self.trade_actions_panel = None
         self.investments_panel = None
         self.goods_trade_actions_panel = None
+        self.bank_panel = None
+        self.bank_actions_panel = None
+        self.loan_actions_panel = None
+        self.bank_transactions_panel = None
+        self.loan_balance_panel = None
+        self.your_loans_panel = None
         self.current_tab = "goods-tab"  # Track current tab
 
     def compose(self) -> ComposeResult:
@@ -137,6 +158,15 @@ class MerchantTycoon(App):
                 with Vertical(id="investments-right-col"):
                     yield TradeActionsPanel(self.engine)
                     yield InvestmentsPanel(self.engine)
+            with TabPane("🏦 Bank", id="bank-tab"):
+                with Vertical(id="bank-left-col"):
+                    yield AccountActionsPanel(self.engine)
+                    yield AccountBalancePanel(self.engine)
+                    yield AccountTransactionsPanel(self.engine)
+                with Vertical(id="bank-right-col"):
+                    yield LoanActionsPanel(self.engine)
+                    yield LoanBalancePanel(self.engine)
+                    yield YourLoansPanel(self.engine)
         yield MessageLog()
         yield Footer()
 
@@ -154,9 +184,39 @@ class MerchantTycoon(App):
             self.goods_trade_actions_panel = self.query_one(GoodsTradeActionsPanel)
         except Exception:
             self.goods_trade_actions_panel = None
+        # Bank panel references (may be missing if layout changes)
+        try:
+            self.bank_panel = self.query_one(AccountBalancePanel)
+        except Exception:
+            self.bank_panel = None
+        try:
+            self.bank_actions_panel = self.query_one(AccountActionsPanel)
+        except Exception:
+            self.bank_actions_panel = None
+        try:
+            self.loan_actions_panel = self.query_one(LoanActionsPanel)
+        except Exception:
+            self.loan_actions_panel = None
+        try:
+            self.bank_transactions_panel = self.query_one(AccountTransactionsPanel)
+        except Exception:
+            self.bank_transactions_panel = None
+        try:
+            self.loan_balance_panel = self.query_one(LoanBalancePanel)
+        except Exception:
+            self.loan_balance_panel = None
+        try:
+            self.your_loans_panel = self.query_one(YourLoansPanel)
+        except Exception:
+            self.your_loans_panel = None
 
-        # Set initial contextual bindings for Goods tab
-        self._update_contextual_bindings("goods-tab")
+        # Set initial contextual bindings based on the actual active tab
+        try:
+            tabbed = self.query_one(TabbedContent)
+            active = getattr(tabbed, "active", "goods-tab") or "goods-tab"
+        except Exception:
+            active = "goods-tab"
+        self._update_contextual_bindings(active)
 
         # Auto-load savegame if present
         try:
@@ -181,17 +241,28 @@ class MerchantTycoon(App):
         """Update footer bindings based on active tab"""
         self.current_tab = tab_id
 
-        # Remove all contextual bindings first
-        contextual_keys = ["b", "s", "t", "l", "r", "i"]
+        # Remove all contextual bindings first (defensively clear both lower/upper cases)
+        contextual_keys = ["b", "s", "t", "l", "r", "i", "d", "w",
+                           "B", "S", "T", "L", "R", "I", "D", "W"]
         for key in contextual_keys:
             try:
                 self.unbind(key)
             except Exception:
                 pass
 
+        # Additional defensive unbind by action names if supported
+        for action_name in ("buy", "sell", "travel", "loan", "repay", "goods_transactions",
+                            "investment_transactions", "bank_deposit", "bank_withdraw"):
+            try:
+                self.unbind(action_name)
+            except Exception:
+                pass
+
         # Add new contextual bindings based on tab
         if tab_id == "investments-tab":
             bindings_to_add = self.INVESTMENTS_BINDINGS
+        elif tab_id == "bank-tab":
+            bindings_to_add = self.BANK_BINDINGS
         else:  # goods-tab
             bindings_to_add = self.GOODS_BINDINGS
 
@@ -219,6 +290,18 @@ class MerchantTycoon(App):
             self.goods_trade_actions_panel.update_trade_actions()
         if self.investments_panel:
             self.investments_panel.update_investments()
+        if self.bank_panel:
+            self.bank_panel.update_bank()
+        if self.bank_actions_panel:
+            self.bank_actions_panel.update_actions()
+        if self.loan_actions_panel:
+            self.loan_actions_panel.update_actions()
+        if self.loan_balance_panel:
+            self.loan_balance_panel.update_loan()
+        if self.your_loans_panel:
+            self.your_loans_panel.update_loans()
+        if self.bank_transactions_panel:
+            self.bank_transactions_panel.update_transactions()
 
     def game_log(self, msg: str):
         # Prefix each log entry with timestamp and the in-game day number
@@ -228,12 +311,18 @@ class MerchantTycoon(App):
             self.message_log.add_message(f"[{ts}] Day {day}: {msg}")
 
     def action_buy(self):
-        """Context-aware Buy: goods or assets depending on active tab"""
+        """Context-aware Buy: goods or assets depending on active tab.
+        Disabled on Bank tab per UX requirements (no Buy/Sell in Bank).
+        """
         try:
             tabbed = self.query_one(TabbedContent)
             active = getattr(tabbed, "active", None)
         except Exception:
             active = None
+
+        # Do not allow Buy on the Bank tab
+        if active == "bank-tab":
+            return
 
         if active == "investments-tab":
             # Open assets buy modal when Investments tab is active
@@ -254,12 +343,18 @@ class MerchantTycoon(App):
         self.refresh_all()
 
     def action_sell(self):
-        """Context-aware Sell: goods or assets depending on active tab"""
+        """Context-aware Sell: goods or assets depending on active tab.
+        Disabled on Bank tab per UX requirements (no Buy/Sell in Bank).
+        """
         try:
             tabbed = self.query_one(TabbedContent)
             active = getattr(tabbed, "active", None)
         except Exception:
             active = None
+
+        # Do not allow Sell on the Bank tab
+        if active == "bank-tab":
+            return
 
         if active == "investments-tab":
             # Selling assets
@@ -312,9 +407,21 @@ class MerchantTycoon(App):
 
     def action_loan(self):
         """Take a loan"""
+        # Show today's offer rate for new loans (fixed at creation)
+        try:
+            offer_rate = float(getattr(self.engine, "interest_rate", 0.10))
+        except Exception:
+            offer_rate = 0.10
+        # Clamp to [1%, 20%] just for display safety
+        pct = int(max(1, min(20, round(offer_rate * 100))))
+        prompt = (
+            "How much would you like to borrow?\n"
+            f"(Max: $10,000 | Today's interest: {pct}% per day)\n"
+            "Note: The rate is fixed for this loan at creation."
+        )
         modal = InputModal(
             "🏦 Bank Loan",
-            "How much would you like to borrow?\n(Max: $10,000 | Interest: 10% per day)",
+            prompt,
             self._handle_loan
         )
         self.push_screen(modal)
@@ -332,27 +439,24 @@ class MerchantTycoon(App):
         self.refresh_all()
 
     def action_repay(self):
-        """Repay loan"""
-        if self.engine.state.debt <= 0:
-            self.game_log("No debt to repay!")
+        """Repay loan. Opens a modal to select which loan to repay and amount."""
+        # Filter active loans
+        active_loans = [ln for ln in (self.engine.state.loans or []) if getattr(ln, "remaining", 0) > 0]
+        if not active_loans or self.engine.state.cash <= 0:
+            self.game_log("No repayable loans or no cash available!")
             return
 
-        modal = InputModal(
-            "💳 Repay Loan",
-            f"Current debt: ${self.engine.state.debt:,}\nCash available: ${self.engine.state.cash:,}\nHow much to repay?",
-            self._handle_repay
-        )
-        self.push_screen(modal)
+        # Open new modal with loan selector and prefilled amount
+        self.push_screen(LoanRepayModal(self.engine, self._handle_repay_selected))
 
-    def _handle_repay(self, value: str):
-        """Handle loan repayment"""
+    def _handle_repay_selected(self, loan_id: int, amount: int):
+        """Handle loan repayment for a specific loan selected in modal."""
         try:
-            amount = int(value.strip())
-        except ValueError:
+            amt = int(amount)
+        except Exception:
             self.game_log("Invalid amount!")
             return
-
-        success, msg = self.engine.repay_loan(amount)
+        ok, msg = self.engine.repay_loan_for(int(loan_id), amt)
         self.game_log(msg)
         self.refresh_all()
 
@@ -373,6 +477,53 @@ class MerchantTycoon(App):
 
         modal = InvestmentsTransactionsModal(self.engine)
         self.push_screen(modal)
+
+    # --- Bank actions ---
+    def action_bank_deposit(self):
+        """Open modal to deposit cash to bank."""
+        cash = self.engine.state.cash
+        if cash <= 0:
+            self.game_log("No cash to deposit!")
+            return
+        modal = InputModal(
+            "🏦 Deposit to Bank",
+            f"Cash available: ${cash:,}\nHow much to deposit?",
+            self._handle_bank_deposit,
+        )
+        self.push_screen(modal)
+
+    def _handle_bank_deposit(self, value: str):
+        try:
+            amount = int(value.strip())
+        except ValueError:
+            self.game_log("Invalid amount!")
+            return
+        ok, msg = self.engine.deposit_to_bank(amount)
+        self.game_log(msg)
+        self.refresh_all()
+
+    def action_bank_withdraw(self):
+        """Open modal to withdraw cash from bank."""
+        bal = self.engine.state.bank.balance
+        if bal <= 0:
+            self.game_log("No funds in bank to withdraw!")
+            return
+        modal = InputModal(
+            "🏦 Withdraw from Bank",
+            f"Bank balance: ${bal:,}\nHow much to withdraw?",
+            self._handle_bank_withdraw,
+        )
+        self.push_screen(modal)
+
+    def _handle_bank_withdraw(self, value: str):
+        try:
+            amount = int(value.strip())
+        except ValueError:
+            self.game_log("Invalid amount!")
+            return
+        ok, msg = self.engine.withdraw_from_bank(amount)
+        self.game_log(msg)
+        self.refresh_all()
 
     def action_help(self):
         """Show game instructions"""
