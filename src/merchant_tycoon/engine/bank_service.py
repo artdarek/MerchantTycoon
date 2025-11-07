@@ -132,7 +132,13 @@ class BankService:
         bank.last_interest_day = current_day
 
     def take_loan(self, amount: int) -> tuple[bool, str]:
-        """Take a loan from the bank. Creates a new Loan entry."""
+        """Take a loan from the bank. Creates a new Loan entry.
+        Commission policy:
+        - Base commission is 10% of the borrowed amount, added to the amount to repay.
+        - If the player has 10 or more unpaid loans at the moment of taking a new one,
+          the commission is 30% (higher risk).
+        The commission increases the initial `remaining` to repay but does not change cash received.
+        """
         if amount <= 0:
             return False, "Invalid loan amount"
         if amount > 10000:
@@ -144,12 +150,19 @@ class BankService:
         except Exception:
             apr = 0.10
         daily = apr / 365.0
+
+        # Determine commission based on current unpaid loans BEFORE creating new one
+        unpaid_loans = sum(1 for ln in getattr(self.state, "loans", []) if getattr(ln, "remaining", 0) > 0)
+        fee_rate = 0.30 if unpaid_loans >= 10 else 0.10
+        fee = int(amount * fee_rate)
+        total_to_repay = amount + fee
+
         # Create loan with incremental ID
         next_id = (max((ln.loan_id for ln in self.state.loans), default=0) + 1)
         loan = Loan(
             loan_id=next_id,
             principal=amount,
-            remaining=amount,
+            remaining=total_to_repay,
             repaid=0,
             rate_daily=daily,  # legacy compatibility
             day_taken=self.state.day,
@@ -161,7 +174,11 @@ class BankService:
         # Apply funds to cash and sync aggregate debt
         self.state.cash += amount
         self._sync_total_debt()
-        return True, f"Loan approved! Received ${amount:,} (APR {apr*100:.2f}% | Daily {daily*100:.4f}%)"
+        return True, (
+            f"Loan approved! Received ${amount:,}. "
+            f"Commission: ${fee:,} ({fee_rate*100:.0f}%). "
+            f"Total to repay: ${total_to_repay:,} (APR {apr*100:.2f}% | Daily {daily*100:.4f}%)."
+        )
 
     def repay_loan_for(self, loan_id: int, amount: int) -> tuple[bool, str]:
         """Repay a specific loan by ID.
