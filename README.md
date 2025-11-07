@@ -25,21 +25,24 @@ A terminal-based trading game where you buy low, sell high, travel between citie
 **Merchant Tycoon** is a terminal-based economic simulation game inspired by classic trading games. Your goal is simple: start with $5,000 and become a wealthy merchant tycoon through strategic trading and smart investments.
 
 The game combines:
-- **City Trading**: Buy and sell goods in different cities with varying prices
-- **Stock Market**: Invest in real company stocks (Google, Meta, Apple, Microsoft)
+- **City Trading**: Buy and sell goods across 11 European cities with varying prices
+- **Stock Market**: Invest in 12 real company stocks (Tech giants like Google, Apple, NVIDIA, Tesla, and more)
 - **Commodities**: Trade in Gold, Oil, Silver, and Copper
+- **Cryptocurrency**: Invest in Bitcoin, Ethereum, Solana, and Dogecoin
+- **Banking System**: Deposit cash to earn interest (1-20% daily, randomized), manage your savings
+- **Loan System**: Take multiple loans to grow faster with variable interest rates (1-20% daily, randomized)
 - **Risk Management**: Balance between inventory (vulnerable to events) and investments (safe)
-- **Loan System**: Borrow money to grow faster, but watch the 10% daily interest!
 
 ## 🎯 Game Objective
 
-**Main Strategy: TRAVEL → BUY → SELL → INVEST INCOME**
+**Main Strategy: TRAVEL → BUY → SELL → INVEST → SAVE**
 
 1. Travel between cities to find the best prices
 2. Buy goods when prices are low
 3. Sell goods when prices are high in other cities
 4. Invest your profits in the stock market for safe, long-term growth
-5. Build a diversified portfolio while continuing to trade
+5. Save excess cash in the bank to earn interest
+6. Build a diversified portfolio while continuing to trade
 
 ## 🚀 How To Play
 
@@ -111,25 +114,50 @@ make clean
 
 ### Controls
 
+The game has **3 tabs** (Goods, Investments, Bank) with context-sensitive controls:
+
+#### Global Controls (Always Available)
+| Key | Action | Description |
+|-----|--------|-------------|
+| **N** | New Game | Start a new game (deletes current save) |
+| **A** | Save | Save current game progress |
+| **O** | Load | Load saved game |
+| **H** | Help | Show in-game instructions |
+| **Q** | Quit | Exit the game |
+
+#### 📦 Goods Tab Controls
 | Key | Action | Description |
 |-----|--------|-------------|
 | **T** | Travel | Move to another city to find better prices |
 | **B** | Buy | Purchase goods at current city prices |
 | **S** | Sell | Sell goods from your inventory |
-| **E** | Exchange | Access the stock market to trade stocks & commodities |
-| **L** | Loan | Borrow money (10% interest per day) |
-| **R** | Repay | Pay back your debt |
-| **I** | Inventory | View detailed purchase history with profit/loss |
-| **H** | Help | Show in-game instructions |
-| **Q** | Quit | Exit the game |
+| **I** | Transactions | View detailed purchase history with profit/loss |
+| **L** | Loan | Borrow money (up to $10,000 per loan) |
+| **R** | Repay | Pay back your loans |
+
+#### 💼 Investments Tab Controls
+| Key | Action | Description |
+|-----|--------|-------------|
+| **B** | Buy | Purchase stocks, commodities, or crypto |
+| **S** | Sell | Sell assets from your portfolio |
+| **I** | Transactions | View detailed investment history with profit/loss |
+
+#### 🏦 Bank Tab Controls
+| Key | Action | Description |
+|-----|--------|-------------|
+| **D** | Deposit | Deposit cash into bank account (earns interest) |
+| **W** | Withdraw | Withdraw cash from bank account |
+| **L** | Loan | Take out a new loan (variable rate 1-20%) |
+| **R** | Repay | Repay existing loans |
 
 ### Game Mechanics
 
 #### 🏙️ Cities & Pricing
-- **5 Cities**: Warsaw, Berlin, Prague, Vienna, Budapest
+- **11 European Cities**: Warsaw, Berlin, Prague, Vienna, Budapest, Paris, London, Rome, Amsterdam, Barcelona, Stockholm
 - Each city has different price multipliers for each good
-- Prices fluctuate randomly within a range
+- Prices fluctuate randomly within a range (±30%)
 - Look for arbitrage opportunities between cities
+- Travel between cities to exploit price differences
 
 #### 📦 Inventory Management
 - **Capacity**: 50 units maximum
@@ -137,29 +165,54 @@ make clean
 - **Purchase Lots**: Track each purchase separately to calculate profit/loss accurately
 - **Random Events**: Can affect your inventory (theft, damage, etc.)
 
-#### 💼 Stock Exchange
-- **Stocks**: Google (GOOGL), Meta (META), Apple (AAPL), Microsoft (MSFT)
-- **Commodities**: Gold, Oil, Silver, Copper
+#### 💼 Stock Exchange & Investments
+- **Stocks** (12 companies): Google (GOOGL), Meta (META), Apple (AAPL), Microsoft (MSFT), Amazon (AMZN), Netflix (NFLX), NVIDIA (NVDA), Tesla (TSLA), AMD, Oracle (ORCL), Adobe (ADBE), Intel (INTC)
+- **Commodities** (4 types): Gold, Oil, Silver, Copper
+- **Cryptocurrency** (4 coins): Bitcoin (BTC), Ethereum (ETH), Solana (SOL), Dogecoin (DOGE)
 - **Price Trends**: Watch for ▲ (up), ▼ (down), or ─ (stable) indicators
+- **Price Volatility**: Stocks ±50%, Commodities ±30-80%, Crypto ±70-90%
 - **Safety**: Investments are protected from random events!
 - **Long-term**: Build wealth through diversified portfolio
 
 #### 💰 Loans & Debt
-- Borrow money when you need capital
-- 10% interest charged every day
-- Debt compounds, so repay as soon as profitable
-- Use strategically to accelerate growth
+- Take **multiple loans** to grow your business faster
+- Each loan has its own **variable interest rate** (1-20% daily, randomized)
+- Interest rates change with each travel (existing loans keep their original rate)
+- Maximum $10,000 per loan
+- Interest compounds daily, so repay strategically
+- Use loans when you have clear profit opportunities
 
-## 📊 Game Panels
+#### 🏦 Banking System
+- **Deposit cash** into your bank account to keep it safe
+- Earn **interest** on deposits (1-20% daily, randomized each travel)
+- **Withdraw** anytime without penalties
+- Bank balance is protected from random events
+- Interest accrues daily on your balance
 
-The interface is divided into several panels:
+## 📊 Game Interface
 
-1. **Stats Panel**: Current cash, debt, day, city, and investment value
-2. **Market Prices**: Current prices for goods in your city with trend indicators
-3. **Exchange Prices**: Live stock and commodity prices
-4. **Your Inventory**: Goods you own with quantities
-5. **Your Investments**: Portfolio with profit/loss tracking
-6. **Message Log**: Game events and transaction history
+The game uses a **tabbed interface** with three main tabs:
+
+### 📦 Goods Tab
+- **Market Prices**: Current prices for all goods in your city with trend indicators
+- **Trade Actions**: Buy and Sell buttons
+- **Your Inventory**: List of goods you own with quantities, costs, and profit/loss
+- Travel between cities to find the best prices
+
+### 💼 Investments Tab
+- **Exchange Prices**: Live prices for stocks, commodities, and cryptocurrencies
+- **Trade Actions**: Buy and Sell buttons
+- **Your Portfolio**: List of assets you own with purchase history and profit/loss
+
+### 🏦 Bank Tab
+- **Bank Account**: Your deposit balance and daily interest rate
+- **Your Loans**: List of active loans with details (principal, remaining, rate, day taken)
+- **Actions**: Deposit, Withdraw, Take Loan, Repay Loan
+
+### Common Elements (All Tabs)
+- **Stats Panel** (Top): Cash, Bank Balance, Investments Total, Debt, Day, Location, Cargo
+- **Message Log** (Bottom): Game events, transactions, and system messages
+- **Global Actions Bar** (Very Top): New Game, Save, Load, Help, Quit
 
 ## 💡 Tips & Strategy
 
@@ -168,14 +221,24 @@ The interface is divided into several panels:
 2. Travel to a city, buy what's cheap, travel to another, sell what's expensive
 3. Keep some cash reserve for opportunities
 4. Once you have steady profit, start investing in stocks
+5. Use the bank to protect excess cash and earn interest
 
 ### Advanced Strategy
-1. **Diversify**: Don't put all money in one asset type
-2. **Arbitrage**: Find goods with big price differences between cities
+1. **Diversify**: Spread wealth across goods, stocks, commodities, crypto, and bank deposits
+2. **Arbitrage**: Find goods with big price differences between cities (check all 11 cities!)
 3. **Trend Following**: Buy stocks showing ▲ uptrend, avoid ▼ downtrend
-4. **Risk Balance**: Keep 60-70% in safe investments, 30-40% in active trading
-5. **Debt Leverage**: Use loans only when you have clear profit opportunity
-6. **Event Protection**: Move wealth to stocks/commodities before risky situations
+4. **Risk Balance**:
+   - 40% in safe investments (stocks/commodities)
+   - 30% in bank (earning interest, protected)
+   - 20% in active trading (goods)
+   - 10% in high-risk crypto
+5. **Debt Leverage**:
+   - Take multiple small loans instead of one big loan
+   - Compare loan rates before borrowing (they change with each travel)
+   - Only borrow when you have clear profit opportunity (>25% margin)
+6. **Event Protection**: Move wealth to stocks/commodities/bank before risky situations
+7. **Interest Rate Arbitrage**: When bank rate > loan rate, deposit excess cash
+8. **Crypto Timing**: High volatility = high risk and high reward, time your trades carefully
 
 ## 🛠️ Technical Details
 
@@ -186,12 +249,18 @@ The interface is divided into several panels:
 - **Data Structures**: FIFO queues for inventory tracking
 
 ### Features
-- Real-time price updates
-- FIFO (First In, First Out) inventory accounting
-- Investment lot tracking with profit/loss calculations
-- Random event system
-- Price trend indicators
-- Responsive terminal UI with colors and styling
+- **Tabbed Interface**: 3 main tabs (Goods, Investments, Bank) with context-sensitive controls
+- **Real-time price updates**: All prices fluctuate dynamically
+- **FIFO Accounting**: First In, First Out inventory and investment tracking
+- **Profit/Loss Tracking**: Detailed transaction history with real-time P/L calculations
+- **Random Event System**: Unexpected events affect your inventory
+- **Price Trend Indicators**: Visual ▲▼─ indicators for all assets
+- **Multi-Loan System**: Take multiple loans with individual rates
+- **Banking System**: Deposit/withdraw with daily interest accrual
+- **Cryptocurrency Trading**: High-risk, high-reward crypto investments
+- **11 European Cities**: Each with unique price multipliers
+- **Auto-save/Load**: Persistent game state across sessions
+- **Responsive Terminal UI**: Colorful, styled interface using Textual framework
 
 ## 🤖 Created Entirely with Claude Code
 
@@ -206,18 +275,25 @@ The entire development was done through natural language conversations. The deve
 3. **UI Refinements**: Adjusting layouts, adding panels, fixing alignment
 4. **Feature Additions**:
    - Started with basic buy/sell mechanics
-   - Added city travel system
-   - Implemented loan system
-   - Created stock exchange with real company names
-   - Added investment tracking with profit/loss
-   - Built inventory details with FIFO tracking
-   - Created help system
+   - Added city travel system (5 cities → 11 cities)
+   - Implemented multi-loan system with variable rates
+   - Created stock exchange with 12 real company stocks
+   - Added 4 commodities (Gold, Oil, Silver, Copper)
+   - Integrated cryptocurrency trading (Bitcoin, Ethereum, Solana, Dogecoin)
+   - Built banking system with deposits and interest
+   - Added investment tracking with FIFO and profit/loss calculations
+   - Created detailed transaction history modals
+   - Implemented tabbed interface (Goods, Investments, Bank)
+   - Added context-sensitive keyboard controls
+   - Built help system and alert modals
 
 5. **Polish & UX**:
-   - Changed keybindings for better UX
+   - Changed keybindings to be context-sensitive per tab
    - Fixed data alignment in tables
-   - Removed unnecessary UI elements
-   - Added proper column formatting
+   - Added dynamic profit/loss coloring (green/red)
+   - Refactored UI into modular panels and modals
+   - Added proper column formatting and scrolling
+   - Improved modal layouts and styling
 
 ### No Manual Coding
 
