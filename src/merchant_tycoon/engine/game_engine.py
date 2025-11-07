@@ -119,6 +119,14 @@ class GameEngine:
         """Sell goods using FIFO"""
         return self.goods_service.sell(good_name, quantity)
 
+    # Cargo operations - delegate to GoodsService
+    def extend_cargo(self) -> tuple:
+        """Attempt to extend cargo capacity by 1 slot.
+        Delegates to GoodsService.extend_cargo().
+        Returns tuple as defined by the service.
+        """
+        return self.goods_service.extend_cargo()
+
     # Investment operations - delegate to InvestmentsService
     def generate_asset_prices(self) -> None:
         """Generate random prices for stocks and commodities"""

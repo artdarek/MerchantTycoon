@@ -10,6 +10,7 @@ from .help_modal import HelpModal
 from .alert_modal import AlertModal
 from .confirm_modal import ConfirmModal
 from .loan_repay_modal import LoanRepayModal
+from .cargo_extend_modal import CargoExtendModal
 
 __all__ = [
     "InputModal",
@@ -24,4 +25,5 @@ __all__ = [
     "AlertModal",
     "ConfirmModal",
     "LoanRepayModal",
+    "CargoExtendModal",
 ]

@@ -44,6 +44,7 @@ from .ui.modals import (
     AlertModal,
     ConfirmModal,
     LoanRepayModal,
+    CargoExtendModal,
 )
 from .savegame import (
     is_save_present,
@@ -107,6 +108,7 @@ class MerchantTycoon(App):
         Binding("r", "repay", "Repay", show=True),
         Binding("d", "bank_deposit", "Deposit", show=True),
         Binding("w", "bank_withdraw", "Withdraw", show=True),
+        Binding("c", "cargo", "Cargo", show=True),
     ]
 
     def __init__(self):
@@ -331,6 +333,42 @@ class MerchantTycoon(App):
         """Travel to another city"""
         modal = CitySelectModal(CITIES, self.engine.state.current_city, self._handle_travel)
         self.push_screen(modal)
+
+    def action_cargo(self):
+        """Open modal to extend cargo capacity by purchasing an extra slot."""
+        try:
+            modal = CargoExtendModal(self.engine, self._handle_extend_cargo)
+            self.push_screen(modal)
+        except Exception as e:
+            self.game_log(f"Error opening cargo modal: {e}")
+
+    def _handle_extend_cargo(self) -> bool:
+        """Callback used by CargoExtendModal when Extend is pressed.
+        Returns True to close the modal on success, False to keep it open on failure.
+        """
+        try:
+            result = self.engine.extend_cargo()
+        except Exception as e:
+            self.game_log(f"Error: {e}")
+            return False
+
+        # Interpret tuple shapes per service contract
+        if not result:
+            self.game_log("Unexpected response from engine.")
+            return False
+
+        ok = bool(result[0])
+        if ok:
+            # (True, msg, new_capacity, next_cost)
+            msg = result[1] if len(result) > 1 else "Cargo extended."
+            self.game_log(msg)
+            self.refresh_all()
+            return True
+        else:
+            # (False, msg, current_cost)
+            msg = result[1] if len(result) > 1 else "Not enough cash to extend cargo."
+            self.game_log(msg)
+            return False
 
     def _handle_travel(self, city_index: int):
         """Handle travel to new city"""

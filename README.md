@@ -29,6 +29,7 @@ The game combines:
 - **Stock Market**: Invest in 12 real company stocks (Tech giants like Google, Apple, NVIDIA, Tesla, and more)
 - **Commodities**: Trade in Gold, Oil, Silver, and Copper
 - **Cryptocurrency**: Invest in Bitcoin, Ethereum, Solana, and Dogecoin
+- **Cargo Upgrades**: Extend inventory capacity; each added slot doubles in price (starts at 50)
 - **Banking System**: Deposit cash to earn interest (1-3% APR, compounded daily), manage your savings
 - **Loan System**: Take multiple loans to grow faster with variable APR (1-20%, compounded daily)
 - **Risk Management**: Balance between inventory (vulnerable to events) and investments (safe)
@@ -124,6 +125,7 @@ The game has **3 tabs** (Goods, Investments, Bank) with context-sensitive contro
 | **O** | Load | Load saved game |
 | **H** | Help | Show in-game instructions |
 | **Q** | Quit | Exit the game |
+| **C** | Cargo | Extend cargo capacity by +1 slot (cost doubles per slot) |
 
 #### 📦 Goods Tab Controls
 | Key | Action | Description |
@@ -160,7 +162,7 @@ The game has **3 tabs** (Goods, Investments, Bank) with context-sensitive contro
 - Travel between cities to exploit price differences
 
 #### 📦 Inventory Management
-- **Capacity**: 50 units maximum
+- **Capacity**: Starts at 50; press C to extend by +1 slot (each added slot doubles in price)
 - **FIFO System**: Goods are sold in First In, First Out order
 - **Purchase Lots**: Track each purchase separately to calculate profit/loss accurately
 - **Random Events**: Can affect your inventory (theft, damage, etc.)

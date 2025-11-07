@@ -15,6 +15,34 @@ class GoodsService:
         self.prices = prices
         self.previous_prices = previous_prices
 
+    # Cargo extension utility
+    def extend_cargo(self) -> tuple:
+        """Attempt to extend cargo capacity by 1 slot.
+        Pricing is exponential starting at $100 and doubling per slot purchased beyond the base 50.
+        Returns one of the following tuples:
+          - (False, message, current_cost) when insufficient cash.
+          - (True, message, new_capacity, next_cost) on success.
+        """
+        # Determine how many slots purchased beyond the base capacity (50)
+        try:
+            current_capacity = int(getattr(self.state, "max_inventory", 50))
+        except Exception:
+            current_capacity = 50
+        slots_purchased = max(0, current_capacity - 50)
+        current_cost = 100 * (2 ** slots_purchased)
+
+        # Validate cash
+        if self.state.cash < current_cost:
+            return False, f"Not enough cash! Need ${current_cost:,}, have ${self.state.cash:,}", current_cost
+
+        # Deduct and extend capacity
+        self.state.cash -= current_cost
+        self.state.max_inventory = current_capacity + 1
+
+        # Compute next cost after purchase
+        next_cost = 100 * (2 ** (slots_purchased + 1))
+        return True, f"Cargo extended to {self.state.max_inventory} slots (-${current_cost:,})", self.state.max_inventory, next_cost
+
     def generate_prices(self) -> None:
         """Generate random prices for current city"""
         # Save previous prices before generating new ones

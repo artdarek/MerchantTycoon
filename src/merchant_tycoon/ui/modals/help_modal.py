@@ -38,13 +38,13 @@ class HelpModal(ModalScreen):
 
                 yield Label(" 🏦 LOANS & DEBT ", classes="section-header")
                 yield Label("  • Loan (L) to borrow money when you need capital")
-                yield Label("  • 10% interest charged each day")
+                yield Label("  • Interest is shown as APR; it accrues daily on each loan")
                 yield Label("  • Repay (R) debt as soon as possible")
                 yield Label("")
 
                 yield Label(" 📦 INVENTORY ", classes="section-header")
                 yield Label("  • Inventory (I) to see detailed purchase history")
-                yield Label("  • Limited space: 50 units maximum")
+                yield Label("  • Limited space: starts at 50; press C to extend (cost doubles per slot)")
                 yield Label("  • Goods sold using FIFO (First In, First Out)")
                 yield Label("  • Track profit/loss for each purchase lot")
                 yield Label("")
