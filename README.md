@@ -29,8 +29,8 @@ The game combines:
 - **Stock Market**: Invest in 12 real company stocks (Tech giants like Google, Apple, NVIDIA, Tesla, and more)
 - **Commodities**: Trade in Gold, Oil, Silver, and Copper
 - **Cryptocurrency**: Invest in Bitcoin, Ethereum, Solana, and Dogecoin
-- **Banking System**: Deposit cash to earn interest (1-20% daily, randomized), manage your savings
-- **Loan System**: Take multiple loans to grow faster with variable interest rates (1-20% daily, randomized)
+- **Banking System**: Deposit cash to earn interest (1-3% APR, compounded daily), manage your savings
+- **Loan System**: Take multiple loans to grow faster with variable APR (1-20%, compounded daily)
 - **Risk Management**: Balance between inventory (vulnerable to events) and investments (safe)
 
 ## 🎯 Game Objective
@@ -145,9 +145,9 @@ The game has **3 tabs** (Goods, Investments, Bank) with context-sensitive contro
 #### 🏦 Bank Tab Controls
 | Key | Action | Description |
 |-----|--------|-------------|
-| **D** | Deposit | Deposit cash into bank account (earns interest) |
+| **D** | Deposit | Deposit cash into bank account (earns interest APR 1-3%) |
 | **W** | Withdraw | Withdraw cash from bank account |
-| **L** | Loan | Take out a new loan (variable rate 1-20%) |
+| **L** | Loan | Take out a new loan (APR 1-20%, max $10,000) |
 | **R** | Repay | Repay existing loans |
 
 ### Game Mechanics
@@ -176,18 +176,23 @@ The game has **3 tabs** (Goods, Investments, Bank) with context-sensitive contro
 
 #### 💰 Loans & Debt
 - Take **multiple loans** to grow your business faster
-- Each loan has its own **variable interest rate** (1-20% daily, randomized)
-- Interest rates change with each travel (existing loans keep their original rate)
+- Each loan has its own **variable APR** (1-20% annual rate, randomized each travel)
+- Loan APR is converted to daily rate (APR ÷ 365) and compounds daily
+- Interest rates change with each travel, but **existing loans keep their original APR**
 - Maximum $10,000 per loan
-- Interest compounds daily, so repay strategically
-- Use loans when you have clear profit opportunities
+- **Example:** 10% APR loan = 0.027% daily interest, but compounds over time
+- Fractional interest accrues until it reaches $1, then adds to loan balance
+- Use loans strategically when you have clear profit opportunities (>20-25% margin)
 
 #### 🏦 Banking System
 - **Deposit cash** into your bank account to keep it safe
-- Earn **interest** on deposits (1-20% daily, randomized each travel)
+- Earn **interest** on deposits (1-3% APR, randomized each travel)
+- Interest is converted to daily rate (APR ÷ 365) and compounds daily
+- **Example:** 2% APR = 0.0055% daily interest ≈ $55/day on $1,000,000
+- Fractional interest accrues until it reaches $1, then adds to your balance
 - **Withdraw** anytime without penalties
 - Bank balance is protected from random events
-- Interest accrues daily on your balance
+- Lower risk, lower reward compared to goods trading or investments
 
 ## 📊 Game Interface
 
@@ -234,10 +239,15 @@ The game uses a **tabbed interface** with three main tabs:
    - 10% in high-risk crypto
 5. **Debt Leverage**:
    - Take multiple small loans instead of one big loan
-   - Compare loan rates before borrowing (they change with each travel)
-   - Only borrow when you have clear profit opportunity (>25% margin)
+   - Compare loan APR before borrowing (changes with each travel)
+   - Only borrow when you have clear profit opportunity (>20-25% margin)
+   - Remember: Even 1% APR = 0.0027% daily, which compounds over time
 6. **Event Protection**: Move wealth to stocks/commodities/bank before risky situations
-7. **Interest Rate Arbitrage**: When bank rate > loan rate, deposit excess cash
+7. **Banking Strategy**:
+   - Bank interest (1-3% APR) is modest but safe
+   - Best for parking large amounts of cash you don't need immediately
+   - **Not** a primary wealth-building strategy (too low APR)
+   - Use for safety, not growth
 8. **Crypto Timing**: High volatility = high risk and high reward, time your trades carefully
 
 ## 🛠️ Technical Details
@@ -253,10 +263,11 @@ The game uses a **tabbed interface** with three main tabs:
 - **Real-time price updates**: All prices fluctuate dynamically
 - **FIFO Accounting**: First In, First Out inventory and investment tracking
 - **Profit/Loss Tracking**: Detailed transaction history with real-time P/L calculations
-- **Random Event System**: Unexpected events affect your inventory
+- **Random Event System**: Unexpected events affect your inventory (25% chance per travel)
 - **Price Trend Indicators**: Visual ▲▼─ indicators for all assets
-- **Multi-Loan System**: Take multiple loans with individual rates
-- **Banking System**: Deposit/withdraw with daily interest accrual
+- **Multi-Loan System**: Take multiple loans with individual APR (1-20%), daily compounding
+- **Banking System**: Deposit/withdraw with interest accrual (1-3% APR, daily compounding)
+- **Realistic Interest Model**: APR converted to daily rates (APR÷365), fractional cents tracked
 - **Cryptocurrency Trading**: High-risk, high-reward crypto investments
 - **11 European Cities**: Each with unique price multipliers
 - **Auto-save/Load**: Persistent game state across sessions

@@ -90,38 +90,23 @@ class MerchantTycoon(App):
     # Load styles from external file created in Stage 5
     CSS_PATH = "style.tcss"
 
-    # Global bindings (always active, shown in top bar)
+    # All bindings are visible in footer - key actions depend on active tab
     BINDINGS = [
+        # Global actions (hidden from footer, shown in top bar)
         Binding("q", "quit", "Quit", show=False),
         Binding("h", "help", "Help", show=False),
         Binding("a", "save", "Save", show=False),
         Binding("o", "load", "Load", show=False),
         Binding("n", "new_game", "New Game", show=False),
-    ]
-
-    # Contextual bindings for Goods tab
-    GOODS_BINDINGS = [
-        Binding("t", "travel", "Travel"),
-        Binding("b", "buy", "Buy"),
-        Binding("s", "sell", "Sell"),
-        Binding("i", "goods_transactions", "Transactions"),
-        Binding("l", "loan", "Loan"),
-        Binding("r", "repay", "Repay"),
-    ]
-
-    # Contextual bindings for Investments tab
-    INVESTMENTS_BINDINGS = [
-        Binding("b", "buy", "Buy"),
-        Binding("s", "sell", "Sell"),
-        Binding("i", "investment_transactions", "Transactions"),
-    ]
-
-    # Contextual bindings for Bank tab
-    BANK_BINDINGS = [
-        Binding("d", "bank_deposit", "Deposit"),
-        Binding("w", "bank_withdraw", "Withdraw"),
-        Binding("l", "loan", "Loan"),
-        Binding("r", "repay", "Repay"),
+        # Context-sensitive actions (always visible, behavior depends on active tab)
+        Binding("t", "travel", "Travel", show=True),
+        Binding("b", "buy", "Buy", show=True),
+        Binding("s", "sell", "Sell", show=True),
+        Binding("i", "transactions", "Transactions", show=True),
+        Binding("l", "loan", "Loan", show=True),
+        Binding("r", "repay", "Repay", show=True),
+        Binding("d", "bank_deposit", "Deposit", show=True),
+        Binding("w", "bank_withdraw", "Withdraw", show=True),
     ]
 
     def __init__(self):
@@ -210,13 +195,8 @@ class MerchantTycoon(App):
         except Exception:
             self.your_loans_panel = None
 
-        # Set initial contextual bindings based on the actual active tab
-        try:
-            tabbed = self.query_one(TabbedContent)
-            active = getattr(tabbed, "active", "goods-tab") or "goods-tab"
-        except Exception:
-            active = "goods-tab"
-        self._update_contextual_bindings(active)
+        # Initialize current_tab to default
+        self.current_tab = "goods-tab"
 
         # Auto-load savegame if present
         try:
@@ -234,46 +214,8 @@ class MerchantTycoon(App):
         self.refresh_all()
 
     def on_tabbed_content_tab_activated(self, event: TabbedContent.TabActivated) -> None:
-        """Handle tab changes to update contextual bindings"""
-        self._update_contextual_bindings(event.pane.id)
-
-    def _update_contextual_bindings(self, tab_id: str) -> None:
-        """Update footer bindings based on active tab"""
-        self.current_tab = tab_id
-
-        # Remove all contextual bindings first (defensively clear both lower/upper cases)
-        contextual_keys = ["b", "s", "t", "l", "r", "i", "d", "w",
-                           "B", "S", "T", "L", "R", "I", "D", "W"]
-        for key in contextual_keys:
-            try:
-                self.unbind(key)
-            except Exception:
-                pass
-
-        # Additional defensive unbind by action names if supported
-        for action_name in ("buy", "sell", "travel", "loan", "repay", "goods_transactions",
-                            "investment_transactions", "bank_deposit", "bank_withdraw"):
-            try:
-                self.unbind(action_name)
-            except Exception:
-                pass
-
-        # Add new contextual bindings based on tab
-        if tab_id == "investments-tab":
-            bindings_to_add = self.INVESTMENTS_BINDINGS
-        elif tab_id == "bank-tab":
-            bindings_to_add = self.BANK_BINDINGS
-        else:  # goods-tab
-            bindings_to_add = self.GOODS_BINDINGS
-
-        # Add each binding by extracting properties from Binding object
-        for binding in bindings_to_add:
-            self.bind(
-                keys=binding.key,
-                action=binding.action,
-                description=binding.description,
-                show=binding.show
-            )
+        """Handle tab changes - track active tab for context-aware actions"""
+        self.current_tab = event.pane.id
 
     def refresh_all(self):
         if self.stats_panel:
@@ -459,6 +401,19 @@ class MerchantTycoon(App):
         ok, msg = self.engine.repay_loan_for(int(loan_id), amt)
         self.game_log(msg)
         self.refresh_all()
+
+    def action_transactions(self):
+        """Context-aware Transactions: show goods or investments depending on active tab"""
+        try:
+            tabbed = self.query_one(TabbedContent)
+            active = getattr(tabbed, "active", None)
+        except Exception:
+            active = None
+
+        if active == "investments-tab":
+            self.action_investment_transactions()
+        else:  # goods-tab (default)
+            self.action_goods_transactions()
 
     def action_goods_transactions(self):
         """Show detailed inventory with purchase lots"""
