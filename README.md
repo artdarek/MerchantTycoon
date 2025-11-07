@@ -6,6 +6,20 @@ A terminal-based trading game where you buy low, sell high, travel between citie
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Made with Claude Code](https://img.shields.io/badge/Made%20with-Claude%20Code-purple.svg)
 
+## 📸 Screenshots
+
+### 📦 Goods Trading
+![Merchant Tycoon - Goods Trading Screen](docs/images/goods.png)
+*Main trading interface with market prices, inventory management, and real-time price trends*
+
+### 💼 Investments & Stock Market
+![Merchant Tycoon - Investments Screen](docs/images/investments.png)
+*Stock market and commodities trading with portfolio tracking and profit/loss analysis*
+
+### 🏦 Bank & Loans
+![Merchant Tycoon - Bank Screen](docs/images/bank.png)
+*Banking interface for managing loans and financial operations*
+
 ## 📖 About The Game
 
 **Merchant Tycoon** is a terminal-based economic simulation game inspired by classic trading games. Your goal is simple: start with $5,000 and become a wealthy merchant tycoon through strategic trading and smart investments.
