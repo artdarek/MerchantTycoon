@@ -9,8 +9,8 @@ entry point. It was extracted from `game.py` as part of refactoring Stage 4.
 
 from datetime import datetime
 from textual.app import App, ComposeResult
-from textual.containers import Vertical
-from textual.widgets import Header, Footer, TabbedContent, TabPane
+from textual.containers import Vertical, Horizontal
+from textual.widgets import Header, Footer, TabbedContent, TabPane, Static, Label, Button
 from textual.binding import Binding
 from .engine import GameEngine, GameState
 from .models import CITIES
@@ -22,8 +22,6 @@ from .ui.panels import (
     ExchangePricesPanel,
     InvestmentsPanel,
     MessageLog,
-)
-from .ui.trade_panels import (
     TradeActionsPanel,
     GoodsTradeActionsPanel,
 )
@@ -32,7 +30,8 @@ from .ui.modals import (
     CitySelectModal,
     BuyModal,
     SellModal,
-    InventoryDetailsModal,
+    InventoryTransactionsModal,
+    InvestmentsTransactionsModal,
     BuyAssetModal,
     SellAssetModal,
     HelpModal,
@@ -48,23 +47,66 @@ from .savegame import (
 )
 
 
+class GlobalActionsBar(Static):
+    """Top bar showing global actions available at all times"""
+
+    def compose(self) -> ComposeResult:
+        with Horizontal(id="global-actions-bar"):
+            yield Button("🎮 [N] New Game", id="action-new", classes="action-item")
+            yield Button("💾 [A] Save", id="action-save", classes="action-item")
+            yield Button("📂 [O] Load", id="action-load", classes="action-item")
+            yield Button("❓ [H] Help", id="action-help", classes="action-item")
+            yield Button("🚪 [Q] Quit", id="action-quit", classes="action-item")
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        """Dispatch top bar button clicks to the same actions as hotkeys."""
+        bid = event.button.id or ""
+        app = self.app
+        if bid == "action-new":
+            app.action_new_game()
+        elif bid == "action-save":
+            app.action_save()
+        elif bid == "action-load":
+            app.action_load()
+        elif bid == "action-help":
+            app.action_help()
+        elif bid == "action-quit":
+            try:
+                app.action_quit()
+            except Exception:
+                app.exit()
+
+
 class MerchantTycoon(App):
     """Main game application"""
 
     # Load styles from external file created in Stage 5
     CSS_PATH = "style.tcss"
 
+    # Global bindings (always active, shown in top bar)
     BINDINGS = [
-        Binding("q", "quit", "Quit"),
+        Binding("q", "quit", "Quit", show=False),
+        Binding("h", "help", "Help", show=False),
+        Binding("a", "save", "Save", show=False),
+        Binding("o", "load", "Load", show=False),
+        Binding("n", "new_game", "New Game", show=False),
+    ]
+
+    # Contextual bindings for Goods tab
+    GOODS_BINDINGS = [
+        Binding("t", "travel", "Travel"),
         Binding("b", "buy", "Buy"),
         Binding("s", "sell", "Sell"),
-        Binding("t", "travel", "Travel"),
+        Binding("i", "goods_transactions", "Transactions"),
         Binding("l", "loan", "Loan"),
         Binding("r", "repay", "Repay"),
-        Binding("i", "details", "Inventory"),
-        Binding("h", "help", "Help"),
-        Binding("a", "save", "Save"),
-        Binding("n", "new_game", "New Game"),
+    ]
+
+    # Contextual bindings for Investments tab
+    INVESTMENTS_BINDINGS = [
+        Binding("b", "buy", "Buy"),
+        Binding("s", "sell", "Sell"),
+        Binding("i", "investment_transactions", "Transactions"),
     ]
 
     def __init__(self):
@@ -78,9 +120,11 @@ class MerchantTycoon(App):
         self.trade_actions_panel = None
         self.investments_panel = None
         self.goods_trade_actions_panel = None
+        self.current_tab = "goods-tab"  # Track current tab
 
     def compose(self) -> ComposeResult:
         yield Header()
+        yield GlobalActionsBar()
         yield StatsPanel(self.engine)
         with TabbedContent(initial="goods-tab"):
             with TabPane("📦 Goods", id="goods-tab"):
@@ -111,6 +155,9 @@ class MerchantTycoon(App):
         except Exception:
             self.goods_trade_actions_panel = None
 
+        # Set initial contextual bindings for Goods tab
+        self._update_contextual_bindings("goods-tab")
+
         # Auto-load savegame if present
         try:
             if is_save_present():
@@ -125,6 +172,37 @@ class MerchantTycoon(App):
             pass
 
         self.refresh_all()
+
+    def on_tabbed_content_tab_activated(self, event: TabbedContent.TabActivated) -> None:
+        """Handle tab changes to update contextual bindings"""
+        self._update_contextual_bindings(event.pane.id)
+
+    def _update_contextual_bindings(self, tab_id: str) -> None:
+        """Update footer bindings based on active tab"""
+        self.current_tab = tab_id
+
+        # Remove all contextual bindings first
+        contextual_keys = ["b", "s", "t", "l", "r", "i"]
+        for key in contextual_keys:
+            try:
+                self.unbind(key)
+            except Exception:
+                pass
+
+        # Add new contextual bindings based on tab
+        if tab_id == "investments-tab":
+            bindings_to_add = self.INVESTMENTS_BINDINGS
+        else:  # goods-tab
+            bindings_to_add = self.GOODS_BINDINGS
+
+        # Add each binding by extracting properties from Binding object
+        for binding in bindings_to_add:
+            self.bind(
+                keys=binding.key,
+                action=binding.action,
+                description=binding.description,
+                show=binding.show
+            )
 
     def refresh_all(self):
         if self.stats_panel:
@@ -278,13 +356,22 @@ class MerchantTycoon(App):
         self.game_log(msg)
         self.refresh_all()
 
-    def action_details(self):
+    def action_goods_transactions(self):
         """Show detailed inventory with purchase lots"""
         if not self.engine.state.inventory:
             self.game_log("No goods in inventory!")
             return
 
-        modal = InventoryDetailsModal(self.engine)
+        modal = InventoryTransactionsModal(self.engine)
+        self.push_screen(modal)
+
+    def action_investment_transactions(self):
+        """Show detailed investments with purchase lots"""
+        if not self.engine.state.portfolio:
+            self.game_log("No investments in portfolio!")
+            return
+
+        modal = InvestmentsTransactionsModal(self.engine)
         self.push_screen(modal)
 
     def action_help(self):
@@ -303,6 +390,33 @@ class MerchantTycoon(App):
                 self.game_log(msg)
         except Exception as e:
             self.game_log(f"Save failed: {e}")
+
+    def action_load(self):
+        """Load saved game from disk."""
+        if not is_save_present():
+            self.game_log("No save file found!")
+            return
+
+        def _confirm_load():
+            try:
+                data = load_game()
+                if data and apply_loaded_game(self.engine, data):
+                    msgs = data.get("messages") or []
+                    if self.message_log and msgs:
+                        self.message_log.set_messages(msgs)
+                    self.game_log("Game loaded successfully.")
+                    self.refresh_all()
+                else:
+                    self.game_log("Failed to load save file.")
+            except Exception as e:
+                self.game_log(f"Load failed: {e}")
+
+        confirm = ConfirmModal(
+            "Load Game",
+            "Load saved game? Current progress will be lost if not saved.",
+            on_confirm=_confirm_load,
+        )
+        self.push_screen(confirm)
 
     def action_new_game(self):
         """Ask for confirmation, then delete save and reset state."""
@@ -328,6 +442,10 @@ class MerchantTycoon(App):
             on_confirm=_confirm_new,
         )
         self.push_screen(confirm)
+
+    def action_quit(self):
+        """Quit the game application."""
+        self.exit()
 
 
 def main():

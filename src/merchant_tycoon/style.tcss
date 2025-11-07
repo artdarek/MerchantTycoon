@@ -2,6 +2,39 @@ Screen {
     layout: vertical;
 }
 
+GlobalActionsBar {
+    background: $primary-darken-2;
+    color: $text;
+    height: auto;
+    padding: 1 2;
+    margin-bottom: 0;
+}
+
+#global-actions-bar {
+    height: auto;
+    align-horizontal: left;
+    content-align: left middle;
+}
+
+.action-item {
+    color: $text;
+    margin-right: 3;
+    text-style: bold;
+}
+
+/* Make top menu items clickable buttons look like flat labels */
+GlobalActionsBar Button.action-item {
+    background: transparent;
+    border: none;
+    padding: 0 1;
+    color: $text;
+}
+GlobalActionsBar Button.action-item:hover,
+GlobalActionsBar Button.action-item:focus {
+    background: $primary-darken-1;
+    text-style: bold;
+}
+
 StatsPanel {
     background: $primary;
     color: $text;
@@ -129,7 +162,7 @@ MessageLog {
     padding: 1 2;
 }
 
-#inventory-details-modal {
+#transactions-modal {
     width: 90;
     height: 35;
     border: thick $accent;
@@ -138,16 +171,16 @@ MessageLog {
     layout: vertical;
 }
 
-#details-content {
+#transactions-content {
     width: 100%;
-    height: 28;
+    height: 20;
     border: solid $primary;
     margin: 1 0;
     padding: 1;
     background: $panel;
 }
 
-#details-instructions {
+#transactions-instructions {
     text-style: italic;
     color: $text-muted;
 }
@@ -233,11 +266,6 @@ AlertModal {
 .lot-info {
     padding-left: 2;
     color: $text;
-}
-
-.profit-info {
-    padding-left: 4;
-    color: $success;
 }
 
 

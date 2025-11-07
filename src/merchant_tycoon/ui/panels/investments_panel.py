@@ -1,0 +1,83 @@
+from textual.app import ComposeResult
+from textual.widgets import Static, Label, DataTable
+from rich.text import Text
+
+from ...engine import GameEngine
+from ...models import STOCKS, COMMODITIES, CRYPTO
+
+
+class InvestmentsPanel(Static):
+    """Display player investments (stocks and commodities)"""
+
+    def __init__(self, engine: GameEngine):
+        super().__init__()
+        self.engine = engine
+
+    def compose(self) -> ComposeResult:
+        yield Label("💼 YOUR INVESTMENTS", id="investments-header", classes="panel-title")
+        yield DataTable(id="portfolio-table")
+
+    def update_investments(self):
+        table = self.query_one("#portfolio-table", DataTable)
+
+        # Initialize columns once
+        if not getattr(self, "_portfolio_table_initialized", False):
+            table.clear(columns=True)
+            table.add_columns("Symbol", "Name", "Qty", "Price", "Value", "Avg Cost", "P/L", "P/L%")
+            try:
+                table.cursor_type = "row"
+                table.show_header = True
+                table.zebra_stripes = True
+            except Exception:
+                pass
+            self._portfolio_table_initialized = True
+
+        # Clear existing rows
+        try:
+            table.clear(rows=True)
+        except Exception:
+            table.clear()
+
+        if not self.engine.state.portfolio:
+            table.add_row("(no investments)", "", "", "", "", "", "", "")
+            return
+
+        all_assets = STOCKS + COMMODITIES + CRYPTO
+
+        for symbol in sorted(self.engine.state.portfolio.keys()):
+            quantity = self.engine.state.portfolio.get(symbol, 0)
+            current_price = self.engine.asset_prices.get(symbol, 0)
+            current_value = current_price * quantity
+
+            # Calculate profit/loss from investment lots (FIFO basis)
+            lots = self.engine.state.get_investment_lots_for_asset(symbol)
+            total_cost = sum(lot.quantity * lot.purchase_price for lot in lots)
+            avg_purchase_price = (total_cost // quantity) if quantity > 0 else 0
+
+            profit = current_value - total_cost
+            profit_pct = (profit / total_cost * 100) if total_cost > 0 else 0
+
+            asset = next((a for a in all_assets if a.symbol == symbol), None)
+            asset_name = asset.name if asset else symbol
+
+            # Color profit cells
+            if profit > 0:
+                pl_cell = Text(f"${profit:+,}", style="green")
+                pl_pct_cell = Text(f"{profit_pct:+.0f}%", style="green")
+            elif profit < 0:
+                pl_cell = Text(f"${profit:+,}", style="red")
+                pl_pct_cell = Text(f"{profit_pct:+.0f}%", style="red")
+            else:
+                pl_cell = Text("$0", style="dim")
+                pl_pct_cell = Text("0%", style="dim")
+
+            table.add_row(
+                symbol,
+                asset_name,
+                str(quantity),
+                f"${current_price:,}",
+                f"${current_value:,}",
+                f"${avg_purchase_price:,}",
+                pl_cell,
+                pl_pct_cell,
+            )

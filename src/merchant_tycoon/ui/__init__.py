@@ -5,8 +5,6 @@ from .panels import (
     ExchangePricesPanel,
     InvestmentsPanel,
     MessageLog,
-)
-from .trade_panels import (
     TradeActionsPanel,
     GoodsTradeActionsPanel,
 )
@@ -15,7 +13,8 @@ from .modals import (
     CitySelectModal,
     BuyModal,
     SellModal,
-    InventoryDetailsModal,
+    InventoryTransactionsModal,
+    InvestmentsTransactionsModal,
     BuyAssetModal,
     SellAssetModal,
     HelpModal,
@@ -39,7 +38,8 @@ __all__ = [
     "CitySelectModal",
     "BuyModal",
     "SellModal",
-    "InventoryDetailsModal",
+    "InventoryTransactionsModal",
+    "InvestmentsTransactionsModal",
     "BuyAssetModal",
     "SellAssetModal",
     "HelpModal",
