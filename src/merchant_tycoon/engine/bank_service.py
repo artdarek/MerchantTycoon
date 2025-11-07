@@ -1,7 +1,7 @@
 import random
 from typing import TYPE_CHECKING
 
-from ..models import BankTransaction, Loan
+from ..model import BankTransaction, Loan
 
 if TYPE_CHECKING:
     from .game_state import GameState

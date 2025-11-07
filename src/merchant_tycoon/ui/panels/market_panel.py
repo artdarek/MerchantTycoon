@@ -3,7 +3,7 @@ from textual.widgets import Static, Label, DataTable
 from rich.text import Text
 
 from ...engine import GameEngine
-from ...models import GOODS
+from ...model import GOODS
 
 
 class MarketPanel(Static):

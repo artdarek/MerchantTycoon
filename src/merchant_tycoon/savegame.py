@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import List, Tuple, Optional, Dict, Any
 
 from .engine import GameEngine, GameState
-from .models import PurchaseLot, Transaction, InvestmentLot, BankTransaction, BankAccount, Loan
+from .model import PurchaseLot, Transaction, InvestmentLot, BankTransaction, BankAccount, Loan
 
 
 SCHEMA_VERSION = 1

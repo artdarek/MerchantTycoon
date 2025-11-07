@@ -1,7 +1,7 @@
 import random
 from typing import List, Optional
 
-from ..models import BankTransaction, STOCKS, GOODS
+from ..model import BankTransaction, STOCKS, GOODS
 
 
 class TravelEventSystem:

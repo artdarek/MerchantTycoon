@@ -4,7 +4,7 @@ from textual.widgets import Label, Button, Input, Select
 from textual.screen import ModalScreen
 
 from ...engine import GameEngine
-from ...models import GOODS
+from ...model import GOODS
 
 
 class BuyModal(ModalScreen):

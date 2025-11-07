@@ -1,7 +1,7 @@
 import random
 from typing import Dict, TYPE_CHECKING
 
-from ..models import PurchaseLot, Transaction, GOODS, CITIES
+from ..model import PurchaseLot, Transaction, GOODS, CITIES
 
 if TYPE_CHECKING:
     from .game_state import GameState
@@ -52,7 +52,7 @@ class GoodsService:
         city = CITIES[self.state.current_city]
         for good in GOODS:
             variance = random.uniform(1 - good.price_variance, 1 + good.price_variance)
-            city_mult = city.price_multiplier[good.name]
+            city_mult = city.price_multiplier.get(good.name, 1.0)
             base_price = good.base_price * city_mult * variance
             # Apply one-day modifier if present
             try:

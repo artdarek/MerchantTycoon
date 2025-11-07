@@ -5,7 +5,7 @@ from textual.screen import ModalScreen
 from rich.text import Text
 
 from ...engine import GameEngine
-from ...models import STOCKS, COMMODITIES, CRYPTO
+from ...model import STOCKS, COMMODITIES, CRYPTO
 
 
 class InvestmentsTransactionsModal(ModalScreen):

@@ -1,6 +1,6 @@
 from typing import Optional, TYPE_CHECKING
 
-from ..models import CITIES
+from ..model import CITIES
 from ..events import TravelEventSystem
 
 if TYPE_CHECKING:

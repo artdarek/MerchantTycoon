@@ -3,7 +3,7 @@ from textual.widgets import Static, Label, DataTable
 from rich.text import Text
 
 from ...engine import GameEngine
-from ...models import STOCKS, COMMODITIES, CRYPTO
+from ...model import STOCKS, COMMODITIES, CRYPTO
 
 
 class ExchangePricesPanel(Static):

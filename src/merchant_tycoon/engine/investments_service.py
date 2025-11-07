@@ -1,7 +1,7 @@
 import random
 from typing import Dict, TYPE_CHECKING
 
-from ..models import InvestmentLot, STOCKS, COMMODITIES, CRYPTO
+from ..model import InvestmentLot, STOCKS, COMMODITIES, CRYPTO
 
 if TYPE_CHECKING:
     from .game_state import GameState

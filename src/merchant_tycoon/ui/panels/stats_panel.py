@@ -2,7 +2,7 @@ from textual.app import ComposeResult
 from textual.widgets import Static, Label
 
 from ...engine import GameEngine
-from ...models import CITIES
+from ...model import CITIES
 
 
 class StatsPanel(Static):

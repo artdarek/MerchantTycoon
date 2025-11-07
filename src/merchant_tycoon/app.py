@@ -13,7 +13,7 @@ from textual.containers import Vertical, Horizontal
 from textual.widgets import Header, Footer, TabbedContent, TabPane, Static, Label, Button
 from textual.binding import Binding
 from .engine import GameEngine, GameState
-from .models import CITIES
+from .model import CITIES
 # UI modules extracted in Stage 3
 from .ui.panels import (
     StatsPanel,
