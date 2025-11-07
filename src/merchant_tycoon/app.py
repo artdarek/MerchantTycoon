@@ -349,22 +349,22 @@ class MerchantTycoon(App):
 
     def action_loan(self):
         """Take a loan"""
-        # Show today's offer rate for new loans (fixed at creation)
+        # Show today's APR offer for new loans (existing loans keep their own APR)
         try:
-            offer_rate = float(getattr(self.engine, "interest_rate", 0.10))
+            apr_offer = float(getattr(self.engine, "loan_apr_today", 0.10))
         except Exception:
-            offer_rate = 0.10
-        # Clamp to [1%, 20%] just for display safety
-        pct = int(max(1, min(20, round(offer_rate * 100))))
+            apr_offer = 0.10
+        apr_pct = f"{apr_offer*100:.2f}"
+        max_amount = 10000
         prompt = (
             "How much would you like to borrow?\n"
-            f"(Max: $10,000 | Today's interest: {pct}% per day)\n"
-            "Note: The rate is fixed for this loan at creation."
+            f"(Max: ${max_amount:,} | Today's offer: {apr_pct}% APR, accrued daily)"
         )
         modal = InputModal(
             "🏦 Bank Loan",
             prompt,
-            self._handle_loan
+            self._handle_loan,
+            str(max_amount),
         )
         self.push_screen(modal)
 
