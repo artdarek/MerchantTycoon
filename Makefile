@@ -67,16 +67,6 @@ upgrade:  ## Upgrade all packages to latest versions and update uv.lock
 run:  ## Run the game
 	PYTHONPATH=src python3 -m merchant_tycoon
 
-bin:
-	##  pyinstaller --onefile --windowed src/merchant_tycoon/__main__.py
-	pyinstaller -F -n merchant-tycoon -p src \
-	  --add-data "src/merchant_tycoon/template:merchant_tycoon/template" \
-	  src/merchant_tycoon/__main__.py && \
-	echo "Built binary at: dist/merchant-tycoon"
-
-bin-clean:  ## Remove PyInstaller build artifacts (dist/, build/, *.spec)
-	@rm -rf dist/ build/ *.spec || true
-
 clean:  ## Clean up build artifacts and cache files
 	rm -rf build/
 	rm -rf dist/
