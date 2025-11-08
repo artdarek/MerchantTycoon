@@ -1,25 +1,36 @@
-from merchant_tycoon.ui.panels import (
+from merchant_tycoon.ui.general.panels import (
     StatsPanel,
+    MessageLog,
+)
+from merchant_tycoon.ui.goods.panels import (
     MarketPanel,
+    GoodsTradeActionsPanel,
     InventoryPanel,
+)
+from merchant_tycoon.ui.investments.panels import (
     ExchangePricesPanel,
     InvestmentsPanel,
-    MessageLog,
     TradeActionsPanel,
-    GoodsTradeActionsPanel,
 )
-from merchant_tycoon.ui.modals import (
+from merchant_tycoon.ui.general.modals import (
     InputModal,
     CitySelectModal,
+    HelpModal,
+    AboutModal,
+    SplashModal,
+    AlertModal,
+    ConfirmModal,
+    CargoExtendModal,
+)
+from merchant_tycoon.ui.goods.modals import (
     BuyModal,
     SellModal,
     InventoryTransactionsModal,
-    InvestmentsTransactionsModal,
+)
+from merchant_tycoon.ui.investments.modals import (
     BuyAssetModal,
     SellAssetModal,
-    HelpModal,
-    AlertModal,
-    ConfirmModal,
+    InvestmentsTransactionsModal,
 )
 
 __all__ = [

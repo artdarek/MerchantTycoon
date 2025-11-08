@@ -4,13 +4,13 @@ from typing import TYPE_CHECKING
 from merchant_tycoon.model import BankTransaction, Loan
 
 if TYPE_CHECKING:
-    from merchant_tycoon.engine.contracts import GameStateLike
+    from merchant_tycoon.engine.game_state import GameState
 
 
 class BankService:
     """Service for handling banking operations and loans"""
 
-    def __init__(self, state: "GameStateLike"):
+    def __init__(self, state: "GameState"):
         self.state = state
         # Loan interest (offer of the day) — APR for new loans
         self.loan_apr_today = 0.10
