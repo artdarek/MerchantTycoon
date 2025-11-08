@@ -24,19 +24,29 @@ class MessageLog(Static):
         yield Label("📜 MESSAGES", id="log-header", classes="panel-title")
         yield ScrollableContainer(id="log-content")
 
+    def on_mount(self) -> None:
+        # Ensure initial render happens after the container exists
+        try:
+            self._update_display()
+        except Exception:
+            pass
+
     def add_entry(self, ts_iso: str, text: str):
         self.messages.insert(0, {"ts": str(ts_iso), "text": str(text)})
-        if len(self.messages) > 10:
-            self.messages = self.messages[:10]
+        limit = int(getattr(SETTINGS.saveui, "messages_save_limit", 10))
+        if len(self.messages) > limit:
+            self.messages = self.messages[:limit]
         self._update_display()
 
     def set_messages(self, messages: List[Dict[str, str]]):
-        """Replace the log with provided messages (newest first)."""
-        # Expect list of dicts: {"ts": ISO datetime, "text": str}
+        """Replace the log with provided messages (newest first).
+        Expects list of dict entries: {"ts": ISO datetime, "text": str}.
+        """
+        limit = int(getattr(SETTINGS.saveui, "messages_save_limit", 10))
         self.messages = [
             {"ts": str(m.get("ts", "")), "text": str(m.get("text", ""))}
             for m in (messages or [])
-        ][:10]
+        ][:limit]
         self._update_display()
 
     def reset_messages(self):
@@ -47,9 +57,16 @@ class MessageLog(Static):
         self._update_display()
 
     def _update_display(self):
-        container = self.query_one("#log-content", ScrollableContainer)
-        container.remove_children()
-        for e in self.messages:
+        try:
+            container = self.query_one("#log-content", ScrollableContainer)
+        except Exception:
+            return
+        try:
+            container.remove_children()
+        except Exception:
+            pass
+        # Render oldest first so newest is at the bottom
+        for e in reversed(self.messages):
             ts = e.get("ts", "")
             text = e.get("text", "")
             display = text
@@ -64,3 +81,8 @@ class MessageLog(Static):
                     else:
                         display = f"[{ts}] {text}"
             container.mount(Label(display))
+        # Ensure view is scrolled to the end (newest entries are last)
+        try:
+            container.scroll_end(animate=False)
+        except Exception:
+            pass

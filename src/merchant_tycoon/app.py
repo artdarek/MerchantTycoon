@@ -194,7 +194,8 @@ class MerchantTycoon(App):
             if self.engine.savegame_service.is_save_present():
                 data = self.engine.savegame_service.load()
                 if data and self.engine.savegame_service.apply(data):
-                    msgs = data.get("messages") or []
+                    # Load messages from top-level or (rarely) nested under state
+                    msgs = data.get("messages") or (data.get("state") or {}).get("messages") or []
                     if self.message_log and msgs:
                         self.message_log.set_messages(msgs)
                     self.game_log("Loaded savegame.")
