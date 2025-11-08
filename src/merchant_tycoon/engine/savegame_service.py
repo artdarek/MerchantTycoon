@@ -118,6 +118,9 @@ class SavegameService:
     def apply(self, data: Dict[str, Any]) -> bool:
         """Apply loaded payload to the current engine and state in-place."""
         try:
+            # Strictly require current schema version
+            if int(data.get("schema_version", -1)) != SCHEMA_VERSION:
+                return False
             engine = self.engine
             state = engine.state
             s = data.get("state") or {}
@@ -235,19 +238,11 @@ class SavegameService:
                 bank.balance = int(bank_data.get("balance", bank.balance))
             except Exception:
                 pass
-            # Read APR (v2). Fallback: migrate from legacy daily (v1)
-            rate_annual = bank_data.get("rate_annual")
-            if rate_annual is None:
-                try:
-                    legacy_daily = float(bank_data.get("rate", 0.0))
-                except Exception:
-                    legacy_daily = 0.0
-                bank.interest_rate_annual = legacy_daily * 365.0 if legacy_daily > 0 else getattr(bank, "interest_rate_annual", 0.02)
-            else:
-                try:
-                    bank.interest_rate_annual = float(rate_annual)
-                except Exception:
-                    pass
+            # Read APR (v2 only)
+            try:
+                bank.interest_rate_annual = float(bank_data.get("rate_annual", bank.interest_rate_annual))
+            except Exception:
+                pass
             try:
                 bank.accrued_interest = float(bank_data.get("accrued", bank.accrued_interest))
             except Exception:
@@ -278,7 +273,7 @@ class SavegameService:
             except Exception:
                 pass
 
-            # Restore today's loan offer (APR). For legacy saves, fallback handled via default.
+            # Restore today's loan offer (APR)
             try:
                 engine.loan_apr_today = float(s.get("loan_rate_annual", getattr(engine, "loan_apr_today", 0.10)))
             except Exception:
@@ -290,16 +285,7 @@ class SavegameService:
 
     @classmethod
     def delete_save(cls) -> None:
-        try:
-            cls.get_save_path().unlink(missing_ok=True)
-        except TypeError:
-            # Python < 3.8 compatibility if needed
-            path = cls.get_save_path()
-            if path.exists():
-                try:
-                    path.unlink()
-                except Exception:
-                    pass
+        cls.get_save_path().unlink(missing_ok=True)
 
     # ---------- Private helpers (conversion) ----------
     @staticmethod
@@ -424,16 +410,7 @@ class SavegameService:
         result: List[Loan] = []
         for d in items or []:
             try:
-                # APR-first (v2). Migrate from legacy daily if needed (v1).
-                rate_annual = d.get("rate_annual")
-                if rate_annual is None or float(rate_annual) <= 0:
-                    try:
-                        rate_daily_legacy = float(d.get("rate_daily", 0.0))
-                    except Exception:
-                        rate_daily_legacy = 0.0
-                    rate_annual = rate_daily_legacy * 365.0 if rate_daily_legacy > 0 else 0.10
-                else:
-                    rate_annual = float(rate_annual)
+                rate_annual = float(d.get("rate_annual", 0.10))
                 # Clamp APR to range 1%–20%
                 try:
                     rate_annual = max(0.01, min(0.20, rate_annual))
