@@ -4,7 +4,7 @@ from typing import List, Optional
 from merchant_tycoon.model import BankTransaction, STOCKS, GOODS
 
 
-class TravelEventSystem:
+class TravelEventsService:
     """Weighted random travel events.
 
     Exposes a single method `trigger(engine)` that performs at most one event and
@@ -16,13 +16,18 @@ class TravelEventSystem:
     - This class is stateless; all state is taken from the provided engine instance.
     """
 
-    def trigger(self, engine) -> Optional[tuple[str, bool]]:
+    def trigger(self, state, prices: dict, asset_prices: dict) -> Optional[tuple[str, bool]]:
+        """Trigger at most one weighted random travel event.
+
+        Parameters:
+            state: Game state object with inventory, cash, bank, etc.
+            prices: dict of current goods prices {good_name: price}
+            asset_prices: dict of asset prices {symbol: price}
+        """
         # Overall chance that any event occurs this travel
         if random.random() >= 0.25:  # 25% chance of any event
             return None
-
-        state = engine.state
-        prices = engine.prices or {}
+        prices = prices or {}
 
         def inv_total_value() -> int:
             total = 0
@@ -190,7 +195,7 @@ class TravelEventSystem:
                 return None
             sym = random.choice(held_stocks)
             qty = state.portfolio.get(sym, 0)
-            price = engine.asset_prices.get(sym, 0) or 0
+            price = (asset_prices or {}).get(sym, 0) or 0
             if qty <= 0 or price <= 0:
                 return None
             # 0.5% – 2% of position value

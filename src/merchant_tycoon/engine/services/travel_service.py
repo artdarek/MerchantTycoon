@@ -1,13 +1,13 @@
 from typing import Optional, TYPE_CHECKING
 
 from merchant_tycoon.model import CITIES
-from merchant_tycoon.events import TravelEventSystem
 
 if TYPE_CHECKING:
     from merchant_tycoon.engine.game_state import GameState
-    from merchant_tycoon.engine.bank_service import BankService
-    from merchant_tycoon.engine.goods_service import GoodsService
-    from merchant_tycoon.engine.investments_service import InvestmentsService
+    from merchant_tycoon.engine.services.bank_service import BankService
+    from merchant_tycoon.engine.services.goods_service import GoodsService
+    from merchant_tycoon.engine.services.investments_service import InvestmentsService
+    from merchant_tycoon.engine.services.travel_events_service import TravelEventsService
 
 
 class TravelService:
@@ -19,11 +19,13 @@ class TravelService:
         bank_service: "BankService",
         goods_service: "GoodsService",
         investments_service: "InvestmentsService",
+        events_service: "TravelEventsService",
     ):
         self.state = state
         self.bank_service = bank_service
         self.goods_service = goods_service
         self.investments_service = investments_service
+        self.events_service = events_service
 
     def travel(self, city_index: int) -> tuple[bool, str, Optional[tuple[str, bool]]]:
         """Travel to a new city. Returns (success, message, event_data) where event_data is (event_msg, is_positive)"""
@@ -66,7 +68,14 @@ class TravelService:
         self.bank_service.accrue_bank_interest()
 
         # Random event (only affects goods, not investments!)
-        event_data = self._random_event()
+        try:
+            event_data = self.events_service.trigger(
+                self.state,
+                self.goods_service.prices,
+                getattr(self.investments_service, "asset_prices", {}),
+            )
+        except Exception:
+            event_data = None
 
         # Generate new prices for goods and assets
         self.goods_service.generate_prices()
@@ -78,25 +87,3 @@ class TravelService:
             f"Travel fee charged: ${travel_fee} for route {origin_city.name} → {destination_city.name}"
         )
         return True, msg, event_data
-
-    def _random_event(self) -> Optional[tuple[str, bool]]:
-        """Generate a weighted random travel event. Returns (message, is_positive) or None.
-        Delegates to TravelEventSystem to keep engine slim.
-
-        Note: This method needs access to GameEngine-like interface for event system.
-        We'll need to pass a wrapper or the actual GameEngine reference.
-        """
-        try:
-            # TravelEventSystem expects an engine-like object with state and prices
-            # For now, we create a minimal wrapper
-            class EngineWrapper:
-                def __init__(self, state, goods_service):
-                    self.state = state
-                    self.prices = goods_service.prices
-                    self.asset_prices = {}  # Events don't affect investments
-
-            wrapper = EngineWrapper(self.state, self.goods_service)
-            return TravelEventSystem().trigger(wrapper)
-        except Exception:
-            # Fail-safe: no event if anything goes wrong
-            return None

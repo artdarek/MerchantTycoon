@@ -1,11 +1,12 @@
 from typing import Dict, Optional
 
 from merchant_tycoon.engine.game_state import GameState
-from merchant_tycoon.engine.bank_service import BankService
-from merchant_tycoon.engine.goods_service import GoodsService
-from merchant_tycoon.engine.investments_service import InvestmentsService
-from merchant_tycoon.engine.travel_service import TravelService
-from merchant_tycoon.engine.savegame_service import SavegameService
+from merchant_tycoon.engine.services.bank_service import BankService
+from merchant_tycoon.engine.services.goods_service import GoodsService
+from merchant_tycoon.engine.services.investments_service import InvestmentsService
+from merchant_tycoon.engine.services.travel_service import TravelService
+from merchant_tycoon.engine.services.travel_events_service import TravelEventsService
+from merchant_tycoon.engine.services.savegame_service import SavegameService
 
 
 class GameEngine:
@@ -25,11 +26,14 @@ class GameEngine:
         self.bank_service = BankService(self.state)
         self.goods_service = GoodsService(self.state, self.prices, self.previous_prices)
         self.investments_service = InvestmentsService(self.state, self.asset_prices, self.previous_asset_prices)
+        # Event service for travel random encounters
+        self.travel_events_service = TravelEventsService()
         self.travel_service = TravelService(
             self.state,
             self.bank_service,
             self.goods_service,
             self.investments_service,
+            self.travel_events_service,
         )
         # Savegame service (persistence)
         self.savegame_service = SavegameService(self)
@@ -218,7 +222,3 @@ class GameEngine:
     def travel(self, city_index: int) -> tuple[bool, str, Optional[tuple[str, bool]]]:
         """Travel to a new city"""
         return self.travel_service.travel(city_index)
-
-    def _random_event(self) -> Optional[tuple[str, bool]]:
-        """Generate a weighted random travel event"""
-        return self.travel_service._random_event()
