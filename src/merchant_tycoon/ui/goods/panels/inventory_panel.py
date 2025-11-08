@@ -10,6 +10,7 @@ class InventoryPanel(Static):
     def __init__(self, engine: GameEngine):
         super().__init__()
         self.engine = engine
+        self._row_to_product = {}
 
     def compose(self) -> ComposeResult:
         yield Label("📦 YOUR INVENTORY", id="inventory-header", classes="panel-title")
@@ -35,6 +36,7 @@ class InventoryPanel(Static):
             table.clear(rows=True)
         except Exception:
             table.clear()
+        self._row_to_product = {}
 
         if not self.engine.state.inventory:
             # Show a single informative row
@@ -53,7 +55,7 @@ class InventoryPanel(Static):
             profit = current_value - total_cost
             profit_pct = (profit / total_cost * 100) if total_cost > 0 else 0
 
-            table.add_row(
+            row_key = table.add_row(
                 good_name,
                 str(quantity),
                 f"${current_price:,}",
@@ -62,3 +64,27 @@ class InventoryPanel(Static):
                 f"${profit:+,}",
                 f"{profit_pct:+.0f}%",
             )
+            try:
+                self._row_to_product[row_key] = good_name
+            except Exception:
+                pass
+
+    def on_data_table_row_selected(self, event: DataTable.RowSelected) -> None:
+        # Open Sell modal for the clicked product with default = owned quantity
+        try:
+            table = event.data_table
+        except Exception:
+            table = None
+        if not table or getattr(table, "id", None) != "inventory-table":
+            return
+        product = self._row_to_product.get(getattr(event, "row_key", None))
+        if not product:
+            return
+        owned = int(self.engine.state.inventory.get(product, 0))
+        if owned <= 0:
+            return
+        try:
+            from ..modals import SellModal
+            self.app.push_screen(SellModal(self.engine, self.app._handle_sell, default_product=product, default_quantity=owned))
+        except Exception:
+            pass

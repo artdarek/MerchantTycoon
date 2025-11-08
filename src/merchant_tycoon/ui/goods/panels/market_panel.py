@@ -12,6 +12,7 @@ class MarketPanel(Static):
     def __init__(self, engine: GameEngine):
         super().__init__()
         self.engine = engine
+        self._row_to_product = {}
 
     def compose(self) -> ComposeResult:
         yield Label("🏪 MARKET PRICES", id="market-header", classes="panel-title")
@@ -40,6 +41,8 @@ class MarketPanel(Static):
         except Exception:
             # Fallback if signature differs
             table.clear()
+        # Rebuild row->product mapping
+        self._row_to_product = {}
 
         for good in GOODS:
             price = self.engine.prices.get(good.name, 0)
@@ -68,10 +71,37 @@ class MarketPanel(Static):
             else:
                 minp = maxp = "-"
 
-            table.add_row(
+            row_key = table.add_row(
                 good.name,
                 f"${price:,}",
                 change_cell,
                 minp,
                 maxp,
             )
+            try:
+                self._row_to_product[row_key] = good.name
+            except Exception:
+                pass
+
+    def on_data_table_row_selected(self, event: DataTable.RowSelected) -> None:
+        # Open Buy modal for the clicked product with default = max buyable now
+        try:
+            table = event.data_table
+        except Exception:
+            table = None
+        if not table or getattr(table, "id", None) != "market-table":
+            return
+        product = self._row_to_product.get(getattr(event, "row_key", None))
+        if not product:
+            return
+        # Compute max quantity we can buy now (cash and cargo space constraints)
+        price = int(self.engine.prices.get(product, 0))
+        cash = int(self.engine.state.cash)
+        available_space = int(self.engine.state.max_inventory - self.engine.state.get_inventory_count())
+        max_affordable = (cash // price) if price > 0 else 0
+        max_buyable = min(max_affordable, available_space)
+        try:
+            from ..modals import BuyModal
+            self.app.push_screen(BuyModal(self.engine, self.app._handle_buy, default_product=product, default_quantity=max_buyable))
+        except Exception:
+            pass

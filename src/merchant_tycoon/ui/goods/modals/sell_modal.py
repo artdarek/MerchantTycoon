@@ -9,11 +9,14 @@ from merchant_tycoon.engine import GameEngine
 class SellModal(ModalScreen):
     """Modal for selling goods with product selector and quantity input"""
 
-    def __init__(self, engine: GameEngine, callback):
+    def __init__(self, engine: GameEngine, callback, default_product: str | None = None, default_quantity: int | None = None):
         super().__init__()
         self.engine = engine
         self.callback = callback
         self.max_quantities = {}  # Store max quantity for each product
+        self.default_product = default_product
+        self.default_quantity = default_quantity
+        self._suppress_autofill = False
 
     def compose(self) -> ComposeResult:
         with Container(id="sell-modal"):
@@ -42,8 +45,31 @@ class SellModal(ModalScreen):
                 yield Button("Sell", variant="primary", id="confirm-btn")
                 yield Button("Cancel", variant="default", id="cancel-btn")
 
+    def on_mount(self) -> None:
+        # Preselect product and quantity if provided
+        try:
+            select_widget = self.query_one("#product-select", Select)
+            input_widget = self.query_one("#quantity-input", Input)
+        except Exception:
+            return
+        if self.default_product:
+            try:
+                self._suppress_autofill = True
+                select_widget.value = self.default_product
+            except Exception:
+                pass
+            finally:
+                self._suppress_autofill = False
+        if self.default_quantity is not None:
+            try:
+                input_widget.value = str(int(self.default_quantity))
+            except Exception:
+                pass
+
     def on_select_changed(self, event: Select.Changed) -> None:
         """Auto-fill quantity when product is selected"""
+        if getattr(self, "_suppress_autofill", False):
+            return
         if event.select.id == "product-select" and event.value:
             max_qty = self.max_quantities.get(event.value, 0)
             input_widget = self.query_one("#quantity-input", Input)
