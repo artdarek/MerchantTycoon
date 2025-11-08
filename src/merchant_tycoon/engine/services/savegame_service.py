@@ -83,7 +83,7 @@ class SavegameService:
                     # Loans list (multi-loan support).
                     "loans": self._loans_to_dicts(state.loans),
                     # Current global loan rate offer (APR)
-                    "loan_rate_annual": float(getattr(engine, "loan_apr_today", 0.10)),
+                    "loan_rate_annual": float(getattr(engine.bank_service, "loan_apr_today", 0.10)),
                     # Bank section (APR only)
                     "bank": {
                         "balance": bank.balance,
@@ -186,7 +186,7 @@ class SavegameService:
 
             # Backward compatibility for debt (aggregate from loans)
             try:
-                state.debt = engine._sync_total_debt()
+                state.debt = engine.bank_service._sync_total_debt()
             except Exception:
                 pass
 
@@ -291,7 +291,9 @@ class SavegameService:
 
             # Restore today's loan offer (APR)
             try:
-                engine.loan_apr_today = float(s.get("loan_rate_annual", getattr(engine, "loan_apr_today", 0.10)))
+                engine.bank_service.loan_apr_today = float(
+                    s.get("loan_rate_annual", getattr(engine.bank_service, "loan_apr_today", 0.10))
+                )
             except Exception:
                 pass
 

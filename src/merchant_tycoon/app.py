@@ -371,7 +371,7 @@ class MerchantTycoon(App):
         """Take a loan"""
         # Show today's APR offer for new loans (existing loans keep their own APR)
         try:
-            apr_offer = float(getattr(self.engine, "loan_apr_today", 0.10))
+            apr_offer = float(getattr(self.engine.bank_service, "loan_apr_today", 0.10))
         except Exception:
             apr_offer = 0.10
         apr_pct = f"{apr_offer*100:.2f}"

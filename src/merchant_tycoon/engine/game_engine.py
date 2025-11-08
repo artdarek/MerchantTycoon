@@ -48,9 +48,10 @@ class GameEngine:
 
 
         # Ensure aggregate debt synchronized with loans list
-        self._sync_total_debt()
+        self.bank_service._sync_total_debt()
 
     # ---------- Lifecycle helpers ----------
+
     def reset_state(self) -> None:
         """Reset the engine to a fresh GameState and rebind all services.
         Keeps the same engine instance so UI references remain valid.
@@ -92,10 +93,9 @@ class GameEngine:
         if getattr(self.state.bank, "last_interest_day", 0) == 0:
             self.state.bank.last_interest_day = self.state.day
 
-
         # Ensure aggregate debt synchronized with loans list
         try:
-            self._sync_total_debt()
+            self.bank_service._sync_total_debt()
         except Exception:
             pass
         # Clear price history on reset
@@ -103,6 +103,8 @@ class GameEngine:
             self.state.price_history.clear()
         except Exception:
             self.state.price_history = {}
+
+    # ---------- Global operations ----------
 
     def new_game(self) -> None:
         """Start a new game using a fresh GameState and regenerated prices."""
@@ -117,23 +119,13 @@ class GameEngine:
         except Exception:
             pass
 
-    # Legacy properties for backward compatibility
-    @property
-    def loan_apr_today(self) -> float:
-        """Legacy property - delegates to bank_service"""
-        return self.bank_service.loan_apr_today
+    # ---------- Travel operations ----------
 
-    @loan_apr_today.setter
-    def loan_apr_today(self, value: float):
-        """Legacy property setter - delegates to bank_service"""
-        self.bank_service.loan_apr_today = value
+    def travel(self, city_index: int) -> tuple[bool, str, Optional[tuple[str, bool]]]:
+        """Travel to a new city"""
+        return self.travel_service.travel(city_index)
 
-    # Removed: legacy daily `interest_rate` property (APR is the source of truth)
-
-    # Bank operations - delegate to BankService
-    def get_bank_daily_rate(self) -> float:
-        """Return today's bank daily rate"""
-        return self.bank_service.get_bank_daily_rate()
+    # ---------- Bank operations ----------
 
     def randomize_daily_rates(self) -> None:
         """Randomize bank APR and loan APR offer"""
@@ -163,31 +155,11 @@ class GameEngine:
         """Repay loan (legacy - oldest active loan)"""
         return self.bank_service.repay_loan(amount)
 
-    def _sync_total_debt(self) -> int:
-        """Sync aggregate debt from loans list"""
-        return self.bank_service._sync_total_debt()
+    # ---------- Goods operations ----------
 
-    # Goods operations - delegate to GoodsService
     def generate_prices(self) -> None:
         """Generate random prices for current city"""
         self.goods_service.generate_prices()
-        # Update rolling price history (keep last 10 per good)
-        try:
-            hist = self.state.price_history
-        except Exception:
-            hist = {}
-            self.state.price_history = hist
-        for name, price in (self.prices or {}).items():
-            try:
-                seq = hist.get(name)
-                if seq is None:
-                    seq = []
-                    hist[name] = seq
-                seq.append(int(price))
-                if len(seq) > 10:
-                    del seq[:-10]
-            except Exception:
-                pass
 
     def buy(self, good_name: str, quantity: int) -> tuple[bool, str]:
         """Buy goods"""
@@ -205,7 +177,8 @@ class GameEngine:
         """
         return self.goods_service.extend_cargo()
 
-    # Investment operations - delegate to InvestmentsService
+    # ---------- Investment operation ----------
+
     def generate_asset_prices(self) -> None:
         """Generate random prices for stocks and commodities"""
         self.investments_service.generate_asset_prices()
@@ -217,8 +190,3 @@ class GameEngine:
     def sell_asset(self, symbol: str, quantity: int) -> tuple[bool, str]:
         """Sell stocks or commodities using FIFO"""
         return self.investments_service.sell_asset(symbol, quantity)
-
-    # Travel operations - delegate to TravelService
-    def travel(self, city_index: int) -> tuple[bool, str, Optional[tuple[str, bool]]]:
-        """Travel to a new city"""
-        return self.travel_service.travel(city_index)

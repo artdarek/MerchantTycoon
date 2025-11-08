@@ -31,6 +31,6 @@ class AccountBalancePanel(Static):
             apr = float(getattr(bank, 'interest_rate_annual', 0.02))
         except Exception:
             apr = 0.02
-        daily = self.engine.get_bank_daily_rate()
+        daily = self.engine.bank_service.get_bank_daily_rate()
         rate_lbl.update(f"APR: {apr * 100:.2f}% (Daily: {daily * 100:.4f}%)")
         acc_lbl.update(f"Accrued: ${int(bank.accrued_interest):,}" if bank.accrued_interest >= 1 else "Accrued: <$1")

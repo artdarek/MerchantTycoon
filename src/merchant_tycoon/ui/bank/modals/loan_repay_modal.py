@@ -27,7 +27,7 @@ class LoanRepayModal(ModalScreen):
 
             # Informational note about rates (APR)
             try:
-                offer_pct = float(getattr(self.engine, "loan_apr_today", 0.10)) * 100.0
+                offer_pct = float(getattr(self.engine.bank_service, "loan_apr_today", 0.10)) * 100.0
             except Exception:
                 offer_pct = 10.0
             try:

@@ -27,7 +27,7 @@ class LoanBalancePanel(Static):
         debt_lbl.update(f"Debt: ${state.debt:,}")
         # Display today's loan offer APR and derived daily rate
         try:
-            apr = float(getattr(self.engine, 'loan_apr_today', 0.10))
+            apr = float(getattr(self.engine.bank_service, 'loan_apr_today', 0.10))
         except Exception:
             apr = 0.10
         daily = apr / 365.0
