@@ -27,7 +27,25 @@ class InvestmentsService:
             variance = random.uniform(1 - asset.price_variance, 1 + asset.price_variance)
             price = asset.base_price * variance
             # Always convert to int and ensure minimum $1
-            self.asset_prices[asset.symbol] = max(1, int(price))
+            p = max(1, int(price))
+            self.asset_prices[asset.symbol] = p
+
+        # Update rolling price history for assets (reuse state's price_history)
+        try:
+            hist = getattr(self.state, "price_history", None)
+            if hist is None:
+                hist = {}
+                self.state.price_history = hist
+            for symbol, price in (self.asset_prices or {}).items():
+                seq = hist.get(symbol)
+                if seq is None:
+                    seq = []
+                    hist[symbol] = seq
+                seq.append(int(price))
+                if len(seq) > 10:
+                    del seq[:-10]
+        except Exception:
+            pass
 
     def buy_asset(self, symbol: str, quantity: int) -> tuple[bool, str]:
         """Buy stocks or commodities"""

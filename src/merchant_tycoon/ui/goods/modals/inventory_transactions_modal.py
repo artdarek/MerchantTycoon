@@ -54,10 +54,9 @@ class InventoryTransactionsModal(ModalScreen):
                     container.mount(Label("  (No purchase history available)"))
                     container.mount(Label(""))
                 else:
-                    # Calculate total profit/loss
+                    # Calculate total profit/loss using lot-level aggregation (matches table logic)
                     total_invested = sum(lot.quantity * lot.purchase_price for lot in lots)
-                    total_current_value = total_qty * current_price
-                    total_profit = total_current_value - total_invested
+                    total_profit = sum((current_price - lot.purchase_price) * lot.quantity for lot in lots)
                     total_profit_pct = (total_profit / total_invested * 100) if total_invested > 0 else 0
 
                     profit_symbol = "📈" if total_profit > 0 else "📉" if total_profit < 0 else "➖"

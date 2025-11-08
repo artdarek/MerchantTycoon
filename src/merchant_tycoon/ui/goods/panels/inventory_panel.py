@@ -1,5 +1,6 @@
 from textual.app import ComposeResult
 from textual.widgets import Static, Label, DataTable
+from rich.text import Text
 
 from merchant_tycoon.engine import GameEngine
 
@@ -52,8 +53,20 @@ class InventoryPanel(Static):
             total_cost = sum(lot.quantity * lot.purchase_price for lot in lots)
             avg_cost = (total_cost // quantity) if quantity > 0 else 0
 
-            profit = current_value - total_cost
+            # Sum lot-level P/L for robustness (equals current_value - total_cost)
+            profit = sum((current_price - lot.purchase_price) * lot.quantity for lot in lots)
             profit_pct = (profit / total_cost * 100) if total_cost > 0 else 0
+
+            # Colored cells for clarity
+            if profit > 0:
+                pl_cell = Text(f"${profit:+,}", style="green")
+                pl_pct_cell = Text(f"{profit_pct:+.1f}%", style="green")
+            elif profit < 0:
+                pl_cell = Text(f"${profit:+,}", style="red")
+                pl_pct_cell = Text(f"{profit_pct:+.1f}%", style="red")
+            else:
+                pl_cell = Text("$0", style="dim")
+                pl_pct_cell = Text("0.0%", style="dim")
 
             row_key = table.add_row(
                 good_name,
@@ -61,8 +74,8 @@ class InventoryPanel(Static):
                 f"${current_price:,}",
                 f"${current_value:,}",
                 f"${avg_cost:,}",
-                f"${profit:+,}",
-                f"{profit_pct:+.0f}%",
+                pl_cell,
+                pl_pct_cell,
             )
             try:
                 self._row_to_product[row_key] = good_name

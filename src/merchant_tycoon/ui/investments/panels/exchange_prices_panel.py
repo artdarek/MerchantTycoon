@@ -24,7 +24,7 @@ class ExchangePricesPanel(Static):
         # Initialize columns once
         if not getattr(self, "_exchange_table_initialized", False):
             table.clear(columns=True)
-            table.add_columns("Symbol", "Name", "Price", "Change", "Have", "Type")
+            table.add_columns("Symbol", "Name", "Price", "Change", "Min (10d)", "Max (10d)", "Type")
             try:
                 table.cursor_type = "row"
                 table.show_header = True
@@ -43,7 +43,7 @@ class ExchangePricesPanel(Static):
         # Helper to add asset rows
         def add_asset_row(name: str, symbol: str, asset_type: str):
             price = self.engine.asset_prices.get(symbol, 0)
-            owned = self.engine.state.portfolio.get(symbol, 0)
+            hist = (self.engine.state.price_history or {}).get(symbol, [])[-10:]
 
             change_cell = Text("─", style="dim")
             if symbol in self.engine.previous_asset_prices:
@@ -64,6 +64,18 @@ class ExchangePricesPanel(Static):
             else:
                 price_str = f"${price:,}"
 
+            # Format min/max over last 10 entries
+            if hist:
+                try:
+                    min_val = min(hist)
+                    max_val = max(hist)
+                    minp = f"${min_val:.2f}" if asset_type == "crypto" and min_val < 10 else f"${min_val:,}"
+                    maxp = f"${max_val:.2f}" if asset_type == "crypto" and max_val < 10 else f"${max_val:,}"
+                except Exception:
+                    minp = maxp = "-"
+            else:
+                minp = maxp = "-"
+
             # Display asset type
             type_display = "Stock" if asset_type == "stock" else "Commodity" if asset_type == "commodity" else "Crypto"
 
@@ -72,7 +84,8 @@ class ExchangePricesPanel(Static):
                 name,
                 price_str,
                 change_cell,
-                str(owned),
+                minp,
+                maxp,
                 type_display,
             )
             try:
