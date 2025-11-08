@@ -50,18 +50,22 @@ TabbedContent {
 TabPane {
     layout: horizontal;
     padding: 1;
+    height: 1fr;
 }
 
 MarketPanel {
     border: solid $accent;
     padding: 1;
     width: 1fr;
+    height: 1fr;
 }
 
 InventoryPanel {
     border: solid $accent;
     padding: 1;
     width: 1fr;
+    height: 1fr;
+    layout: vertical;
 }
 
 /* Goods trade actions panel (right column on Goods tab) */
@@ -73,6 +77,8 @@ GoodsTradeActionsPanel {
 
 #goods-right-col {
     width: 1fr;
+    height: 1fr;
+    layout: vertical;
 }
 
 #goods-trade-actions-bar {
@@ -131,6 +137,12 @@ MessageLog {
 
 #market-list, #inventory-list, #exchange-prices-list, #investments-list {
     height: auto;
+}
+
+/* Make inventory table grow to fill panel space */
+#inventory-table {
+    height: 1fr;
+    overflow-y: auto;
 }
 
 /* Exchange Prices footer/action bar */
