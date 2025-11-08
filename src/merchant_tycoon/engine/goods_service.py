@@ -67,6 +67,24 @@ class GoodsService:
         except Exception:
             self.state.price_modifiers = {}
 
+        # Update rolling price history (keep last 10 per good)
+        try:
+            hist = getattr(self.state, "price_history", None)
+            if hist is None:
+                hist = {}
+                self.state.price_history = hist
+            for name, price in (self.prices or {}).items():
+                seq = hist.get(name)
+                if seq is None:
+                    seq = []
+                    hist[name] = seq
+                seq.append(int(price))
+                if len(seq) > 10:
+                    del seq[:-10]
+        except Exception:
+            # Best-effort; ignore history errors
+            pass
+
     def buy(self, good_name: str, quantity: int) -> tuple[bool, str]:
         """Buy goods"""
         if good_name not in self.prices:

@@ -94,6 +94,11 @@ class GameEngine:
             self._sync_total_debt()
         except Exception:
             pass
+        # Clear price history on reset
+        try:
+            self.state.price_history.clear()
+        except Exception:
+            self.state.price_history = {}
 
     def new_game(self) -> None:
         """Start a new game using a fresh GameState and regenerated prices."""
@@ -162,6 +167,23 @@ class GameEngine:
     def generate_prices(self) -> None:
         """Generate random prices for current city"""
         self.goods_service.generate_prices()
+        # Update rolling price history (keep last 10 per good)
+        try:
+            hist = self.state.price_history
+        except Exception:
+            hist = {}
+            self.state.price_history = hist
+        for name, price in (self.prices or {}).items():
+            try:
+                seq = hist.get(name)
+                if seq is None:
+                    seq = []
+                    hist[name] = seq
+                seq.append(int(price))
+                if len(seq) > 10:
+                    del seq[:-10]
+            except Exception:
+                pass
 
     def buy(self, good_name: str, quantity: int) -> tuple[bool, str]:
         """Buy goods"""

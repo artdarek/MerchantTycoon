@@ -24,7 +24,7 @@ class MarketPanel(Static):
         # Configure columns once
         if not getattr(self, "_market_table_initialized", False):
             table.clear(columns=True)
-            table.add_columns("Product", "Price", "Change", "Have")
+            table.add_columns("Product", "Price", "Change", "Min (10d)", "Max (10d)")
             # Optional: make table non-selectable for now (purely informational)
             try:
                 table.cursor_type = "row"
@@ -43,7 +43,7 @@ class MarketPanel(Static):
 
         for good in GOODS:
             price = self.engine.prices.get(good.name, 0)
-            inventory = self.engine.state.inventory.get(good.name, 0)
+            hist = (self.engine.state.price_history or {}).get(good.name, [])[-10:]
 
             # Compute price change indicator with color
             change_cell = Text("─", style="dim")
@@ -59,9 +59,19 @@ class MarketPanel(Static):
                     else:
                         change_cell = Text("─", style="dim")
 
+            if hist:
+                try:
+                    minp = f"${min(hist):,}"
+                    maxp = f"${max(hist):,}"
+                except Exception:
+                    minp = maxp = "-"
+            else:
+                minp = maxp = "-"
+
             table.add_row(
                 good.name,
                 f"${price:,}",
                 change_cell,
-                str(inventory),
+                minp,
+                maxp,
             )

@@ -98,6 +98,8 @@ class SavegameService:
                     "goods_prev": dict(engine.previous_prices),
                     "assets": dict(engine.asset_prices),
                     "assets_prev": dict(engine.previous_asset_prices),
+                    # Optional rolling history of last 10 prices per good
+                    "goods_hist": {k: list(v[-10:]) for k, v in (getattr(state, 'price_history', {}) or {}).items()},
                 },
                 "messages": list(messages[:10]),
             }
@@ -228,6 +230,20 @@ class SavegameService:
                         engine.previous_asset_prices.update({str(k): int(v) for k, v in assets_prev.items()})
                     except Exception:
                         engine.previous_asset_prices = {str(k): int(v) for k, v in assets_prev.items()}
+            except Exception:
+                pass
+            # Restore goods price history (optional)
+            try:
+                goods_hist = prices.get("goods_hist") or {}
+                if isinstance(goods_hist, dict):
+                    ph: Dict[str, List[int]] = {}
+                    for k, v in goods_hist.items():
+                        try:
+                            seq = [int(x) for x in (v or [])][-10:]
+                        except Exception:
+                            seq = []
+                        ph[str(k)] = seq
+                    state.price_history = ph
             except Exception:
                 pass
 

@@ -31,6 +31,8 @@ class GameState:
     loans: List[Loan] = field(default_factory=list)
     # One-day price modifiers for specific goods (applied on next price generation)
     price_modifiers: Dict[str, float] = field(default_factory=dict)
+    # Rolling price history for goods: {good_name: [prices...]}
+    price_history: Dict[str, List[int]] = field(default_factory=dict)
 
     def get_inventory_count(self) -> int:
         return sum(self.inventory.values())
