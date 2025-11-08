@@ -5,7 +5,7 @@ from dataclasses import dataclass
 
 @dataclass(frozen=True)
 class TravelSettings:
-    base_fee: int = 100
+    base_fee: int = 50
     fee_per_cargo_unit: int = 1
 
 
@@ -97,8 +97,13 @@ class InvestmentsSettings:
 @dataclass(frozen=True)
 class SaveUiSettings:
     save_dir_name: str = ".merchant_tycoon"
-    messages_save_limit: int = 10
+    messages_save_limit: int = 100
     bank_transactions_limit: int = 100
+
+
+@dataclass(frozen=True)
+class GameSettings:
+    start_cash: int = 10000
 
 
 @dataclass(frozen=True)
@@ -110,6 +115,7 @@ class Settings:
     events: EventsSettings = EventsSettings()
     investments: InvestmentsSettings = InvestmentsSettings()
     saveui: SaveUiSettings = SaveUiSettings()
+    game: GameSettings = GameSettings()
 
 
 SETTINGS = Settings()

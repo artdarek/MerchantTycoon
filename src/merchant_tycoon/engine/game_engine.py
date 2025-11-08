@@ -1,6 +1,7 @@
 from typing import Dict, Optional
 
 from merchant_tycoon.engine.game_state import GameState
+from merchant_tycoon.config import SETTINGS
 from merchant_tycoon.engine.services.bank_service import BankService
 from merchant_tycoon.engine.services.goods_service import GoodsService
 from merchant_tycoon.engine.services.investments_service import InvestmentsService
@@ -15,6 +16,10 @@ class GameEngine:
     def __init__(self):
         # Initialize game state
         self.state = GameState()
+        try:
+            self.state.cash = int(SETTINGS.game.start_cash)
+        except Exception:
+            pass
 
         # Initialize price dictionaries - all prices are integers
         self.prices: Dict[str, int] = {}
@@ -58,6 +63,10 @@ class GameEngine:
         """
         # Replace state object
         self.state = GameState()
+        try:
+            self.state.cash = int(SETTINGS.game.start_cash)
+        except Exception:
+            pass
 
         # Rebind service state references
         try:
