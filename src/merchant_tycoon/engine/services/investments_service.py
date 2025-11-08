@@ -1,5 +1,6 @@
 import random
 from typing import Dict, TYPE_CHECKING, Optional
+import math
 
 from merchant_tycoon.model import InvestmentLot, STOCKS, COMMODITIES, CRYPTO
 from merchant_tycoon.config import SETTINGS
@@ -61,10 +62,15 @@ class InvestmentsService:
             return False, "Quantity must be positive"
 
         price = self.asset_prices[symbol]
-        total_cost = price * quantity
+        base_cost = price * quantity
+        # Commission on buy: rate with minimum fee
+        rate = float(getattr(SETTINGS.investments, "buy_fee_rate", 0.02))
+        min_fee = int(getattr(SETTINGS.investments, "buy_fee_min", 1))
+        fee = max(min_fee, int(math.ceil(base_cost * rate)))
+        total_cost = base_cost + fee
 
         if total_cost > self.state.cash:
-            return False, f"Not enough cash! Need ${total_cost:,}, have ${self.state.cash:,}"
+            return False, f"Not enough cash! Need ${total_cost:,} (incl. fee ${fee:,}), have ${self.state.cash:,}"
 
         self.state.cash -= total_cost
         self.state.portfolio[symbol] = self.state.portfolio.get(symbol, 0) + quantity
@@ -81,7 +87,10 @@ class InvestmentsService:
 
         try:
             if self.messenger:
-                self.messenger.info(f"Bought {quantity}x {symbol} for ${total_cost:,}", tag="investments")
+                self.messenger.info(
+                    f"Bought {quantity}x {symbol} for ${base_cost:,} (fee ${fee:,}, total ${total_cost:,})",
+                    tag="investments",
+                )
         except Exception:
             pass
         return True, f"Bought {quantity}x {symbol} for ${total_cost:,}"
@@ -97,6 +106,11 @@ class InvestmentsService:
 
         price = self.asset_prices[symbol]
         total_value = price * quantity
+        # Commission on sell: rate with minimum fee, deducted from proceeds
+        rate = float(getattr(SETTINGS.investments, "sell_fee_rate", 0.005))
+        min_fee = int(getattr(SETTINGS.investments, "sell_fee_min", 1))
+        fee = max(min_fee, int(math.ceil(total_value * rate)))
+        proceeds = max(0, total_value - fee)
 
         # Deduct from investment lots using FIFO
         remaining_to_sell = quantity
@@ -115,14 +129,39 @@ class InvestmentsService:
         for i in reversed(lots_to_remove):
             self.state.investment_lots.pop(i)
 
-        self.state.cash += total_value
+        self.state.cash += proceeds
         self.state.portfolio[symbol] -= quantity
         if self.state.portfolio[symbol] == 0:
             del self.state.portfolio[symbol]
 
         try:
             if self.messenger:
-                self.messenger.info(f"Sold {quantity}x {symbol} for ${total_value:,}", tag="investments")
+                self.messenger.info(
+                    f"Sold {quantity}x {symbol} for ${total_value:,} (fee ${fee:,}, received ${proceeds:,})",
+                    tag="investments",
+                )
         except Exception:
             pass
-        return True, f"Sold {quantity}x {symbol} for ${total_value:,}"
+        return True, f"Sold {quantity}x {symbol} for ${proceeds:,} (after fee)"
+
+    # Utility to compute max affordable quantity including buy commission
+    def max_affordable(self, cash: int, price: int) -> int:
+        if price <= 0 or cash <= 0:
+            return 0
+        rate = float(getattr(SETTINGS.investments, "buy_fee_rate", 0.02))
+        min_fee = int(getattr(SETTINGS.investments, "buy_fee_min", 1))
+        # Upper bound ignoring fee
+        hi = cash // price
+        if hi <= 0:
+            return 0
+        lo = 0
+        while lo < hi:
+            mid = (lo + hi + 1) // 2
+            base = price * mid
+            fee = max(min_fee, int(math.ceil(base * rate)))
+            total = base + fee
+            if total <= cash:
+                lo = mid
+            else:
+                hi = mid - 1
+        return lo

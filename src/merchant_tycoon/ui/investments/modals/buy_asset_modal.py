@@ -27,7 +27,11 @@ class BuyAssetModal(ModalScreen):
             all_assets = STOCKS + COMMODITIES + CRYPTO
             for asset in all_assets:
                 price = self.engine.asset_prices[asset.symbol]
-                max_affordable = self.engine.state.cash // price if price > 0 else 0
+                max_affordable = 0
+                try:
+                    max_affordable = self.engine.investments_service.max_affordable(self.engine.state.cash, price)
+                except Exception:
+                    max_affordable = self.engine.state.cash // price if price > 0 else 0
 
                 # Store max quantity for this asset
                 self.max_quantities[asset.symbol] = max_affordable

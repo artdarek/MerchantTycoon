@@ -121,9 +121,12 @@ class ExchangePricesPanel(Static):
         symbol = self._row_to_symbol.get(getattr(event, "row_key", None))
         if not symbol:
             return
-        price = float(self.engine.asset_prices.get(symbol, 0))
-        cash = float(self.engine.state.cash)
-        max_affordable = int(cash // price) if price > 0 else 0
+        price = int(self.engine.asset_prices.get(symbol, 0))
+        cash = int(self.engine.state.cash)
+        try:
+            max_affordable = int(self.engine.investments_service.max_affordable(cash, price))
+        except Exception:
+            max_affordable = int(cash // price) if price > 0 else 0
         try:
             from ..modals import BuyAssetModal
             self.app.push_screen(BuyAssetModal(self.engine, self.app._handle_asset_trade, default_symbol=symbol, default_quantity=max_affordable))
