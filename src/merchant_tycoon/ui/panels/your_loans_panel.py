@@ -71,17 +71,10 @@ class YourLoansPanel(Static):
 
             # Display per-loan APR and derived daily rate
             try:
-                apr = float(getattr(ln, 'rate_annual', 0.0))
+                apr = float(getattr(ln, 'rate_annual', 0.10))
             except Exception:
-                apr = 0.0
-            if not apr or apr <= 0:
-                try:
-                    daily = float(getattr(ln, 'rate_daily', 0.0))
-                except Exception:
-                    daily = 0.0
-                apr = daily * 365.0 if daily > 0 else 0.0
-            else:
-                daily = apr / 365.0
+                apr = 0.10
+            daily = apr / 365.0
             rate_cell = f"{apr*100:.2f}% | {daily*100:.4f}%"
 
             table.add_row(

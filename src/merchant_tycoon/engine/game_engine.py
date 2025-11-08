@@ -42,11 +42,6 @@ class GameEngine:
         if self.state.bank.last_interest_day == 0:
             self.state.bank.last_interest_day = self.state.day
 
-        # Sync legacy daily rate field from APR on startup for consistency
-        try:
-            _ = self.get_bank_daily_rate()
-        except Exception:
-            pass
 
         # Ensure aggregate debt synchronized with loans list
         self._sync_total_debt()
@@ -93,11 +88,6 @@ class GameEngine:
         if getattr(self.state.bank, "last_interest_day", 0) == 0:
             self.state.bank.last_interest_day = self.state.day
 
-        # Sync legacy daily rate field from APR for consistency
-        try:
-            _ = self.get_bank_daily_rate()
-        except Exception:
-            pass
 
         # Ensure aggregate debt synchronized with loans list
         try:
@@ -129,15 +119,7 @@ class GameEngine:
         """Legacy property setter - delegates to bank_service"""
         self.bank_service.loan_apr_today = value
 
-    @property
-    def interest_rate(self) -> float:
-        """Legacy property - delegates to bank_service"""
-        return self.bank_service.interest_rate
-
-    @interest_rate.setter
-    def interest_rate(self, value: float):
-        """Legacy property setter - delegates to bank_service"""
-        self.bank_service.interest_rate = value
+    # Removed: legacy daily `interest_rate` property (APR is the source of truth)
 
     # Bank operations - delegate to BankService
     def get_bank_daily_rate(self) -> float:

@@ -1,6 +1,6 @@
 [project]
 name = "merchant-tycoon"
-version = "1.0.0"
+version = "1.1.0"
 description = "A terminal-based trading game - buy low, sell high, and become a merchant tycoon!"
 authors = [
     {name = "artdarek", email = "artdarek@gmail.com"}
@@ -32,7 +32,7 @@ Repository = "https://github.com/artdarek/MerchantTycoon"
 Issues = "https://github.com/artdarek/MerchantTycoon/issues"
 
 [project.scripts]
-merchant-tycoon = "merchant_tycoon:main"
+merchant-tycoon = "merchant_tycoon.__main__:main"
 
 [build-system]
 requires = ["setuptools>=61.0", "wheel"]

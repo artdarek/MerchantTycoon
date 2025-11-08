@@ -1,8 +1,11 @@
-"""
-Entry point for running the game as a module: python -m merchant_tycoon
-"""
+"""Module entry point: `python -m merchant_tycoon` runs the app."""
 
-from merchant_tycoon.game import main
+from merchant_tycoon.app import MerchantTycoon
+
+
+def main() -> None:
+    app = MerchantTycoon()
+    app.run()
 
 if __name__ == "__main__":
     main()

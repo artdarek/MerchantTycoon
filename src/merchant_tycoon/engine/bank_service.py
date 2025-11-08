@@ -4,42 +4,25 @@ from typing import TYPE_CHECKING
 from merchant_tycoon.model import BankTransaction, Loan
 
 if TYPE_CHECKING:
-    from merchant_tycoon.engine.game_state import GameState
+    from merchant_tycoon.engine.contracts import GameStateLike
 
 
 class BankService:
     """Service for handling banking operations and loans"""
 
-    def __init__(self, state: "GameState"):
+    def __init__(self, state: "GameStateLike"):
         self.state = state
-        # Loan interest (offer of the day)
-        self.loan_apr_today = 0.10  # Annual APR offer for new loans
-        self.interest_rate = self.loan_apr_today / 365.0  # Legacy daily rate for compatibility
+        # Loan interest (offer of the day) — APR for new loans
+        self.loan_apr_today = 0.10
 
     def get_bank_daily_rate(self) -> float:
-        """Return today's bank daily rate derived from APR on a 365-day basis.
-        Maintains legacy `interest_rate_daily` field for backward compatibility.
-        """
+        """Return today's bank daily rate derived from APR on a 365-day basis."""
         bank = self.state.bank
         try:
-            annual = float(getattr(bank, "interest_rate_annual", 0.0))
+            annual = float(getattr(bank, "interest_rate_annual", 0.02))
         except Exception:
-            annual = 0.0
-        daily = 0.0
-        if annual and annual > 0:
-            daily = annual / 365.0
-        else:
-            # fallback to legacy stored daily rate
-            try:
-                daily = float(getattr(bank, "interest_rate_daily", 0.0005))
-            except Exception:
-                daily = 0.0005
-        # keep legacy field in sync for any existing UI/saves
-        try:
-            bank.interest_rate_daily = daily
-        except Exception:
-            pass
-        return daily
+            annual = 0.02
+        return max(0.0, annual / 365.0)
 
     def randomize_daily_rates(self) -> None:
         """Randomize bank APR and today's loan APR offer for the new day.
@@ -51,15 +34,11 @@ class BankService:
             self.state.bank.interest_rate_annual = random.uniform(0.01, 0.03)
         except Exception:
             self.state.bank.interest_rate_annual = 0.02
-        # Sync legacy daily for compatibility
-        _ = self.get_bank_daily_rate()
         # Randomize today's loan APR offer (used only for NEW loans created today)
         try:
             self.loan_apr_today = random.uniform(0.01, 0.20)
         except Exception:
             self.loan_apr_today = 0.10
-        # Keep legacy daily rate for compatibility with older UI/save keys
-        self.interest_rate = self.loan_apr_today / 365.0
 
     def deposit_to_bank(self, amount: int) -> tuple[bool, str]:
         """Deposit cash to bank account."""
@@ -144,12 +123,11 @@ class BankService:
         if amount > 10000:
             return False, "Maximum loan is $10,000"
 
-        # Determine today's APR offer (fallback to legacy daily if needed)
+        # Determine today's APR offer
         try:
             apr = float(getattr(self, "loan_apr_today", 0.10))
         except Exception:
             apr = 0.10
-        daily = apr / 365.0
 
         # Determine commission based on current unpaid loans BEFORE creating new one
         unpaid_loans = sum(1 for ln in getattr(self.state, "loans", []) if getattr(ln, "remaining", 0) > 0)
@@ -164,7 +142,6 @@ class BankService:
             principal=amount,
             remaining=total_to_repay,
             repaid=0,
-            rate_daily=daily,  # legacy compatibility
             day_taken=self.state.day,
             rate_annual=apr,
             accrued_interest=0.0,
@@ -177,7 +154,7 @@ class BankService:
         return True, (
             f"Loan approved! Received ${amount:,}. "
             f"Commission: ${fee:,} ({fee_rate*100:.0f}%). "
-            f"Total to repay: ${total_to_repay:,} (APR {apr*100:.2f}% | Daily {daily*100:.4f}%)."
+            f"Total to repay: ${total_to_repay:,} (APR {apr*100:.2f}%)."
         )
 
     def repay_loan_for(self, loan_id: int, amount: int) -> tuple[bool, str]:
@@ -234,18 +211,12 @@ class BankService:
         if self.state.loans:
             for loan in self.state.loans:
                 if getattr(loan, 'remaining', 0) > 0:
-                    # Determine daily rate from this loan's APR; fall back to legacy daily
+                    # Determine daily rate from this loan's APR
                     try:
-                        apr = float(getattr(loan, 'rate_annual', 0.0))
+                        apr = float(getattr(loan, 'rate_annual', 0.10))
                     except Exception:
-                        apr = 0.0
-                    if not apr or apr <= 0:
-                        try:
-                            daily_rate = float(getattr(loan, 'rate_daily', self.interest_rate))
-                        except Exception:
-                            daily_rate = self.interest_rate
-                    else:
-                        daily_rate = apr / 365.0
+                        apr = 0.10
+                    daily_rate = max(0.0, apr / 365.0)
                     # Accrue fractional interest then credit whole units to remaining
                     try:
                         loan.accrued_interest = float(getattr(loan, 'accrued_interest', 0.0))

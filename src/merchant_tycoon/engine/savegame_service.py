@@ -17,7 +17,7 @@ if TYPE_CHECKING:
     from merchant_tycoon.engine.game_engine import GameEngine
 
 
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 
 
 class SavegameService:
@@ -82,15 +82,12 @@ class SavegameService:
                     "investment_lots": self._inv_lots_to_dicts(state.investment_lots),
                     # Loans list (multi-loan support).
                     "loans": self._loans_to_dicts(state.loans),
-                    # Current global loan rates offer (optional; defaults on load if missing)
+                    # Current global loan rate offer (APR)
                     "loan_rate_annual": float(getattr(engine, "loan_apr_today", 0.10)),
-                    "loan_rate_daily": float(getattr(engine, "interest_rate", 0.10)),  # legacy
-                    # Bank section (backward compatible)
+                    # Bank section (APR only)
                     "bank": {
                         "balance": bank.balance,
-                        # Persist both annual APR and legacy daily rate
                         "rate_annual": getattr(bank, "interest_rate_annual", 0.02),
-                        "rate": getattr(bank, "interest_rate_daily", 0.0005),
                         "accrued": bank.accrued_interest,
                         "last_day": bank.last_interest_day,
                         "transactions": bank_txs,
@@ -238,27 +235,19 @@ class SavegameService:
                 bank.balance = int(bank_data.get("balance", bank.balance))
             except Exception:
                 pass
-            # Support both APR and legacy daily rate keys
-            try:
-                rate_annual = float(bank_data.get("rate_annual"))
-            except Exception:
-                rate_annual = None
-            try:
-                rate_daily_legacy = float(bank_data.get("rate", 0.0))
-            except Exception:
-                rate_daily_legacy = 0.0
-            if rate_annual is None or rate_annual <= 0:
+            # Read APR (v2). Fallback: migrate from legacy daily (v1)
+            rate_annual = bank_data.get("rate_annual")
+            if rate_annual is None:
                 try:
-                    bank.interest_rate_annual = rate_daily_legacy * 365.0 if rate_daily_legacy > 0 else 0.02
+                    legacy_daily = float(bank_data.get("rate", 0.0))
                 except Exception:
-                    bank.interest_rate_annual = 0.02
+                    legacy_daily = 0.0
+                bank.interest_rate_annual = legacy_daily * 365.0 if legacy_daily > 0 else getattr(bank, "interest_rate_annual", 0.02)
             else:
-                bank.interest_rate_annual = rate_annual
-            # Keep legacy daily field in sync
-            try:
-                bank.interest_rate_daily = bank.interest_rate_annual / 365.0
-            except Exception:
-                pass
+                try:
+                    bank.interest_rate_annual = float(rate_annual)
+                except Exception:
+                    pass
             try:
                 bank.accrued_interest = float(bank_data.get("accrued", bank.accrued_interest))
             except Exception:
@@ -289,14 +278,9 @@ class SavegameService:
             except Exception:
                 pass
 
-            # Restore today's loan offer (APR) and legacy daily for compatibility
+            # Restore today's loan offer (APR). For legacy saves, fallback handled via default.
             try:
                 engine.loan_apr_today = float(s.get("loan_rate_annual", getattr(engine, "loan_apr_today", 0.10)))
-            except Exception:
-                pass
-            try:
-                # legacy
-                engine.interest_rate = float(s.get("loan_rate_daily", getattr(engine, "interest_rate", 0.10)))
             except Exception:
                 pass
 
@@ -424,9 +408,8 @@ class SavegameService:
                         "principal": int(getattr(ln, "principal", 0)),
                         "remaining": int(getattr(ln, "remaining", 0)),
                         "repaid": int(getattr(ln, "repaid", 0)),
-                        # Persist both APR and legacy daily for compatibility
+                        # Persist APR only in v2
                         "rate_annual": float(getattr(ln, "rate_annual", 0.0)),
-                        "rate_daily": float(getattr(ln, "rate_daily", 0.0)),
                         "accrued_interest": float(getattr(ln, "accrued_interest", 0.0)),
                         "day_taken": int(getattr(ln, "day_taken", 0)),
                     }
@@ -441,20 +424,16 @@ class SavegameService:
         result: List[Loan] = []
         for d in items or []:
             try:
-                # Prefer APR if present; otherwise derive from legacy daily
-                try:
-                    rate_annual = float(d.get("rate_annual"))
-                except Exception:
-                    rate_annual = None
-                try:
-                    rate_daily_legacy = float(d.get("rate_daily", 0.0))
-                except Exception:
-                    rate_daily_legacy = 0.0
-                if rate_annual is None or rate_annual <= 0:
-                    if rate_daily_legacy > 0:
-                        rate_annual = rate_daily_legacy * 365.0
-                    else:
-                        rate_annual = 0.10  # sensible default APR for legacy saves
+                # APR-first (v2). Migrate from legacy daily if needed (v1).
+                rate_annual = d.get("rate_annual")
+                if rate_annual is None or float(rate_annual) <= 0:
+                    try:
+                        rate_daily_legacy = float(d.get("rate_daily", 0.0))
+                    except Exception:
+                        rate_daily_legacy = 0.0
+                    rate_annual = rate_daily_legacy * 365.0 if rate_daily_legacy > 0 else 0.10
+                else:
+                    rate_annual = float(rate_annual)
                 # Clamp APR to range 1%–20%
                 try:
                     rate_annual = max(0.01, min(0.20, rate_annual))
@@ -471,7 +450,6 @@ class SavegameService:
                         principal=int(d.get("principal", 0)),
                         remaining=int(d.get("remaining", 0)),
                         repaid=int(d.get("repaid", 0)),
-                        rate_daily=rate_daily_legacy if rate_daily_legacy > 0 else rate_annual / 365.0,
                         day_taken=int(d.get("day_taken", 0)),
                         rate_annual=rate_annual,
                         accrued_interest=accrued,

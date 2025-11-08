@@ -7,6 +7,7 @@ from merchant_tycoon.ui.modals.investments_transactions_modal import Investments
 from merchant_tycoon.ui.modals.buy_asset_modal import BuyAssetModal
 from merchant_tycoon.ui.modals.sell_asset_modal import SellAssetModal
 from merchant_tycoon.ui.modals.help_modal import HelpModal
+from merchant_tycoon.ui.modals.about_modal import AboutModal
 from merchant_tycoon.ui.modals.alert_modal import AlertModal
 from merchant_tycoon.ui.modals.confirm_modal import ConfirmModal
 from merchant_tycoon.ui.modals.loan_repay_modal import LoanRepayModal
@@ -22,6 +23,7 @@ __all__ = [
     "BuyAssetModal",
     "SellAssetModal",
     "HelpModal",
+    "AboutModal",
     "AlertModal",
     "ConfirmModal",
     "LoanRepayModal",

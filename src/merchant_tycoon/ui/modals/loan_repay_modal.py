@@ -25,16 +25,19 @@ class LoanRepayModal(ModalScreen):
         with Container(id="repay-modal"):
             yield Label("💳 Repay Loan", id="modal-title")
 
-            # Informational note about rates
+            # Informational note about rates (APR)
             try:
-                offer_pct = int(max(1, min(20, round(float(getattr(self.engine, "interest_rate", 0.10)) * 100))))
+                offer_pct = float(getattr(self.engine, "loan_apr_today", 0.10)) * 100.0
             except Exception:
-                offer_pct = 10
+                offer_pct = 10.0
             try:
-                bank_pct = max(0.0, float(getattr(self.engine.state.bank, "interest_rate_daily", 0.0)) * 100)
+                bank_apr_pct = float(getattr(self.engine.state.bank, "interest_rate_annual", 0.02)) * 100.0
             except Exception:
-                bank_pct = 0.0
-            yield Label(f"Today's new-loan rate: {offer_pct}% per day · Bank savings rate: {bank_pct:.1f}%", id="repay-rates-info")
+                bank_apr_pct = 2.0
+            yield Label(
+                f"Today's new-loan APR: {offer_pct:.1f}% · Bank savings APR: {bank_apr_pct:.1f}%",
+                id="repay-rates-info",
+            )
             yield Label("Note: Each loan keeps its own fixed rate set on the day it was taken.", id="repay-rates-note")
 
             # Build options from active loans (remaining > 0)
@@ -43,7 +46,11 @@ class LoanRepayModal(ModalScreen):
             # Sort by oldest first
             active_loans.sort(key=lambda ln: ln.day_taken)
             for ln in active_loans:
-                label = f"#${ln.loan_id}  Day {ln.day_taken}  Principal: ${ln.principal:,}  Remaining: ${ln.remaining:,}  Rate: {ln.rate_daily*100:.0f}%"
+                apr = float(getattr(ln, 'rate_annual', 0.10))
+                label = (
+                    f"#${ln.loan_id}  Day {ln.day_taken}  Principal: ${ln.principal:,}  "
+                    f"Remaining: ${ln.remaining:,}  Rate APR: {apr*100:.1f}%"
+                )
                 key = str(ln.loan_id)
                 options.append((label, key))
                 self._loan_map[key] = ln

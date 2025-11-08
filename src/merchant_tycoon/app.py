@@ -1,10 +1,12 @@
-#!/usr/bin/env python3
 """
-Merchant Tycoon - A terminal-based trading game
-Buy low, sell high, travel between cities, manage loans, survive random events!
+Merchant Tycoon — Textual TUI application.
 
-This module hosts the main application class `MerchantTycoon` and the `main()`
-entry point. It was extracted from `game.py` as part of refactoring Stage 4.
+This module defines the main UI class `MerchantTycoon` and supporting widgets
+used by the game. It does not provide a top‑level `main()` function. To run the
+app, use one of the configured entry points:
+
+- Module: `python -m merchant_tycoon` (handled by `merchant_tycoon.__main__`)
+- Console script: `merchant-tycoon` (configured in pyproject)
 """
 
 from datetime import datetime
@@ -41,6 +43,7 @@ from merchant_tycoon.ui.modals import (
     BuyAssetModal,
     SellAssetModal,
     HelpModal,
+    AboutModal,
     AlertModal,
     ConfirmModal,
     LoanRepayModal,
@@ -57,6 +60,7 @@ class GlobalActionsBar(Static):
             yield Button("💾 [A] Save", id="action-save", classes="action-item")
             yield Button("📂 [O] Load", id="action-load", classes="action-item")
             yield Button("❓ [H] Help", id="action-help", classes="action-item")
+            yield Button("ℹ️ [F2] About", id="action-about", classes="action-item")
             yield Button("🚪 [Q] Quit", id="action-quit", classes="action-item")
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
@@ -71,6 +75,8 @@ class GlobalActionsBar(Static):
             app.action_load()
         elif bid == "action-help":
             app.action_help()
+        elif bid == "action-about":
+            app.action_about()
         elif bid == "action-quit":
             try:
                 app.action_quit()
@@ -92,6 +98,7 @@ class MerchantTycoon(App):
         Binding("a", "save", "Save", show=False),
         Binding("o", "load", "Load", show=False),
         Binding("n", "new_game", "New Game", show=False),
+        Binding("f2", "about", "About", show=False),
         # Context-sensitive actions (always visible, behavior depends on active tab)
         Binding("t", "travel", "Travel", show=True),
         Binding("b", "buy", "Buy", show=True),
@@ -518,6 +525,10 @@ class MerchantTycoon(App):
         modal = HelpModal()
         self.push_screen(modal)
 
+    def action_about(self):
+        """Show About modal with app info"""
+        self.push_screen(AboutModal())
+
     def action_save(self):
         """Save current game to disk (single slot)."""
         try:
@@ -623,11 +634,4 @@ class MerchantTycoon(App):
         self.push_screen(confirm)
 
 
-def main():
-    """Entry point for the game"""
-    app = MerchantTycoon()
-    app.run()
-
-
-if __name__ == "__main__":
-    main()
+# No top-level main() here; entry points use __main__.py

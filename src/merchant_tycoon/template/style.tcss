@@ -167,7 +167,7 @@ MessageLog {
 }
 
 /* Modal styles */
-#input-modal, #city-modal, #buy-modal, #sell-modal, #confirm-modal, #repay-modal {
+#input-modal, #city-modal, #buy-modal, #sell-modal, #confirm-modal, #repay-modal, #about-modal {
     width: 60;
     height: auto;
     border: thick $accent;
