@@ -154,7 +154,7 @@ TradeActionsPanel {
     width: 1fr;
 }
 
-MessageLog {
+MessangerPanel {
     border: solid $accent;
     padding: 0 1;
     margin: 0;

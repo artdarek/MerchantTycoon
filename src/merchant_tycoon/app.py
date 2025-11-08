@@ -17,7 +17,7 @@ from textual.widgets import Header, Footer, TabbedContent, TabPane, Static, Labe
 from textual.binding import Binding
 from merchant_tycoon.engine import GameEngine, GameState
 from merchant_tycoon.model import CITIES
-from merchant_tycoon.ui.general.panels import StatsPanel, MessageLog, GlobalActionsBar
+from merchant_tycoon.ui.general.panels import StatsPanel, MessangerPanel, GlobalActionsBar
 from merchant_tycoon.ui.goods.panels import (
     MarketPanel,
     GoodsTradeActionsPanel,
@@ -132,12 +132,12 @@ class MerchantTycoon(App):
                     yield LoanBalancePanel(self.engine)
                     yield LoanActionsPanel(self.engine)
                     yield YourLoansPanel(self.engine)
-        yield MessageLog()
+        yield MessangerPanel()
         yield Footer()
 
     def on_mount(self) -> None:
         self.title = "Merchant Tycoon"
-        self.message_log = self.query_one(MessageLog)
+        self.message_log = self.query_one(MessangerPanel)
         self.stats_panel = self.query_one(StatsPanel)
         self.market_panel = self.query_one(MarketPanel)
         self.inventory_panel = self.query_one(InventoryPanel)
@@ -196,7 +196,7 @@ class MerchantTycoon(App):
                 if data and self.engine.savegame_service.apply(data):
                     # Messages handled inside savegame apply via messenger
                     try:
-                        self.message_log._update_display()
+                        self.message_log.render_messages()
                     except Exception:
                         pass
                     # Optional: add operational note
@@ -243,7 +243,7 @@ class MerchantTycoon(App):
         # Refresh message log to reflect any new messenger entries
         try:
             if self.message_log:
-                self.message_log._update_display()
+                self.message_log.render_messages()
         except Exception:
             pass
 
