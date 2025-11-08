@@ -13,7 +13,6 @@ class AccountActionsPanel(Static):
         self.engine = engine
 
     def compose(self) -> ComposeResult:
-        yield Label("🏦 ACCOUNT ACTIONS", id="bank-actions-header", classes="panel-title")
         with Horizontal(id="bank-actions-bar"):
             # Use consistent compact button styling as other action panels
             yield Button("Deposit [D]", id="bank-deposit-btn", variant="success")

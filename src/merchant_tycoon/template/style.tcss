@@ -49,20 +49,22 @@ TabbedContent {
 
 TabPane {
     layout: horizontal;
-    padding: 1;
+    padding: 0;
     height: 1fr;
 }
 
 MarketPanel {
     border: solid $accent;
-    padding: 1;
+    padding: 0 1;
+    margin: 0;
     width: 1fr;
     height: 1fr;
 }
 
 InventoryPanel {
     border: solid $accent;
-    padding: 1;
+    padding: 0 1;
+    margin: 0;
     width: 1fr;
     height: 1fr;
     layout: vertical;
@@ -71,7 +73,9 @@ InventoryPanel {
 /* Goods trade actions panel (right column on Goods tab) */
 GoodsTradeActionsPanel {
     border: solid $accent;
-    padding: 1;
+    /* Visual balance: terminal cells are taller than wide; use less vertical padding */
+    padding: 0 1;
+    margin: 0;
     width: 1fr;
 }
 
@@ -83,8 +87,9 @@ GoodsTradeActionsPanel {
 
 #goods-trade-actions-bar {
     height: auto;
-    align-horizontal: right;
-    content-align: right middle;
+    width: 1fr;
+    align-horizontal: left;
+    content-align: center middle;
 }
 
 /* Compact Buy/Sell buttons for goods (match investments) */
@@ -96,22 +101,30 @@ GoodsTradeActionsPanel {
     padding: 0 1;
 }
 
+/* Make both buttons split the panel width evenly */
+#goods-trade-actions-bar Button {
+    width: 1fr;
+}
+
 ExchangePricesPanel {
     border: solid $accent;
-    padding: 1;
+    padding: 0 1;
+    margin: 0;
     width: 1fr;
 }
 
 InvestmentsPanel {
     border: solid $accent;
-    padding: 1;
+    padding: 0 1;
+    margin: 0;
     width: 1fr;
     height: 1fr;
 }
 
 TradeActionsPanel {
     border: solid $accent;
-    padding: 1;
+    padding: 0 1;
+    margin: 0;
     width: 1fr;
 }
 #investments-right-col {
@@ -119,13 +132,20 @@ TradeActionsPanel {
 }
 #trade-actions-bar {
     height: auto;
-    align-horizontal: right;
-    content-align: right middle;
+    width: 1fr;
+    align-horizontal: left;
+    content-align: center middle;
+}
+
+/* Split TradeActions buttons evenly */
+#trade-actions-bar Button {
+    width: 1fr;
 }
 
 MessageLog {
     border: solid $accent;
-    padding: 1;
+    padding: 0 1;
+    margin: 0;
     height: 8;
 }
 
@@ -336,13 +356,15 @@ AlertModal {
 /* --- Bank tab styles (mirror Investments tab) --- */
 AccountBalancePanel {
     border: solid $accent;
-    padding: 1;
+    padding: 0 1;
+    margin: 0;
     width: 1fr;
 }
 
 AccountActionsPanel {
     border: solid $accent;
-    padding: 1;
+    padding: 0 1;
+    margin: 0;
     width: 1fr;
 }
 
@@ -356,8 +378,14 @@ AccountActionsPanel {
 
 #bank-actions-bar {
     height: auto;
-    align-horizontal: right;
-    content-align: right middle;
+    width: 1fr;
+    align-horizontal: left;
+    content-align: center middle;
+}
+
+/* Split bank action buttons evenly */
+#bank-actions-bar Button {
+    width: 1fr;
 }
 
 /* Compact buttons like other action panels */
@@ -381,7 +409,8 @@ AccountActionsPanel {
 
 AccountTransactionsPanel {
     border: solid $accent;
-    padding: 1;
+    padding: 0 1;
+    margin: 0;
     width: 1fr;
     height: 1fr;
 }
@@ -394,14 +423,21 @@ AccountTransactionsPanel {
 /* --- Loan actions styles (mirror Bank actions) --- */
 LoanActionsPanel {
     border: solid $accent;
-    padding: 1;
+    padding: 0 1;
+    margin: 0;
     width: 1fr;
 }
 
 #loan-actions-bar {
     height: auto;
-    align-horizontal: right;
-    content-align: right middle;
+    width: 1fr;
+    align-horizontal: left;
+    content-align: center middle;
+}
+
+/* Split loan action buttons evenly */
+#loan-actions-bar Button {
+    width: 1fr;
 }
 
 #loan-take-btn {
@@ -416,7 +452,8 @@ LoanActionsPanel {
 /* --- Loan balance panel (under Loan actions) --- */
 LoanBalancePanel {
     border: solid $accent;
-    padding: 1;
+    padding: 0 1;
+    margin: 0;
     width: 1fr;
 }
 
@@ -433,7 +470,8 @@ LoanBalancePanel {
 /* --- Your Loans panel (table under loan balance) --- */
 YourLoansPanel {
     border: solid $accent;
-    padding: 1;
+    padding: 0 1;
+    margin: 0;
     width: 1fr;
     height: 1fr;
 }

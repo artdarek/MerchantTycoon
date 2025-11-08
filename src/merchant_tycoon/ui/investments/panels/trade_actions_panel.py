@@ -16,11 +16,10 @@ class TradeActionsPanel(Static):
         self.engine = engine
 
     def compose(self) -> ComposeResult:
-        yield Label("🛒 TRADE STOCKS", id="trade-actions-header", classes="panel-title")
         with Horizontal(id="trade-actions-bar"):
             # Reuse existing IDs so compact button CSS applies
-            yield Button("Buy", id="exchange-buy-btn", variant="success")
-            yield Button("Sell", id="exchange-sell-btn", variant="error", disabled=not bool(self.engine.state.portfolio))
+            yield Button("Buy [B]", id="exchange-buy-btn", variant="success")
+            yield Button("Sell [S]", id="exchange-sell-btn", variant="error", disabled=not bool(self.engine.state.portfolio))
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         # Import here to avoid top-level circular imports

@@ -13,7 +13,6 @@ class LoanActionsPanel(Static):
         self.engine = engine
 
     def compose(self) -> ComposeResult:
-        yield Label("💳 LOAN ACTIONS", id="loan-actions-header", classes="panel-title")
         with Horizontal(id="loan-actions-bar"):
             yield Button("Loan [L]", id="loan-take-btn", variant="success")
             yield Button(

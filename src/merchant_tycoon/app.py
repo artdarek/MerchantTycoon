@@ -122,12 +122,12 @@ class MerchantTycoon(App):
                     yield InvestmentsPanel(self.engine)
             with TabPane("🏦 Bank", id="bank-tab"):
                 with Vertical(id="bank-left-col"):
-                    yield AccountActionsPanel(self.engine)
                     yield AccountBalancePanel(self.engine)
+                    yield AccountActionsPanel(self.engine)
                     yield AccountTransactionsPanel(self.engine)
                 with Vertical(id="bank-right-col"):
-                    yield LoanActionsPanel(self.engine)
                     yield LoanBalancePanel(self.engine)
+                    yield LoanActionsPanel(self.engine)
                     yield YourLoansPanel(self.engine)
         yield MessageLog()
         yield Footer()

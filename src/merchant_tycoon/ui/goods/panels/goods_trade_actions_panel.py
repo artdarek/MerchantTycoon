@@ -13,11 +13,10 @@ class GoodsTradeActionsPanel(Static):
         self.engine = engine
 
     def compose(self) -> ComposeResult:
-        yield Label("🛒 TRADE GOODS", id="goods-trade-actions-header", classes="panel-title")
         with Horizontal(id="goods-trade-actions-bar"):
-            yield Button("Buy", id="goods-buy-btn", variant="success")
+            yield Button("Buy [B]", id="goods-buy-btn", variant="success")
             yield Button(
-                "Sell",
+                "Sell [S]",
                 id="goods-sell-btn",
                 variant="error",
                 disabled=not bool(self.engine.state.inventory),
