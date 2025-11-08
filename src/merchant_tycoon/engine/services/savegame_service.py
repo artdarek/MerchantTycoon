@@ -12,6 +12,7 @@ from merchant_tycoon.model import (
     BankTransaction,
     Loan,
 )
+from merchant_tycoon.config import SETTINGS
 
 if TYPE_CHECKING:
     from merchant_tycoon.engine.game_engine import GameEngine
@@ -34,7 +35,7 @@ class SavegameService:
     @staticmethod
     def get_save_dir() -> Path:
         home = Path(os.path.expanduser("~"))
-        return home / ".merchant_tycoon"
+        return home / SETTINGS.saveui.save_dir_name
 
     @classmethod
     def get_save_path(cls) -> Path:
@@ -98,10 +99,13 @@ class SavegameService:
                     "goods_prev": dict(engine.previous_prices),
                     "assets": dict(engine.asset_prices),
                     "assets_prev": dict(engine.previous_asset_prices),
-                    # Optional rolling history of last 10 prices per good
-                    "goods_hist": {k: list(v[-10:]) for k, v in (getattr(state, 'price_history', {}) or {}).items()},
+                    # Optional rolling history of last N prices per item (goods and assets share the map)
+                    "goods_hist": {
+                        k: list(v[-int(SETTINGS.pricing.history_window):])
+                        for k, v in (getattr(state, 'price_history', {}) or {}).items()
+                    },
                 },
-                "messages": list(messages[:10]),
+                "messages": list(messages[: int(SETTINGS.saveui.messages_save_limit)]),
             }
 
             with path.open("w", encoding="utf-8") as f:

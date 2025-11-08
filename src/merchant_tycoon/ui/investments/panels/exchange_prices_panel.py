@@ -3,6 +3,7 @@ from textual.widgets import Static, Label, DataTable
 from rich.text import Text
 
 from merchant_tycoon.engine import GameEngine
+from merchant_tycoon.config import SETTINGS
 from merchant_tycoon.model import STOCKS, COMMODITIES, CRYPTO
 
 
@@ -24,7 +25,16 @@ class ExchangePricesPanel(Static):
         # Initialize columns once
         if not getattr(self, "_exchange_table_initialized", False):
             table.clear(columns=True)
-            table.add_columns("Symbol", "Name", "Price", "Change", "Min (10d)", "Max (10d)", "Type")
+            window = int(SETTINGS.pricing.history_window)
+            table.add_columns(
+                "Symbol",
+                "Name",
+                "Price",
+                "Change",
+                f"Min ({window}d)",
+                f"Max ({window}d)",
+                "Type",
+            )
             try:
                 table.cursor_type = "row"
                 table.show_header = True

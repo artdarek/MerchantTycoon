@@ -3,6 +3,7 @@ from textual.widgets import Static, Label, DataTable
 from rich.text import Text
 
 from merchant_tycoon.engine import GameEngine
+from merchant_tycoon.config import SETTINGS
 
 
 class AccountTransactionsPanel(Static):
@@ -42,8 +43,9 @@ class AccountTransactionsPanel(Static):
             table.add_row("-", "(no transactions)", "", "", "")
             return
 
-        # Show last 100 transactions, newest to oldest (day desc, then insertion order desc)
-        txs = bank.transactions[-100:]
+        # Show last N transactions, newest to oldest (day desc, then insertion order desc)
+        limit = int(SETTINGS.saveui.bank_transactions_limit)
+        txs = bank.transactions[-limit:]
         # Use index within the sliced window to break ties for same day (later index = newer)
         indexed = [(i, tx) for i, tx in enumerate(txs)]
         try:

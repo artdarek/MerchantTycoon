@@ -3,6 +3,7 @@ from textual.widgets import Static, Label, DataTable
 from rich.text import Text
 
 from merchant_tycoon.engine import GameEngine
+from merchant_tycoon.config import SETTINGS
 from merchant_tycoon.model import GOODS
 
 
@@ -25,7 +26,14 @@ class MarketPanel(Static):
         # Configure columns once
         if not getattr(self, "_market_table_initialized", False):
             table.clear(columns=True)
-            table.add_columns("Product", "Price", "Change", "Min (10d)", "Max (10d)")
+            window = int(SETTINGS.pricing.history_window)
+            table.add_columns(
+                "Product",
+                "Price",
+                "Change",
+                f"Min ({window}d)",
+                f"Max ({window}d)",
+            )
             # Optional: make table non-selectable for now (purely informational)
             try:
                 table.cursor_type = "row"

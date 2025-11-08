@@ -1,6 +1,7 @@
 from typing import Optional, TYPE_CHECKING
 
 from merchant_tycoon.model import CITIES
+from merchant_tycoon.config import SETTINGS
 
 if TYPE_CHECKING:
     from merchant_tycoon.engine.game_state import GameState
@@ -32,14 +33,14 @@ class TravelService:
         if city_index == self.state.current_city:
             return False, "Already in this city!", None
 
-        # Calculate travel fee: $100 base + $1 per unit of cargo currently carried
+        # Calculate travel fee from settings
         origin_city = CITIES[self.state.current_city]
         destination_city = CITIES[city_index]
         try:
             cargo_units = int(self.state.get_inventory_count())
         except Exception:
             cargo_units = sum(self.state.inventory.values()) if isinstance(self.state.inventory, dict) else 0
-        travel_fee = 100 + cargo_units
+        travel_fee = int(SETTINGS.travel.base_fee) + int(SETTINGS.travel.fee_per_cargo_unit) * cargo_units
 
         # Ensure player can afford the travel fee
         if self.state.cash < travel_fee:

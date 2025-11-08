@@ -2,6 +2,7 @@ import random
 from typing import Dict, TYPE_CHECKING
 
 from merchant_tycoon.model import PurchaseLot, Transaction, GOODS, CITIES
+from merchant_tycoon.config import SETTINGS
 
 if TYPE_CHECKING:
     from merchant_tycoon.engine.game_state import GameState
@@ -17,19 +18,22 @@ class GoodsService:
 
     # Cargo extension utility
     def extend_cargo(self) -> tuple:
-        """Attempt to extend cargo capacity by 1 slot.
-        Pricing is exponential starting at $100 and doubling per slot purchased beyond the base 50.
+        """Attempt to extend cargo capacity by a configurable step.
+        Pricing is exponential per bundle: base_cost * (factor ** bundles_purchased),
+        where a bundle = `SETTINGS.cargo.extend_step` slots beyond base capacity.
         Returns one of the following tuples:
           - (False, message, current_cost) when insufficient cash.
           - (True, message, new_capacity, next_cost) on success.
         """
-        # Determine how many slots purchased beyond the base capacity (50)
+        # Determine how many slots purchased beyond the base capacity
         try:
-            current_capacity = int(getattr(self.state, "max_inventory", 50))
+            current_capacity = int(getattr(self.state, "max_inventory", SETTINGS.cargo.base_capacity))
         except Exception:
-            current_capacity = 50
-        slots_purchased = max(0, current_capacity - 50)
-        current_cost = 100 * (2 ** slots_purchased)
+            current_capacity = SETTINGS.cargo.base_capacity
+        step = max(1, int(SETTINGS.cargo.extend_step))
+        over_base = max(0, current_capacity - SETTINGS.cargo.base_capacity)
+        bundles_purchased = over_base // step
+        current_cost = int(SETTINGS.cargo.extend_base_cost) * (SETTINGS.cargo.extend_cost_factor ** bundles_purchased)
 
         # Validate cash
         if self.state.cash < current_cost:
@@ -37,11 +41,13 @@ class GoodsService:
 
         # Deduct and extend capacity
         self.state.cash -= current_cost
-        self.state.max_inventory = current_capacity + 1
+        self.state.max_inventory = current_capacity + step
 
         # Compute next cost after purchase
-        next_cost = 100 * (2 ** (slots_purchased + 1))
-        return True, f"Cargo extended to {self.state.max_inventory} slots (-${current_cost:,})", self.state.max_inventory, next_cost
+        next_cost = int(SETTINGS.cargo.extend_base_cost) * (SETTINGS.cargo.extend_cost_factor ** (bundles_purchased + 1))
+        return True, (
+            f"Cargo extended by +{step} slots to {self.state.max_inventory} (-${current_cost:,})"
+        ), self.state.max_inventory, next_cost
 
     def generate_prices(self) -> None:
         """Generate random prices for current city"""
@@ -59,7 +65,7 @@ class GoodsService:
                 modifier = float(self.state.price_modifiers.get(good.name, 1.0))
             except Exception:
                 modifier = 1.0
-            price = int(max(1, base_price * modifier))
+            price = int(max(SETTINGS.pricing.min_unit_price, base_price * modifier))
             self.prices[good.name] = price
         # Clear one-day modifiers after they take effect
         try:
@@ -79,8 +85,9 @@ class GoodsService:
                     seq = []
                     hist[name] = seq
                 seq.append(int(price))
-                if len(seq) > 10:
-                    del seq[:-10]
+                window = int(SETTINGS.pricing.history_window)
+                if len(seq) > window:
+                    del seq[:-window]
         except Exception:
             # Best-effort; ignore history errors
             pass

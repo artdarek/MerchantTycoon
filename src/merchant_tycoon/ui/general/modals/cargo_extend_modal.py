@@ -4,6 +4,7 @@ from textual.app import ComposeResult
 from textual.containers import Container, Horizontal
 from textual.widgets import Label, Button
 from textual.screen import ModalScreen
+from merchant_tycoon.config import SETTINGS
 
 if TYPE_CHECKING:
     from merchant_tycoon.engine import GameEngine
@@ -28,23 +29,26 @@ class CargoExtendModal(ModalScreen):
         self._on_extend = on_extend
 
     def _current_cost(self) -> int:
-        # Mirror pricing formula: 100 * (2 ** slots_purchased)
+        # Mirror pricing formula using config: base_cost * factor ** bundles
         try:
-            cap = int(getattr(self.engine.state, "max_inventory", 50))
+            cap = int(getattr(self.engine.state, "max_inventory", SETTINGS.cargo.base_capacity))
         except Exception:
-            cap = 50
-        slots_purchased = max(0, cap - 50)
-        return 100 * (2 ** slots_purchased)
+            cap = SETTINGS.cargo.base_capacity
+        step = max(1, int(SETTINGS.cargo.extend_step))
+        over_base = max(0, cap - SETTINGS.cargo.base_capacity)
+        bundles = over_base // step
+        return int(SETTINGS.cargo.extend_base_cost) * (SETTINGS.cargo.extend_cost_factor ** bundles)
 
     def compose(self) -> ComposeResult:
         used = self.engine.state.get_inventory_count()
         cap = self.engine.state.max_inventory
         cash = self.engine.state.cash
         cost = self._current_cost()
+        step = max(1, int(SETTINGS.cargo.extend_step))
         prompt = (
-            "Extend cargo capacity by +1 slot?\n"
+            f"Extend cargo capacity by +{step} slot(s)?\n"
             f"(Capacity: {used}/{cap} | Cash: ${cash:,} | Current cost: ${cost:,})\n"
-            "Note: Each additional slot doubles in price."
+            f"Note: Each additional bundle of {step} slot(s) doubles in price."
         )
         with Container(id="input-modal"):
             yield Label("📦 Extend Cargo", id="modal-title")
@@ -77,10 +81,11 @@ class CargoExtendModal(ModalScreen):
             cap = self.engine.state.max_inventory
             cash = self.engine.state.cash
             cost = self._current_cost()
+            step = max(1, int(SETTINGS.cargo.extend_step))
             prompt = (
-                "Extend cargo capacity by +1 slot?\n"
+                f"Extend cargo capacity by +{step} slot(s)?\n"
                 f"(Capacity: {used}/{cap} | Cash: ${cash:,} | Current cost: ${cost:,})\n"
-                "Note: Each additional slot doubles in price."
+                f"Note: Each additional bundle of {step} slot(s) doubles in price."
             )
             self.query_one("#modal-prompt", Label).update(prompt)
         except Exception:

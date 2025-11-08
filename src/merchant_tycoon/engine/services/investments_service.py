@@ -2,6 +2,7 @@ import random
 from typing import Dict, TYPE_CHECKING
 
 from merchant_tycoon.model import InvestmentLot, STOCKS, COMMODITIES, CRYPTO
+from merchant_tycoon.config import SETTINGS
 
 if TYPE_CHECKING:
     from merchant_tycoon.engine.game_state import GameState
@@ -24,10 +25,10 @@ class InvestmentsService:
         # Generate prices for all assets - always integers, minimum $1
         all_assets = STOCKS + COMMODITIES + CRYPTO
         for asset in all_assets:
-            variance = random.uniform(1 - asset.price_variance, 1 + asset.price_variance)
+            variance = random.uniform(1 - asset.price_variance, 1 + asset.price_variance) * float(SETTINGS.investments.variance_scale)
             price = asset.base_price * variance
             # Always convert to int and ensure minimum $1
-            p = max(1, int(price))
+            p = max(int(SETTINGS.pricing.min_unit_price), int(price))
             self.asset_prices[asset.symbol] = p
 
         # Update rolling price history for assets (reuse state's price_history)
@@ -42,8 +43,9 @@ class InvestmentsService:
                     seq = []
                     hist[symbol] = seq
                 seq.append(int(price))
-                if len(seq) > 10:
-                    del seq[:-10]
+                window = int(SETTINGS.pricing.history_window)
+                if len(seq) > window:
+                    del seq[:-window]
         except Exception:
             pass
 

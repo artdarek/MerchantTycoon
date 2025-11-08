@@ -2,6 +2,7 @@ import random
 from typing import List, Optional
 
 from merchant_tycoon.model import BankTransaction, STOCKS, GOODS
+from merchant_tycoon.config import SETTINGS
 
 
 class TravelEventsService:
@@ -25,7 +26,7 @@ class TravelEventsService:
             asset_prices: dict of asset prices {symbol: price}
         """
         # Overall chance that any event occurs this travel
-        if random.random() >= 0.25:  # 25% chance of any event
+        if random.random() >= float(SETTINGS.events.base_probability):
             return None
         prices = prices or {}
 
@@ -65,8 +66,9 @@ class TravelEventsService:
             qty = state.inventory.get(good, 0)
             if qty <= 0:
                 return None
-            # Smaller loss than fire/flood: 10%–40% of that good
-            lost = max(1, int(qty * random.uniform(0.1, 0.4)))
+            # Smaller loss than fire/flood
+            a, b = SETTINGS.events.robbery_loss_pct
+            lost = max(1, int(qty * random.uniform(a, b)))
             lost = min(lost, qty)
             state.inventory[good] = qty - lost
             if state.inventory[good] <= 0:
@@ -76,8 +78,9 @@ class TravelEventsService:
         def evt_fire() -> Optional[tuple[str, bool]]:
             if not state.inventory:
                 return None
-            # Destroy 20%–60% of total inventory, spread across goods
-            to_destroy = max(1, int(state.get_inventory_count() * random.uniform(0.2, 0.6)))
+            # Destroy a portion of total inventory, spread across goods
+            a, b = SETTINGS.events.fire_total_pct
+            to_destroy = max(1, int(state.get_inventory_count() * random.uniform(a, b)))
             destroyed: List[str] = []
             goods = list(state.inventory.keys())
             random.shuffle(goods)
@@ -87,7 +90,8 @@ class TravelEventsService:
                 have = state.inventory.get(g, 0)
                 if have <= 0:
                     continue
-                d = min(have, max(1, int(have * random.uniform(0.2, 0.6))))
+                a, b = SETTINGS.events.fire_per_good_pct
+                d = min(have, max(1, int(have * random.uniform(a, b))))
                 d = min(d, to_destroy)
                 state.inventory[g] = have - d
                 to_destroy -= d
@@ -101,8 +105,9 @@ class TravelEventsService:
         def evt_flood() -> Optional[tuple[str, bool]]:
             if not state.inventory:
                 return None
-            # Heavier than fire: 30%–80% total
-            to_destroy = max(1, int(state.get_inventory_count() * random.uniform(0.3, 0.8)))
+            # Heavier than fire
+            a, b = SETTINGS.events.flood_total_pct
+            to_destroy = max(1, int(state.get_inventory_count() * random.uniform(a, b)))
             destroyed: List[str] = []
             goods = list(state.inventory.keys())
             random.shuffle(goods)
@@ -112,7 +117,8 @@ class TravelEventsService:
                 have = state.inventory.get(g, 0)
                 if have <= 0:
                     continue
-                d = min(have, max(1, int(have * random.uniform(0.3, 0.8))))
+                a, b = SETTINGS.events.flood_per_good_pct
+                d = min(have, max(1, int(have * random.uniform(a, b))))
                 d = min(d, to_destroy)
                 state.inventory[g] = have - d
                 to_destroy -= d
@@ -151,7 +157,8 @@ class TravelEventsService:
             value = inv_total_value()
             if value <= 0:
                 return None
-            rate = random.uniform(0.05, 0.15)  # 5%–15% of inventory value
+            lo, hi = SETTINGS.events.customs_duty_pct
+            rate = random.uniform(lo, hi)
             fee = max(1, int(value * rate))
             state.cash -= fee
             return (f"🧾 CUSTOMS DUTY! Paid ${fee:,} ({int(rate*100)}%) on your goods.", False)
@@ -180,8 +187,9 @@ class TravelEventsService:
 
         def evt_cash_damage() -> Optional[tuple[str, bool]]:
             # Generic accident costing cash, scaled by current cash
-            base = int(state.cash * random.uniform(0.01, 0.05))
-            damage = max(50, min(2000, base))
+            lo, hi = SETTINGS.events.cash_damage_pct
+            base = int(state.cash * random.uniform(lo, hi))
+            damage = max(SETTINGS.events.cash_damage_min, min(SETTINGS.events.cash_damage_max, base))
             if damage <= 0:
                 return None
             state.cash -= damage
@@ -198,8 +206,9 @@ class TravelEventsService:
             price = (asset_prices or {}).get(sym, 0) or 0
             if qty <= 0 or price <= 0:
                 return None
-            # 0.5% – 2% of position value
-            pct = random.uniform(0.005, 0.02)
+            # Dividend percentage of position value
+            lo, hi = SETTINGS.events.dividend_pct
+            pct = random.uniform(lo, hi)
             payout = max(1, int(qty * price * pct))
             # Prefer bank credit if bank exists
             bank_credit(payout, tx_type="interest", title=f"Dividend for {sym}")
@@ -207,15 +216,9 @@ class TravelEventsService:
 
         def evt_lottery() -> Optional[tuple[str, bool]]:
             # Simulate 3/4/5/6 hits
-            tier = random.choices([3, 4, 5, 6], weights=[50, 30, 15, 5], k=1)[0]
-            if tier == 3:
-                win = random.randint(200, 600)
-            elif tier == 4:
-                win = random.randint(700, 1500)
-            elif tier == 5:
-                win = random.randint(2000, 6000)
-            else:  # 6
-                win = random.randint(10000, 30000)
+            tier = random.choices(SETTINGS.events.lottery_tiers, weights=SETTINGS.events.lottery_weights, k=1)[0]
+            low, high = SETTINGS.events.lottery_reward_ranges.get(tier, (200, 600))
+            win = random.randint(low, high)
             state.cash += win
             return (f"🎟️ LOTTERY! You matched {tier} numbers and won ${win:,}!", True)
 
@@ -227,8 +230,9 @@ class TravelEventsService:
                 bal = 0
             if bal <= 0:
                 return None
-            pct = random.uniform(0.01, 0.05)
-            amount = max(10, int(bal * pct))
+            lo, hi = SETTINGS.events.bank_correction_pct
+            pct = random.uniform(lo, hi)
+            amount = max(SETTINGS.events.bank_correction_min, int(bal * pct))
             bank_credit(amount, tx_type="interest", title="Interest correction from bank")
             return (f"🏦 BANK CORRECTION! Extra interest ${amount:,} credited to your account.", True)
 
@@ -237,7 +241,8 @@ class TravelEventsService:
             if not GOODS:
                 return None
             good = random.choice(GOODS).name
-            mult = random.uniform(0.4, 0.7)
+            lo, hi = SETTINGS.events.promo_multiplier
+            mult = random.uniform(lo, hi)
             state.price_modifiers[good] = mult
             return (f"🏷️ PROMOTION! {good} will be cheaper today (−{int((1 - mult) * 100)}%).", True)
 
@@ -246,7 +251,8 @@ class TravelEventsService:
             if not GOODS:
                 return None
             good = random.choice(GOODS).name
-            mult = random.uniform(0.3, 0.6)
+            lo, hi = SETTINGS.events.oversupply_multiplier
+            mult = random.uniform(lo, hi)
             state.price_modifiers[good] = mult
             return (f"📉 OVERSUPPLY! {good} prices plunge (−{int((1 - mult) * 100)}%).", True)
 
@@ -254,7 +260,8 @@ class TravelEventsService:
             if not GOODS:
                 return None
             good = random.choice(GOODS).name
-            mult = random.uniform(1.8, 2.2)
+            lo, hi = SETTINGS.events.shortage_multiplier
+            mult = random.uniform(lo, hi)
             state.price_modifiers[good] = mult
             return (f"📈 SHORTAGE! {good} prices soar (≈×{mult:.1f}).", True)
 
@@ -263,7 +270,7 @@ class TravelEventsService:
             if not GOODS:
                 return None
             good = random.choice(GOODS).name
-            mult = 0.05  # 95% off
+            mult = SETTINGS.events.loyal_discount_multiplier
             state.price_modifiers[good] = mult
             return (f"🤝 LOYAL CUSTOMER! As a valued customer you get 95% discount on {good} (today only)!", True)
 
@@ -306,23 +313,24 @@ class TravelEventsService:
             except Exception:
                 return False
 
+        w = SETTINGS.events.weights
         events: List[_Evt] = [
             # Loss events
-            _Evt(has_inventory, evt_robbery, 8),
-            _Evt(has_inventory, evt_fire, 5),
-            _Evt(has_inventory, evt_flood, 4),
-            _Evt(has_any_purchase_with_inventory, evt_defective_batch, 5),
-            _Evt(inv_value_positive, evt_customs_duty, 6),
-            _Evt(has_last_buy_with_inventory, evt_stolen_last_buy, 5),
-            _Evt(has_cash, evt_cash_damage, 4),
+            _Evt(has_inventory, evt_robbery, w.get("robbery", 8)),
+            _Evt(has_inventory, evt_fire, w.get("fire", 5)),
+            _Evt(has_inventory, evt_flood, w.get("flood", 4)),
+            _Evt(has_any_purchase_with_inventory, evt_defective_batch, w.get("defective_batch", 5)),
+            _Evt(inv_value_positive, evt_customs_duty, w.get("customs_duty", 6)),
+            _Evt(has_last_buy_with_inventory, evt_stolen_last_buy, w.get("stolen_last_buy", 5)),
+            _Evt(has_cash, evt_cash_damage, w.get("cash_damage", 4)),
             # Gain events
-            _Evt(holds_any_stock, evt_dividend, 6),
-            _Evt(lambda: True, evt_lottery, 3),
-            _Evt(bank_has_balance, evt_bank_correction, 4),
-            _Evt(lambda: True, evt_promo_good, 5),
-            _Evt(lambda: True, evt_oversupply, 4),
-            _Evt(lambda: True, evt_shortage, 4),
-            _Evt(lambda: True, evt_loyal_discount, 1),
+            _Evt(holds_any_stock, evt_dividend, w.get("dividend", 6)),
+            _Evt(lambda: True, evt_lottery, w.get("lottery", 3)),
+            _Evt(bank_has_balance, evt_bank_correction, w.get("bank_correction", 4)),
+            _Evt(lambda: True, evt_promo_good, w.get("promo", 5)),
+            _Evt(lambda: True, evt_oversupply, w.get("oversupply", 4)),
+            _Evt(lambda: True, evt_shortage, w.get("shortage", 4)),
+            _Evt(lambda: True, evt_loyal_discount, w.get("loyal_discount", 1)),
         ]
 
         eligible = [e for e in events if e.w > 0 and e.can()]

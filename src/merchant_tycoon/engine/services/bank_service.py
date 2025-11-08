@@ -2,6 +2,7 @@ import random
 from typing import TYPE_CHECKING
 
 from merchant_tycoon.model import BankTransaction, Loan
+from merchant_tycoon.config import SETTINGS
 
 if TYPE_CHECKING:
     from merchant_tycoon.engine.game_state import GameState
@@ -13,13 +14,13 @@ class BankService:
     def __init__(self, state: "GameState"):
         self.state = state
         # Loan interest (offer of the day) — APR for new loans
-        self.loan_apr_today = 0.10
+        self.loan_apr_today = float(SETTINGS.bank.loan_default_apr)
 
     def get_bank_daily_rate(self) -> float:
         """Return today's bank daily rate derived from APR on a 365-day basis."""
         bank = self.state.bank
         try:
-            annual = float(getattr(bank, "interest_rate_annual", 0.02))
+            annual = float(getattr(bank, "interest_rate_annual", SETTINGS.bank.bank_default_apr))
         except Exception:
             annual = 0.02
         return max(0.0, annual / 365.0)
@@ -31,12 +32,14 @@ class BankService:
         """
         # Randomize bank APR (savings interest)
         try:
-            self.state.bank.interest_rate_annual = random.uniform(0.01, 0.03)
+            lo, hi = SETTINGS.bank.bank_apr_range
+            self.state.bank.interest_rate_annual = random.uniform(lo, hi)
         except Exception:
             self.state.bank.interest_rate_annual = 0.02
         # Randomize today's loan APR offer (used only for NEW loans created today)
         try:
-            self.loan_apr_today = random.uniform(0.01, 0.20)
+            lo, hi = SETTINGS.bank.loan_apr_range
+            self.loan_apr_today = random.uniform(lo, hi)
         except Exception:
             self.loan_apr_today = 0.10
 
@@ -120,18 +123,22 @@ class BankService:
         """
         if amount <= 0:
             return False, "Invalid loan amount"
-        if amount > 10000:
-            return False, "Maximum loan is $10,000"
+        if amount > SETTINGS.bank.loan_max_amount:
+            return False, f"Maximum loan is ${SETTINGS.bank.loan_max_amount:,}"
 
         # Determine today's APR offer
         try:
-            apr = float(getattr(self, "loan_apr_today", 0.10))
+            apr = float(getattr(self, "loan_apr_today", SETTINGS.bank.loan_default_apr))
         except Exception:
             apr = 0.10
 
         # Determine commission based on current unpaid loans BEFORE creating new one
         unpaid_loans = sum(1 for ln in getattr(self.state, "loans", []) if getattr(ln, "remaining", 0) > 0)
-        fee_rate = 0.30 if unpaid_loans >= 10 else 0.10
+        fee_rate = (
+            SETTINGS.bank.loan_high_commission_rate
+            if unpaid_loans >= SETTINGS.bank.loan_high_commission_threshold
+            else SETTINGS.bank.loan_base_commission_rate
+        )
         fee = int(amount * fee_rate)
         total_to_repay = amount + fee
 
@@ -213,7 +220,7 @@ class BankService:
                 if getattr(loan, 'remaining', 0) > 0:
                     # Determine daily rate from this loan's APR
                     try:
-                        apr = float(getattr(loan, 'rate_annual', 0.10))
+                        apr = float(getattr(loan, 'rate_annual', SETTINGS.bank.loan_default_apr))
                     except Exception:
                         apr = 0.10
                     daily_rate = max(0.0, apr / 365.0)
