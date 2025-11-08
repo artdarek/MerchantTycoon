@@ -113,6 +113,7 @@ class SellAssetModal(ModalScreen):
                 try:
                     quantity = int(quantity_str)
                     success, msg = self.engine.sell_asset(symbol, quantity)
+                    # Service logs; no callback needed for logging
                     self.callback(msg)
                 except ValueError:
                     pass

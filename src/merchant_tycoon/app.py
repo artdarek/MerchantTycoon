@@ -194,11 +194,13 @@ class MerchantTycoon(App):
             if self.engine.savegame_service.is_save_present():
                 data = self.engine.savegame_service.load()
                 if data and self.engine.savegame_service.apply(data):
-                    # Load messages from top-level or (rarely) nested under state
-                    msgs = data.get("messages") or (data.get("state") or {}).get("messages") or []
-                    if self.message_log and msgs:
-                        self.message_log.set_messages(msgs)
-                    self.game_log("Loaded savegame.")
+                    # Messages handled inside savegame apply via messenger
+                    try:
+                        self.message_log._update_display()
+                    except Exception:
+                        pass
+                    # Optional: add operational note
+                    self.engine.messenger.info("Loaded savegame.", tag="system")
         except Exception:
             # Ignore autoload errors and start a fresh game
             pass
@@ -238,6 +240,12 @@ class MerchantTycoon(App):
             self.your_loans_panel.update_loans()
         if self.bank_transactions_panel:
             self.bank_transactions_panel.update_transactions()
+        # Refresh message log to reflect any new messenger entries
+        try:
+            if self.message_log:
+                self.message_log._update_display()
+        except Exception:
+            pass
 
     def game_log(self, msg: str):
         # Use engine clock service to build ISO timestamp from game date + system time
@@ -281,11 +289,12 @@ class MerchantTycoon(App):
     def _handle_buy(self, product: str, quantity: int):
         """Handle buy transaction"""
         if quantity <= 0:
-            self.game_log("Quantity must be positive!")
+            self.engine.messenger.warn("Quantity must be positive!", tag="goods")
             return
 
         success, msg = self.engine.buy(product, quantity)
-        self.game_log(msg)
+        if not success:
+            self.engine.messenger.warn(msg, tag="goods")
         self.refresh_all()
 
     def action_sell(self):
@@ -305,13 +314,13 @@ class MerchantTycoon(App):
         if active == "investments-tab":
             # Selling assets
             if not self.engine.state.portfolio:
-                self.game_log("No assets to sell!")
+                self.engine.messenger.warn("No assets to sell!", tag="investments")
                 return
             self.push_screen(SellAssetModal(self.engine, self._handle_asset_trade))
         else:
             # Selling goods
             if not self.engine.state.inventory:
-                self.game_log("No goods to sell!")
+                self.engine.messenger.warn("No goods to sell!", tag="goods")
                 return
             modal = SellModal(self.engine, self._handle_sell)
             self.push_screen(modal)
@@ -319,25 +328,26 @@ class MerchantTycoon(App):
     def _handle_sell(self, product: str, quantity: int):
         """Handle sell transaction"""
         if quantity <= 0:
-            self.game_log("Quantity must be positive!")
+            self.engine.messenger.warn("Quantity must be positive!", tag="goods")
             return
 
         success, msg = self.engine.sell(product, quantity)
-        self.game_log(msg)
+        if not success:
+            self.engine.messenger.warn(msg, tag="goods")
         self.refresh_all()
 
     def _handle_sell_from_lot(self, product: str, lot_ts: str, quantity: int):
         """Handle sell from a specific lot (partial or full)."""
         if quantity <= 0:
-            self.game_log("Quantity must be positive!")
+            self.engine.messenger.warn("Quantity must be positive!", tag="goods")
             return
         ok, msg = self.engine.goods_service.sell_from_lot(product, lot_ts, quantity)
-        self.game_log(msg)
+        if not ok:
+            self.engine.messenger.warn(msg, tag="goods")
         self.refresh_all()
 
     def _handle_asset_trade(self, msg: str):
-        """Handle result message from asset buy/sell modals"""
-        self.game_log(msg)
+        """Handle result message from asset buy/sell modals (refresh only)."""
         self.refresh_all()
 
     def action_travel(self):
@@ -351,7 +361,7 @@ class MerchantTycoon(App):
             modal = CargoExtendModal(self.engine, self._handle_extend_cargo)
             self.push_screen(modal)
         except Exception as e:
-            self.game_log(f"Error opening cargo modal: {e}")
+            self.engine.messenger.error(f"Error opening cargo modal: {e}", tag="system")
 
     def _handle_extend_cargo(self) -> bool:
         """Callback used by CargoExtendModal when Extend is pressed.
@@ -360,41 +370,40 @@ class MerchantTycoon(App):
         try:
             result = self.engine.extend_cargo()
         except Exception as e:
-            self.game_log(f"Error: {e}")
+            self.engine.messenger.error(f"Error: {e}", tag="system")
             return False
 
         # Interpret tuple shapes per service contract
         if not result:
-            self.game_log("Unexpected response from engine.")
+            self.engine.messenger.error("Unexpected response from engine.", tag="system")
             return False
 
         ok = bool(result[0])
         if ok:
             # (True, msg, new_capacity, next_cost)
             msg = result[1] if len(result) > 1 else "Cargo extended."
-            self.game_log(msg)
+            self.engine.messenger.info(msg, tag="goods")
             self.refresh_all()
             return True
         else:
             # (False, msg, current_cost)
             msg = result[1] if len(result) > 1 else "Not enough cash to extend cargo."
-            self.game_log(msg)
+            self.engine.messenger.warn(msg, tag="goods")
             return False
 
     def _handle_travel(self, city_index: int):
         """Handle travel to new city"""
         success, msg, event_data = self.engine.travel(city_index)
         if success:
-            self.game_log(msg)
+            # TravelService logs travel/event
             if event_data:
                 event_msg, is_positive = event_data
-                self.game_log(event_msg)  # Log for history
                 title = "✨ Good News!" if is_positive else "⚠️ Bad News!"
                 modal = AlertModal(title, event_msg, is_positive)
                 self.push_screen(modal)
             self.refresh_all()
         else:
-            self.game_log(msg)
+            self.engine.messenger.warn(msg, tag="travel")
 
     def action_loan(self):
         """Take a loan"""
@@ -422,11 +431,12 @@ class MerchantTycoon(App):
         try:
             amount = int(value.strip())
         except ValueError:
-            self.game_log("Invalid amount!")
+            self.engine.messenger.warn("Invalid amount!", tag="bank")
             return
 
         success, msg = self.engine.take_loan(amount)
-        self.game_log(msg)
+        if not success:
+            self.engine.messenger.warn(msg, tag="bank")
         self.refresh_all()
 
     def action_repay(self):
@@ -434,7 +444,7 @@ class MerchantTycoon(App):
         # Filter active loans
         active_loans = [ln for ln in (self.engine.state.loans or []) if getattr(ln, "remaining", 0) > 0]
         if not active_loans or self.engine.state.cash <= 0:
-            self.game_log("No repayable loans or no cash available!")
+            self.engine.messenger.warn("No repayable loans or no cash available!", tag="bank")
             return
 
         # Open new modal with loan selector and prefilled amount
@@ -445,10 +455,11 @@ class MerchantTycoon(App):
         try:
             amt = int(amount)
         except Exception:
-            self.game_log("Invalid amount!")
+            self.engine.messenger.warn("Invalid amount!", tag="bank")
             return
         ok, msg = self.engine.repay_loan_for(int(loan_id), amt)
-        self.game_log(msg)
+        if not ok:
+            self.engine.messenger.warn(msg, tag="bank")
         self.refresh_all()
 
     def action_transactions(self):
@@ -467,7 +478,7 @@ class MerchantTycoon(App):
     def action_goods_transactions(self):
         """Show detailed inventory with purchase lots"""
         if not self.engine.state.inventory:
-            self.game_log("No goods in inventory!")
+            self.engine.messenger.warn("No goods in inventory!", tag="goods")
             return
 
         modal = InventoryTransactionsModal(self.engine)
@@ -476,7 +487,7 @@ class MerchantTycoon(App):
     def action_investment_transactions(self):
         """Show detailed investments with purchase lots"""
         if not self.engine.state.portfolio:
-            self.game_log("No investments in portfolio!")
+            self.engine.messenger.warn("No investments in portfolio!", tag="investments")
             return
 
         modal = InvestmentsTransactionsModal(self.engine)
@@ -487,7 +498,7 @@ class MerchantTycoon(App):
         """Open modal to deposit cash to bank."""
         cash = self.engine.state.cash
         if cash <= 0:
-            self.game_log("No cash to deposit!")
+            self.engine.messenger.warn("No cash to deposit!", tag="bank")
             return
         modal = InputModal(
             "🏦 Deposit to Bank",
@@ -501,17 +512,18 @@ class MerchantTycoon(App):
         try:
             amount = int(value.strip())
         except ValueError:
-            self.game_log("Invalid amount!")
+            self.engine.messenger.warn("Invalid amount!", tag="bank")
             return
         ok, msg = self.engine.deposit_to_bank(amount)
-        self.game_log(msg)
+        if not ok:
+            self.engine.messenger.warn(msg, tag="bank")
         self.refresh_all()
 
     def action_bank_withdraw(self):
         """Open modal to withdraw cash from bank."""
         bal = self.engine.state.bank.balance
         if bal <= 0:
-            self.game_log("No funds in bank to withdraw!")
+            self.engine.messenger.warn("No funds in bank to withdraw!", tag="bank")
             return
         modal = InputModal(
             "🏦 Withdraw from Bank",
@@ -525,10 +537,11 @@ class MerchantTycoon(App):
         try:
             amount = int(value.strip())
         except ValueError:
-            self.game_log("Invalid amount!")
+            self.engine.messenger.warn("Invalid amount!", tag="bank")
             return
         ok, msg = self.engine.withdraw_from_bank(amount)
-        self.game_log(msg)
+        if not ok:
+            self.engine.messenger.warn(msg, tag="bank")
         self.refresh_all()
 
     def action_help(self):
@@ -543,34 +556,31 @@ class MerchantTycoon(App):
     def action_save(self):
         """Save current game to disk (single slot)."""
         try:
-            msgs = self.message_log.messages if self.message_log else []
+            msgs = self.engine.messenger.get_entries()
             ok, msg = self.engine.savegame_service.save(msgs)
             if ok:
-                self.game_log("Game saved.")
+                self.engine.messenger.info("Game saved.", tag="system")
             else:
-                self.game_log(msg)
+                self.engine.messenger.warn(msg, tag="system")
         except Exception as e:
-            self.game_log(f"Save failed: {e}")
+            self.engine.messenger.error(f"Save failed: {e}", tag="system")
 
     def action_load(self):
         """Load saved game from disk."""
         if not self.engine.savegame_service.is_save_present():
-            self.game_log("No save file found!")
+            self.engine.messenger.warn("No save file found!", tag="system")
             return
 
         def _confirm_load():
             try:
                 data = self.engine.savegame_service.load()
                 if data and self.engine.savegame_service.apply(data):
-                    msgs = data.get("messages") or []
-                    if self.message_log and msgs:
-                        self.message_log.set_messages(msgs)
-                    self.game_log("Loaded savegame.")
+                    self.engine.messenger.info("Loaded savegame.", tag="system")
                     self.refresh_all()
                 else:
-                    self.game_log("Failed to load save file.")
+                    self.engine.messenger.warn("Failed to load save file.", tag="system")
             except Exception as e:
-                self.game_log(f"Load failed: {e}")
+                self.engine.messenger.error(f"Load failed: {e}", tag="system")
 
         confirm = ConfirmModal(
             "Load Game",
@@ -595,10 +605,9 @@ class MerchantTycoon(App):
                 self.engine.state = GameState()
                 self.engine.generate_prices()
                 self.engine.generate_asset_prices()
-            # Reset messages to default welcome
-            if self.message_log:
-                self.message_log.reset_messages()
-            self.game_log("New game started.")
+            # Reset messages
+            self.engine.messenger.clear()
+            self.engine.messenger.info("New game started.", tag="system")
             self.refresh_all()
 
         confirm = ConfirmModal(
@@ -613,14 +622,14 @@ class MerchantTycoon(App):
         def _save_and_quit():
             # Save game, then exit regardless of save outcome
             try:
-                msgs = self.message_log.messages if self.message_log else []
+                msgs = self.engine.messenger.get_entries()
                 ok, msg = self.engine.savegame_service.save(msgs)
                 if ok:
-                    self.game_log("Game saved.")
+                    self.engine.messenger.info("Game saved.", tag="system")
                 else:
-                    self.game_log(msg)
+                    self.engine.messenger.warn(msg, tag="system")
             except Exception as e:
-                self.game_log(f"Save failed: {e}")
+                self.engine.messenger.error(f"Save failed: {e}", tag="system")
             finally:
                 try:
                     self.exit()

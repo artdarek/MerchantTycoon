@@ -28,6 +28,12 @@ class TravelService:
         self.goods_service = goods_service
         self.investments_service = investments_service
         self.events_service = events_service
+        try:
+            from merchant_tycoon.engine.services.messenger_service import MessengerService
+            # messenger available via bank_service if injected from engine
+            self.messenger = getattr(self.bank_service, 'messenger', None)
+        except Exception:
+            self.messenger = None
 
     def travel(self, city_index: int) -> tuple[bool, str, Optional[tuple[str, bool]]]:
         """Travel to a new city. Returns (success, message, event_data) where event_data is (event_msg, is_positive)"""
@@ -98,4 +104,11 @@ class TravelService:
             f"Traveled to {city.name}, {city.country}. "
             f"Travel fee charged: ${travel_fee} for route {origin_city.name} → {destination_city.name}"
         )
+        try:
+            if self.messenger:
+                self.messenger.info(msg, tag="travel")
+            if event_data and self.messenger:
+                self.messenger.info(event_data[0], tag="events")
+        except Exception:
+            pass
         return True, msg, event_data

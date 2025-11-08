@@ -69,6 +69,12 @@ class SavegameService:
                 for tx in bank.transactions
             ]
 
+            # Persist messages from messenger/state only under state.messages
+            try:
+                msgs = engine.messenger.get_entries(limit=int(SETTINGS.saveui.messages_save_limit))
+            except Exception:
+                msgs = getattr(state, 'messages', []) or []
+
             payload: Dict[str, Any] = {
                 "schema_version": SCHEMA_VERSION,
                 "state": {
@@ -95,6 +101,8 @@ class SavegameService:
                         "last_day": bank.last_interest_day,
                         "transactions": bank_txs,
                     },
+                    # Messages live under state
+                    "messages": msgs,
                 },
                 "prices": {
                     "goods": dict(engine.prices),
@@ -107,8 +115,6 @@ class SavegameService:
                         for k, v in (getattr(state, 'price_history', {}) or {}).items()
                     },
                 },
-                # Messages: list of strings or dict entries (kept as provided)
-                "messages": list(messages[: int(SETTINGS.saveui.messages_save_limit)]),
             }
 
             with path.open("w", encoding="utf-8") as f:
@@ -310,6 +316,13 @@ class SavegameService:
                 engine.bank_service.loan_apr_today = float(
                     s.get("loan_rate_annual", getattr(engine.bank_service, "loan_apr_today", 0.10))
                 )
+            except Exception:
+                pass
+
+            # Restore messages under state
+            try:
+                msgs = s.get("messages") or []
+                engine.messenger.set_entries(msgs)
             except Exception:
                 pass
 

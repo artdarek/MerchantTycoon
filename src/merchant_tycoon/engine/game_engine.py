@@ -9,6 +9,7 @@ from merchant_tycoon.engine.services.travel_service import TravelService
 from merchant_tycoon.engine.services.travel_events_service import TravelEventsService
 from merchant_tycoon.engine.services.savegame_service import SavegameService
 from merchant_tycoon.engine.services.clock_service import ClockService
+from merchant_tycoon.engine.services.messenger_service import MessengerService
 
 
 class GameEngine:
@@ -37,9 +38,10 @@ class GameEngine:
 
         # Initialize services
         self.clock_service = ClockService(self.state)
-        self.bank_service = BankService(self.state, self.clock_service)
-        self.goods_service = GoodsService(self.state, self.prices, self.previous_prices, self.clock_service)
-        self.investments_service = InvestmentsService(self.state, self.asset_prices, self.previous_asset_prices, self.clock_service)
+        self.messenger = MessengerService(self.state, self.clock_service)
+        self.bank_service = BankService(self.state, self.clock_service, self.messenger)
+        self.goods_service = GoodsService(self.state, self.prices, self.previous_prices, self.clock_service, self.messenger)
+        self.investments_service = InvestmentsService(self.state, self.asset_prices, self.previous_asset_prices, self.clock_service, self.messenger)
         # Event service for travel random encounters
         self.travel_events_service = TravelEventsService()
         self.travel_service = TravelService(

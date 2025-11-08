@@ -12,11 +12,12 @@ if TYPE_CHECKING:
 class InvestmentsService:
     """Service for handling investment operations (stocks, commodities, crypto)"""
 
-    def __init__(self, state: "GameState", asset_prices: Dict[str, int], previous_asset_prices: Dict[str, int], clock_service: Optional["ClockService"] = None):
+    def __init__(self, state: "GameState", asset_prices: Dict[str, int], previous_asset_prices: Dict[str, int], clock_service: Optional["ClockService"] = None, messenger: Optional["MessengerService"] = None):
         self.state = state
         self.asset_prices = asset_prices
         self.previous_asset_prices = previous_asset_prices
         self.clock = clock_service
+        self.messenger = messenger
 
     def generate_asset_prices(self) -> None:
         """Generate random prices for stocks and commodities"""
@@ -78,6 +79,11 @@ class InvestmentsService:
         )
         self.state.investment_lots.append(lot)
 
+        try:
+            if self.messenger:
+                self.messenger.info(f"Bought {quantity}x {symbol} for ${total_cost:,}", tag="investments")
+        except Exception:
+            pass
         return True, f"Bought {quantity}x {symbol} for ${total_cost:,}"
 
     def sell_asset(self, symbol: str, quantity: int) -> tuple[bool, str]:
@@ -114,4 +120,9 @@ class InvestmentsService:
         if self.state.portfolio[symbol] == 0:
             del self.state.portfolio[symbol]
 
+        try:
+            if self.messenger:
+                self.messenger.info(f"Sold {quantity}x {symbol} for ${total_value:,}", tag="investments")
+        except Exception:
+            pass
         return True, f"Sold {quantity}x {symbol} for ${total_value:,}"

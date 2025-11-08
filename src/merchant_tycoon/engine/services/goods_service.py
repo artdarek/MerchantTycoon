@@ -12,11 +12,12 @@ if TYPE_CHECKING:
 class GoodsService:
     """Service for handling goods trading operations"""
 
-    def __init__(self, state: "GameState", prices: Dict[str, int], previous_prices: Dict[str, int], clock_service: Optional["ClockService"] = None):
+    def __init__(self, state: "GameState", prices: Dict[str, int], previous_prices: Dict[str, int], clock_service: Optional["ClockService"] = None, messenger: Optional["MessengerService"] = None):
         self.state = state
         self.prices = prices
         self.previous_prices = previous_prices
         self.clock = clock_service
+        self.messenger = messenger
 
     # Cargo extension utility
     def extend_cargo(self) -> tuple:
@@ -136,6 +137,11 @@ class GoodsService:
             ts=(self.clock.now().isoformat(timespec="seconds") if self.clock else ""),
         )
         self.state.transaction_history.append(transaction)
+        try:
+            if self.messenger:
+                self.messenger.info(f"Bought {quantity}x {good_name} for ${total_cost:,}", tag="goods")
+        except Exception:
+            pass
 
         return True, f"Bought {quantity}x {good_name} for ${total_cost}"
 
@@ -185,7 +191,12 @@ class GoodsService:
             ts=(self.clock.now().isoformat(timespec="seconds") if self.clock else ""),
         )
         self.state.transaction_history.append(transaction)
-
+        try:
+            if self.messenger:
+                self.messenger.info(f"Sold {quantity}x {good_name} for ${total_value:,}", tag="goods")
+        except Exception:
+            pass
+        
         return True, f"Sold {quantity}x {good_name} for ${total_value}"
 
     def sell_lot_by_ts(self, good_name: str, lot_ts: str) -> tuple[bool, str]:
@@ -242,6 +253,11 @@ class GoodsService:
             ts=(self.clock.now().isoformat(timespec="seconds") if self.clock else ""),
         )
         self.state.transaction_history.append(tx)
+        try:
+            if self.messenger:
+                self.messenger.info(f"Sold lot: {qty}x {good_name} for ${total_value:,}", tag="goods")
+        except Exception:
+            pass
 
         return True, f"Sold lot: {qty}x {good_name} for ${total_value:,}"
 
@@ -300,7 +316,12 @@ class GoodsService:
             ts=(self.clock.now().isoformat(timespec="seconds") if self.clock else ""),
         )
         self.state.transaction_history.append(tx)
-
+        try:
+            if self.messenger:
+                self.messenger.info(f"Sold {quantity}x {good_name} for ${total_value:,}", tag="goods")
+        except Exception:
+            pass
+        
         return True, f"Sold {quantity}x {good_name} for ${total_value:,}"
 
     # --- Helpers to keep lots consistent when inventory changes outside sell() ---

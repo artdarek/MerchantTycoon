@@ -15,10 +15,8 @@ class MessageLog(Static):
         # Start with a welcome message using game date and current system time
         start_date = getattr(SETTINGS.game, "start_date", "2025-01-01")
         start_time = datetime.now().strftime("%H:%M:%S")
-        # messages: newest-first list of entries {ts, text}
-        self.messages: List[Dict[str, str]] = [
-            {"ts": f"{start_date}T{start_time}", "text": "Welcome to Merchant Tycoon!"}
-        ]
+        # No local buffer; messenger service holds the source of truth
+        self.messages: List[Dict[str, str]] = []
 
     def compose(self) -> ComposeResult:
         yield Label("📜 MESSAGES", id="log-header", classes="panel-title")
@@ -27,33 +25,50 @@ class MessageLog(Static):
     def on_mount(self) -> None:
         # Ensure initial render happens after the container exists
         try:
+            # If there are no messages yet (fresh game), add a welcome line
+            try:
+                entries = self.app.engine.messenger.get_entries()
+            except Exception:
+                entries = []
+            if not entries:
+                start_date = getattr(SETTINGS.game, "start_date", "2025-01-01")
+                start_time = datetime.now().strftime("%H:%M:%S")
+                self.app.engine.messenger.set_entries([
+                    {"ts": f"{start_date}T{start_time}", "text": "Welcome to Merchant Tycoon!", "level": "info", "tag": "system", "ctx": {}}
+                ])
             self._update_display()
         except Exception:
             pass
 
     def add_entry(self, ts_iso: str, text: str):
-        self.messages.insert(0, {"ts": str(ts_iso), "text": str(text)})
-        limit = int(getattr(SETTINGS.saveui, "messages_save_limit", 10))
-        if len(self.messages) > limit:
-            self.messages = self.messages[:limit]
+        # Delegate to messenger if available, then refresh UI
+        try:
+            self.app.engine.messenger.info(text)
+        except Exception:
+            pass
         self._update_display()
 
     def set_messages(self, messages: List[Dict[str, str]]):
         """Replace the log with provided messages (newest first).
         Expects list of dict entries: {"ts": ISO datetime, "text": str}.
         """
-        limit = int(getattr(SETTINGS.saveui, "messages_save_limit", 10))
-        self.messages = [
-            {"ts": str(m.get("ts", "")), "text": str(m.get("text", ""))}
-            for m in (messages or [])
-        ][:limit]
+        # Set directly via messenger service, then refresh
+        try:
+            self.app.engine.messenger.set_entries(messages or [])
+        except Exception:
+            pass
         self._update_display()
 
     def reset_messages(self):
         """Reset messages to the default welcome line for start date."""
         start_date = getattr(SETTINGS.game, "start_date", "2025-01-01")
         start_time = datetime.now().strftime("%H:%M:%S")
-        self.messages = [{"ts": f"{start_date}T{start_time}", "text": "Welcome to Merchant Tycoon!"}]
+        try:
+            self.app.engine.messenger.set_entries([
+                {"ts": f"{start_date}T{start_time}", "text": "Welcome to Merchant Tycoon!"}
+            ])
+        except Exception:
+            pass
         self._update_display()
 
     def _update_display(self):
@@ -65,8 +80,12 @@ class MessageLog(Static):
             container.remove_children()
         except Exception:
             pass
-        # Render oldest first so newest is at the bottom
-        for e in reversed(self.messages):
+        # Get entries from messenger; render oldest first so newest at bottom
+        try:
+            entries = self.app.engine.messenger.get_entries()
+        except Exception:
+            entries = []
+        for e in entries:
             ts = e.get("ts", "")
             text = e.get("text", "")
             display = text

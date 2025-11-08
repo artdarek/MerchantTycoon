@@ -104,6 +104,7 @@ class BuyAssetModal(ModalScreen):
                 try:
                     quantity = int(quantity_str)
                     success, msg = self.engine.buy_asset(symbol, quantity)
+                    # Service logs; no callback needed for logging
                     self.callback(msg)
                 except ValueError:
                     pass
