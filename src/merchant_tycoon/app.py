@@ -9,6 +9,7 @@ app, use one of the configured entry points:
 - Console script: `merchant-tycoon` (configured in pyproject)
 """
 
+import os
 from datetime import datetime
 from textual.app import App, ComposeResult
 from textual.containers import Vertical, Horizontal
@@ -44,6 +45,7 @@ from merchant_tycoon.ui.modals import (
     SellAssetModal,
     HelpModal,
     AboutModal,
+    SplashModal,
     AlertModal,
     ConfirmModal,
     LoanRepayModal,
@@ -200,7 +202,14 @@ class MerchantTycoon(App):
         # Initialize current_tab to default
         self.current_tab = "goods-tab"
 
-        # Auto-load savegame if present
+        # Splash screen (skip via env MTY_DISABLE_SPLASH=1)
+        try:
+            if os.getenv("MTY_DISABLE_SPLASH", "0") not in ("1", "true", "TRUE", "yes", "on"):
+                self.push_screen(SplashModal())
+        except Exception:
+            pass
+
+        # Auto-load savegame if present (may occur while splash is visible)
         try:
             if self.engine.savegame_service.is_save_present():
                 data = self.engine.savegame_service.load()

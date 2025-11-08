@@ -167,7 +167,7 @@ MessageLog {
 }
 
 /* Modal styles */
-#input-modal, #city-modal, #buy-modal, #sell-modal, #confirm-modal, #repay-modal, #about-modal {
+#input-modal, #city-modal, #buy-modal, #sell-modal, #confirm-modal, #repay-modal, #about-modal, #splash-modal {
     width: 60;
     height: auto;
     border: thick $accent;
@@ -196,6 +196,37 @@ MessageLog {
 #transactions-instructions {
     text-style: italic;
     color: $text-muted;
+}
+
+/* Splash screen overrides to make it fullscreen and centered */
+#splash-modal {
+    width: 100%;
+    height: 1fr;
+    border: none;
+    layout: vertical;
+}
+
+#splash-center {
+    height: 1fr;
+    layout: vertical;
+    align-horizontal: center;
+    content-align: center middle;
+}
+
+.splash-ascii {
+    text-style: bold;
+    color: $accent;
+    margin-bottom: 1;
+}
+
+.splash-note {
+    color: $text-muted;
+}
+
+#splash-instruction {
+    text-align: center;
+    color: $text-muted;
+    padding: 1;
 }
 
 /* Modal common selectors */
