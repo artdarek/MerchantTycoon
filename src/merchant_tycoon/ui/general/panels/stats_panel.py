@@ -29,7 +29,9 @@ class StatsPanel(Static):
         # Bank balance (added to header after Cash)
         bank_balance = state.bank.balance if hasattr(state, "bank") and state.bank is not None else 0
 
-        stats_text = f"""💰 Cash: ${state.cash:,}  |  🏦 Bank: ${bank_balance:,}  |  💼 Investments: ${portfolio_value:,}  |  🏦 Debt: ${state.debt:,}  |  📅 Day: {state.day}  |  📍 {city.name}, {city.country}  |  📦 Cargo: {inventory_count}/{state.max_inventory}"""
+        date_raw = getattr(state, "date", "")
+        date_disp = f"{date_raw} (Day: {state.day})" if date_raw else f"Day: {state.day}"
+        stats_text = f"""💰 Cash: ${state.cash:,}  |  🏦 Bank: ${bank_balance:,}  |  💼 Investments: ${portfolio_value:,}  |  🏦 Debt: ${state.debt:,}  |  📅 {date_disp}  |  📍 {city.name}, {city.country}  |  📦 Cargo: {inventory_count}/{state.max_inventory}"""
 
         label = self.query_one("#stats-content", Label)
         label.update(stats_text)

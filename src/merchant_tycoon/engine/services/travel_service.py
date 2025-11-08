@@ -2,6 +2,7 @@ from typing import Optional, TYPE_CHECKING
 
 from merchant_tycoon.model import CITIES
 from merchant_tycoon.config import SETTINGS
+from datetime import date as _date, timedelta as _timedelta
 
 if TYPE_CHECKING:
     from merchant_tycoon.engine.game_state import GameState
@@ -55,6 +56,14 @@ class TravelService:
         # Proceed with travel: advance day and change city
         self.state.current_city = city_index
         self.state.day += 1
+        try:
+            # Advance calendar date by one day
+            cur = getattr(self.state, "date", "") or getattr(SETTINGS.game, "start_date", "2025-01-01")
+            d = _date.fromisoformat(str(cur)) + _timedelta(days=1)
+            self.state.date = d.isoformat()
+        except Exception:
+            # Keep going even if date parsing fails
+            pass
 
         # Randomize daily interest rates for this new day (1%–20%)
         try:
@@ -74,6 +83,7 @@ class TravelService:
                 self.state,
                 self.goods_service.prices,
                 getattr(self.investments_service, "asset_prices", {}),
+                bank_service=self.bank_service,
             )
         except Exception:
             event_data = None

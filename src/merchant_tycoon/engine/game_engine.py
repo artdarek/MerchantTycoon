@@ -8,6 +8,7 @@ from merchant_tycoon.engine.services.investments_service import InvestmentsServi
 from merchant_tycoon.engine.services.travel_service import TravelService
 from merchant_tycoon.engine.services.travel_events_service import TravelEventsService
 from merchant_tycoon.engine.services.savegame_service import SavegameService
+from merchant_tycoon.engine.services.clock_service import ClockService
 
 
 class GameEngine:
@@ -20,6 +21,13 @@ class GameEngine:
             self.state.cash = int(SETTINGS.game.start_cash)
         except Exception:
             pass
+        # Initialize in-game calendar date
+        try:
+            if not getattr(self.state, "date", ""):
+                start_date = getattr(SETTINGS.game, "start_date", "") or "2025-01-01"
+                self.state.date = str(start_date)
+        except Exception:
+            pass
 
         # Initialize price dictionaries - all prices are integers
         self.prices: Dict[str, int] = {}
@@ -28,9 +36,10 @@ class GameEngine:
         self.previous_asset_prices: Dict[str, int] = {}
 
         # Initialize services
-        self.bank_service = BankService(self.state)
-        self.goods_service = GoodsService(self.state, self.prices, self.previous_prices)
-        self.investments_service = InvestmentsService(self.state, self.asset_prices, self.previous_asset_prices)
+        self.clock_service = ClockService(self.state)
+        self.bank_service = BankService(self.state, self.clock_service)
+        self.goods_service = GoodsService(self.state, self.prices, self.previous_prices, self.clock_service)
+        self.investments_service = InvestmentsService(self.state, self.asset_prices, self.previous_asset_prices, self.clock_service)
         # Event service for travel random encounters
         self.travel_events_service = TravelEventsService()
         self.travel_service = TravelService(
@@ -65,6 +74,18 @@ class GameEngine:
         self.state = GameState()
         try:
             self.state.cash = int(SETTINGS.game.start_cash)
+        except Exception:
+            pass
+        try:
+            if not getattr(self.state, "date", ""):
+                start_date = getattr(SETTINGS.game, "start_date", "") or "2025-01-01"
+                self.state.date = str(start_date)
+        except Exception:
+            pass
+        try:
+            if not getattr(self.state, "date", ""):
+                start_date = getattr(SETTINGS.game, "start_date", "") or "2025-01-01"
+                self.state.date = str(start_date)
         except Exception:
             pass
 

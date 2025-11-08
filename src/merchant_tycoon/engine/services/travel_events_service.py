@@ -3,6 +3,7 @@ from typing import List, Optional
 
 from merchant_tycoon.model import BankTransaction, STOCKS, GOODS
 from merchant_tycoon.config import SETTINGS
+from datetime import datetime
 
 
 class TravelEventsService:
@@ -17,13 +18,14 @@ class TravelEventsService:
     - This class is stateless; all state is taken from the provided engine instance.
     """
 
-    def trigger(self, state, prices: dict, asset_prices: dict) -> Optional[tuple[str, bool]]:
+    def trigger(self, state, prices: dict, asset_prices: dict, bank_service=None) -> Optional[tuple[str, bool]]:
         """Trigger at most one weighted random travel event.
 
         Parameters:
             state: Game state object with inventory, cash, bank, etc.
             prices: dict of current goods prices {good_name: price}
             asset_prices: dict of asset prices {symbol: price}
+            bank_service: optional bank service to credit amounts into bank history
         """
         # Overall chance that any event occurs this travel
         if random.random() >= float(SETTINGS.events.base_probability):
@@ -38,24 +40,42 @@ class TravelEventsService:
                     total += price * qty
             return total
 
-        # Helper: bank credit
+        # Helper: bank credit via service if provided, otherwise best-effort fallback
         def bank_credit(amount: int, tx_type: str = "deposit", title: str = "") -> None:
             if amount <= 0:
                 return
+            if bank_service is not None and hasattr(bank_service, "credit"):
+                try:
+                    bank_service.credit(int(amount), tx_type=tx_type, title=title)
+                    return
+                except Exception:
+                    pass
+            # Fallback: mutate state directly
             try:
-                state.bank.balance += amount
+                state.bank.balance += int(amount)
+                ts = (
+                    getattr(getattr(bank_service, "clock", None), "now", lambda: None)()
+                    if bank_service is not None else None
+                )
+                if ts is None:
+                    ts_str = f"{getattr(state,'date','')}T{datetime.now().strftime('%H:%M:%S')}"
+                else:
+                    try:
+                        ts_str = ts.isoformat(timespec="seconds")
+                    except Exception:
+                        ts_str = f"{getattr(state,'date','')}T{datetime.now().strftime('%H:%M:%S')}"
                 state.bank.transactions.append(
                     BankTransaction(
                         tx_type=tx_type if tx_type in ("deposit", "withdraw", "interest") else "deposit",
-                        amount=amount,
+                        amount=int(amount),
                         balance_after=state.bank.balance,
                         day=state.day,
                         title=title or ("Deposit" if tx_type == "deposit" else ("Withdraw" if tx_type == "withdraw" else "Interest")),
+                        ts=ts_str,
                     )
                 )
             except Exception:
-                # Fallback to cash if bank broken
-                state.cash += amount
+                state.cash += int(amount)
 
         # Event handlers (side-effecting), each returns (message, is_positive) or None if not applicable
         # LOSS EVENTS

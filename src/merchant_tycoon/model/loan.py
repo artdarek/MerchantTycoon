@@ -16,3 +16,4 @@ class Loan:
     # New APR-based model
     rate_annual: float = 0.10
     accrued_interest: float = 0.0
+    ts: str = ""  # ISO datetime when loan was taken

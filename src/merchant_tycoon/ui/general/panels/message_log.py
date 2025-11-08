@@ -1,5 +1,6 @@
 from datetime import datetime
-from typing import List
+from merchant_tycoon.config import SETTINGS
+from typing import List, Dict
 
 from textual.app import ComposeResult
 from textual.containers import ScrollableContainer
@@ -11,33 +12,55 @@ class MessageLog(Static):
 
     def __init__(self):
         super().__init__()
-        # Start with a welcome message tagged with time and the starting day
-        ts = datetime.now().strftime("%H:%M:%S")
-        self.messages: List[str] = [f"[{ts}] Day 1: Welcome to Merchant Tycoon!"]
+        # Start with a welcome message using game date and current system time
+        start_date = getattr(SETTINGS.game, "start_date", "2025-01-01")
+        start_time = datetime.now().strftime("%H:%M:%S")
+        # messages: newest-first list of entries {ts, text}
+        self.messages: List[Dict[str, str]] = [
+            {"ts": f"{start_date}T{start_time}", "text": "Welcome to Merchant Tycoon!"}
+        ]
 
     def compose(self) -> ComposeResult:
         yield Label("📜 MESSAGES", id="log-header", classes="panel-title")
         yield ScrollableContainer(id="log-content")
 
-    def add_message(self, msg: str):
-        self.messages.insert(0, msg)  # Add new messages at the beginning
+    def add_entry(self, ts_iso: str, text: str):
+        self.messages.insert(0, {"ts": str(ts_iso), "text": str(text)})
         if len(self.messages) > 10:
-            self.messages = self.messages[:10]  # Keep first 10 (newest)
+            self.messages = self.messages[:10]
         self._update_display()
 
-    def set_messages(self, messages: List[str]):
+    def set_messages(self, messages: List[Dict[str, str]]):
         """Replace the log with provided messages (newest first)."""
-        self.messages = list(messages[:10]) if messages else []
+        # Expect list of dicts: {"ts": ISO datetime, "text": str}
+        self.messages = [
+            {"ts": str(m.get("ts", "")), "text": str(m.get("text", ""))}
+            for m in (messages or [])
+        ][:10]
         self._update_display()
 
     def reset_messages(self):
-        """Reset messages to the default welcome line for Day 1."""
-        ts = datetime.now().strftime("%H:%M:%S")
-        self.messages = [f"[{ts}] Day 1: Welcome to Merchant Tycoon!"]
+        """Reset messages to the default welcome line for start date."""
+        start_date = getattr(SETTINGS.game, "start_date", "2025-01-01")
+        start_time = datetime.now().strftime("%H:%M:%S")
+        self.messages = [{"ts": f"{start_date}T{start_time}", "text": "Welcome to Merchant Tycoon!"}]
         self._update_display()
 
     def _update_display(self):
         container = self.query_one("#log-content", ScrollableContainer)
         container.remove_children()
-        for msg in self.messages:
-            container.mount(Label(msg))
+        for e in self.messages:
+            ts = e.get("ts", "")
+            text = e.get("text", "")
+            display = text
+            if ts:
+                try:
+                    dt = datetime.fromisoformat(ts)
+                    display = f"[{dt.date().isoformat()}: {dt.strftime('%H:%M:%S')}] {text}"
+                except Exception:
+                    # Fallback: attempt simple slicing if ISO-like
+                    if len(ts) >= 19 and ts[10] in ("T", " "):
+                        display = f"[{ts[:10]}: {ts[11:19]}] {text}"
+                    else:
+                        display = f"[{ts}] {text}"
+            container.mount(Label(display))

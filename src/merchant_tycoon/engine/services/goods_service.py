@@ -1,20 +1,22 @@
 import random
-from typing import Dict, TYPE_CHECKING
+from typing import Dict, TYPE_CHECKING, Optional
 
 from merchant_tycoon.model import PurchaseLot, Transaction, GOODS, CITIES
 from merchant_tycoon.config import SETTINGS
 
 if TYPE_CHECKING:
     from merchant_tycoon.engine.game_state import GameState
+    from merchant_tycoon.engine.services.clock_service import ClockService
 
 
 class GoodsService:
     """Service for handling goods trading operations"""
 
-    def __init__(self, state: "GameState", prices: Dict[str, int], previous_prices: Dict[str, int]):
+    def __init__(self, state: "GameState", prices: Dict[str, int], previous_prices: Dict[str, int], clock_service: Optional["ClockService"] = None):
         self.state = state
         self.prices = prices
         self.previous_prices = previous_prices
+        self.clock = clock_service
 
     # Cargo extension utility
     def extend_cargo(self) -> tuple:
@@ -118,6 +120,7 @@ class GoodsService:
             purchase_price=price,
             day=self.state.day,
             city=city_name,
+            ts=(self.clock.now().isoformat(timespec="seconds") if self.clock else ""),
         )
         self.state.purchase_lots.append(lot)
 
@@ -130,6 +133,7 @@ class GoodsService:
             total_value=total_cost,
             day=self.state.day,
             city=city_name,
+            ts=(self.clock.now().isoformat(timespec="seconds") if self.clock else ""),
         )
         self.state.transaction_history.append(transaction)
 
@@ -178,6 +182,7 @@ class GoodsService:
             total_value=total_value,
             day=self.state.day,
             city=city_name,
+            ts=(self.clock.now().isoformat(timespec="seconds") if self.clock else ""),
         )
         self.state.transaction_history.append(transaction)
 

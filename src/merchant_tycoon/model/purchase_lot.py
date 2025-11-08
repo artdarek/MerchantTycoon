@@ -10,3 +10,4 @@ class PurchaseLot:
     purchase_price: int  # Price per unit
     day: int
     city: str
+    ts: str = ""  # ISO datetime when lot was created

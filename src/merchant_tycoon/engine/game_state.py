@@ -17,6 +17,8 @@ class GameState:
     cash: int = 5000
     debt: int = 0
     day: int = 1
+    # ISO date for in-game calendar (YYYY-MM-DD). Engine keeps it in sync with `day`.
+    date: str = ""
     current_city: int = 0
     inventory: Dict[str, int] = field(default_factory=dict)
     max_inventory: int = 50

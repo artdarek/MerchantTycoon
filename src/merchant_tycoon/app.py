@@ -230,11 +230,21 @@ class MerchantTycoon(App):
             self.bank_transactions_panel.update_transactions()
 
     def game_log(self, msg: str):
-        # Prefix each log entry with timestamp and the in-game day number
-        day = self.engine.state.day
-        ts = datetime.now().strftime("%H:%M:%S")
+        # Use engine clock service to build ISO timestamp from game date + system time
+        try:
+            ts_iso = self.engine.clock_service.now().isoformat(timespec="seconds")
+        except Exception:
+            from datetime import datetime
+            date_str = getattr(self.engine.state, "date", "") or f"Day {self.engine.state.day}"
+            ts_iso = f"{date_str}T{datetime.now().strftime('%H:%M:%S')}"
         if self.message_log:
-            self.message_log.add_message(f"[{ts}] Day {day}: {msg}")
+            try:
+                self.message_log.add_entry(ts_iso, msg)
+            except Exception:
+                # Fallback to plain string if needed
+                self.message_log.set_messages([
+                    {"ts": ts_iso, "text": msg}
+                ])
 
     def action_buy(self):
         """Context-aware Buy: goods or assets depending on active tab.

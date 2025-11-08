@@ -24,7 +24,7 @@ class AccountTransactionsPanel(Static):
         # Init columns once
         if not getattr(self, '_bank_table_initialized', False):
             table.clear(columns=True)
-            table.add_columns("Day", "Type", "Amount", "Balance After", "Title")
+            table.add_columns("Date", "Type", "Amount", "Balance After", "Title")
             try:
                 table.cursor_type = "row"
                 table.show_header = True
@@ -65,8 +65,20 @@ class AccountTransactionsPanel(Static):
 
             title = getattr(tx, "title", "") or ""
 
+            ts = getattr(tx, "ts", "")
+            # Derive just the date portion YYYY-MM-DD
+            date_only = ""
+            if ts:
+                try:
+                    from datetime import datetime
+                    date_only = datetime.fromisoformat(ts).date().isoformat()
+                except Exception:
+                    date_only = ts[:10]
+            else:
+                # Fallback for legacy saves
+                date_only = getattr(tx, "date", "") or f"Day {getattr(tx, 'day', 0)}"
             table.add_row(
-                str(tx.day),
+                date_only,
                 ttype,
                 f"${tx.amount:,}",
                 f"${tx.balance_after:,}",

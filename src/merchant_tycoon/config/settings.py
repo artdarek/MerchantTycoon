@@ -5,7 +5,7 @@ from dataclasses import dataclass
 
 @dataclass(frozen=True)
 class TravelSettings:
-    base_fee: int = 50
+    base_fee: int = 100
     fee_per_cargo_unit: int = 1
 
 
@@ -103,7 +103,8 @@ class SaveUiSettings:
 
 @dataclass(frozen=True)
 class GameSettings:
-    start_cash: int = 10000
+    start_cash: int = 500000000
+    start_date: str = "2025-01-01"  # ISO YYYY-MM-DD
 
 
 @dataclass(frozen=True)

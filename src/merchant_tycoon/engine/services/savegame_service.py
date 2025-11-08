@@ -45,7 +45,7 @@ class SavegameService:
     def is_save_present(cls) -> bool:
         return cls.get_save_path().exists()
 
-    def save(self, messages: List[str]) -> Tuple[bool, str]:
+    def save(self, messages: List[dict]) -> Tuple[bool, str]:
         """Persist the current game to JSON file. Returns (ok, message)."""
         try:
             save_dir = self.get_save_dir()
@@ -56,7 +56,7 @@ class SavegameService:
             state = engine.state
             bank = state.bank
 
-            # Convert bank transactions to dicts
+            # Convert bank transactions to dicts (include calendar date if present)
             bank_txs = [
                 {
                     "type": tx.tx_type,
@@ -64,6 +64,7 @@ class SavegameService:
                     "balance_after": tx.balance_after,
                     "day": tx.day,
                     "title": getattr(tx, "title", ""),
+                    "ts": getattr(tx, "ts", ""),
                 }
                 for tx in bank.transactions
             ]
@@ -74,6 +75,7 @@ class SavegameService:
                     "cash": state.cash,
                     "debt": state.debt,
                     "day": state.day,
+                    "date": getattr(state, "date", ""),
                     "current_city": state.current_city,
                     "inventory": dict(state.inventory),
                     "max_inventory": state.max_inventory,
@@ -105,6 +107,7 @@ class SavegameService:
                         for k, v in (getattr(state, 'price_history', {}) or {}).items()
                     },
                 },
+                # Messages: list of strings or dict entries (kept as provided)
                 "messages": list(messages[: int(SETTINGS.saveui.messages_save_limit)]),
             }
 
@@ -138,6 +141,11 @@ class SavegameService:
                 pass
             try:
                 state.debt = int(s.get("debt", state.debt))
+            except Exception:
+                pass
+            try:
+                # Restore calendar date if present
+                state.date = str(s.get("date", getattr(state, "date", "")))
             except Exception:
                 pass
             try:
@@ -284,6 +292,10 @@ class SavegameService:
                             balance_after=int(d.get("balance_after", 0)),
                             day=int(d.get("day", 0)),
                             title=str(d.get("title", "")),
+                            ts=str(d.get("ts", "")) or (
+                                # Fallback for transitional saves combining date/time
+                                (str(d.get("date", "")) + ("T" + str(d.get("time", "")) if d.get("time") else ""))
+                            ),
                         )
                     )
                 except Exception:
@@ -319,6 +331,7 @@ class SavegameService:
                 "purchase_price": lot.purchase_price,
                 "day": lot.day,
                 "city": lot.city,
+                "ts": getattr(lot, "ts", ""),
             }
             for lot in lots
         ]
@@ -335,6 +348,7 @@ class SavegameService:
                         purchase_price=int(d["purchase_price"]),
                         day=int(d["day"]),
                         city=str(d["city"]),
+                        ts=str(d.get("ts", "")),
                     )
                 )
             except Exception:
@@ -352,6 +366,7 @@ class SavegameService:
                 "total_value": tx.total_value,
                 "day": tx.day,
                 "city": tx.city,
+                "ts": getattr(tx, "ts", ""),
             }
             for tx in txs
         ]
@@ -370,6 +385,7 @@ class SavegameService:
                         total_value=int(d["total_value"]),
                         day=int(d["day"]),
                         city=str(d["city"]),
+                        ts=str(d.get("ts", "")),
                     )
                 )
             except Exception:
@@ -384,6 +400,7 @@ class SavegameService:
                 "quantity": lot.quantity,
                 "purchase_price": lot.purchase_price,
                 "day": lot.day,
+                "ts": getattr(lot, "ts", ""),
             }
             for lot in lots
         ]
@@ -399,6 +416,7 @@ class SavegameService:
                         quantity=int(d["quantity"]),
                         purchase_price=int(d["purchase_price"]),
                         day=int(d["day"]),
+                        ts=str(d.get("ts", "")),
                     )
                 )
             except Exception:
@@ -420,6 +438,7 @@ class SavegameService:
                         "rate_annual": float(getattr(ln, "rate_annual", 0.0)),
                         "accrued_interest": float(getattr(ln, "accrued_interest", 0.0)),
                         "day_taken": int(getattr(ln, "day_taken", 0)),
+                        "ts": str(getattr(ln, "ts", "")),
                     }
                 )
             except Exception:
@@ -452,6 +471,7 @@ class SavegameService:
                         day_taken=int(d.get("day_taken", 0)),
                         rate_annual=rate_annual,
                         accrued_interest=accrued,
+                        ts=str(d.get("ts", "")),
                     )
                 )
             except Exception:

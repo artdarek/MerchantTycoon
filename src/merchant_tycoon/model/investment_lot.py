@@ -9,3 +9,4 @@ class InvestmentLot:
     quantity: int
     purchase_price: int
     day: int
+    ts: str = ""  # ISO datetime when lot was created

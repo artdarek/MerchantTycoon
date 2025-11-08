@@ -103,10 +103,24 @@ class InvestmentsTransactionsModal(ModalScreen):
                             f"    [{i}] {lot.quantity}x @ {lot_price_str}/unit = {lot_total_str}",
                             classes="lot-info"
                         ))
-                        container.mount(Label(
-                            f"        Bought: Day {lot.day}",
-                            classes="lot-info"
-                        ))
+                        # Timestamp with fallback for safety
+                        try:
+                            from datetime import datetime
+                            ts_raw = getattr(lot, 'ts', '')
+                            if ts_raw:
+                                dtobj = datetime.fromisoformat(ts_raw)
+                                ts_disp = f"[{dtobj.strftime('%H:%M:%S')}] {dtobj.date().isoformat()}"
+                            else:
+                                ts_disp = f"Day {lot.day}"
+                            container.mount(Label(
+                                f"        Bought: {ts_disp}",
+                                classes="lot-info"
+                            ))
+                        except Exception:
+                            container.mount(Label(
+                                f"        Bought: Day {lot.day}",
+                                classes="lot-info"
+                            ))
 
                         profit_text = Text(
                             f"        {profit_symbol} If sold now: ${profit_per_unit:+,.2f}/unit "

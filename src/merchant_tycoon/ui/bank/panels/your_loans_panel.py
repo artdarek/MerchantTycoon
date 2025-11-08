@@ -29,7 +29,7 @@ class YourLoansPanel(Static):
                     table.clear()
                 except Exception:
                     pass
-            table.add_columns("Day", "Amount", "Paid", "Remain", "Rate (APR | Daily)", "Status")
+            table.add_columns("Date", "Amount", "Paid", "Remain", "Rate (APR | Daily)", "Status")
             try:
                 table.cursor_type = "row"
                 table.show_header = True
@@ -79,8 +79,19 @@ class YourLoansPanel(Static):
             daily = apr / 365.0
             rate_cell = f"{apr*100:.2f}% | {daily*100:.4f}%"
 
+            # Date column from ISO ts if present, else fallback to "Day X"
+            ts = getattr(ln, 'ts', '')
+            if ts:
+                try:
+                    from datetime import datetime
+                    date_only = datetime.fromisoformat(ts).date().isoformat()
+                except Exception:
+                    date_only = ts[:10]
+            else:
+                date_only = f"Day {day}"
+
             row_key = table.add_row(
-                str(day),
+                date_only,
                 f"${int(principal):,}",
                 f"${int(repaid):,}",
                 f"${int(remaining):,}",

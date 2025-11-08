@@ -12,3 +12,4 @@ class Transaction:
     total_value: int
     day: int
     city: str
+    ts: str = ""  # ISO datetime when transaction occurred

@@ -10,3 +10,4 @@ class BankTransaction:
     balance_after: int
     day: int
     title: str = ""
+    ts: str = ""  # ISO datetime (YYYY-MM-DDTHH:MM:SS) from ClockService

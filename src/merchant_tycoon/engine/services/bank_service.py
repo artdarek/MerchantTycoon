@@ -1,18 +1,21 @@
 import random
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 from merchant_tycoon.model import BankTransaction, Loan
 from merchant_tycoon.config import SETTINGS
+from datetime import datetime
 
 if TYPE_CHECKING:
     from merchant_tycoon.engine.game_state import GameState
+    from merchant_tycoon.engine.services.clock_service import ClockService
 
 
 class BankService:
     """Service for handling banking operations and loans"""
 
-    def __init__(self, state: "GameState"):
+    def __init__(self, state: "GameState", clock_service: Optional["ClockService"] = None):
         self.state = state
+        self.clock: Optional["ClockService"] = clock_service
         # Loan interest (offer of the day) — APR for new loans
         self.loan_apr_today = float(SETTINGS.bank.loan_default_apr)
 
@@ -52,15 +55,17 @@ class BankService:
         self.state.cash -= amount
         bank = self.state.bank
         bank.balance += amount
+        ts = (self.clock.now().isoformat(timespec="seconds") if self.clock else f"{getattr(self.state,'date','')}T{datetime.now().strftime('%H:%M:%S')}")
         bank.transactions.append(
-                BankTransaction(
-                    tx_type="deposit",
-                    amount=amount,
-                    balance_after=bank.balance,
-                    day=self.state.day,
-                    title="Personal savings",
-                )
+            BankTransaction(
+                tx_type="deposit",
+                amount=amount,
+                balance_after=bank.balance,
+                day=self.state.day,
+                title="Personal savings",
+                ts=ts,
             )
+        )
         return True, f"Deposited ${amount:,} to bank"
 
     def withdraw_from_bank(self, amount: int) -> tuple[bool, str]:
@@ -72,15 +77,17 @@ class BankService:
             return False, f"Not enough bank balance! Have ${bank.balance:,}"
         bank.balance -= amount
         self.state.cash += amount
+        ts = (self.clock.now().isoformat(timespec="seconds") if self.clock else f"{getattr(self.state,'date','')}T{datetime.now().strftime('%H:%M:%S')}")
         bank.transactions.append(
-                BankTransaction(
-                    tx_type="withdraw",
-                    amount=amount,
-                    balance_after=bank.balance,
-                    day=self.state.day,
-                    title="Personal withdrawal",
-                )
+            BankTransaction(
+                tx_type="withdraw",
+                amount=amount,
+                balance_after=bank.balance,
+                day=self.state.day,
+                title="Personal withdrawal",
+                ts=ts,
             )
+        )
         return True, f"Withdrew ${amount:,} from bank"
 
     def accrue_bank_interest(self) -> None:
@@ -109,6 +116,7 @@ class BankService:
                         balance_after=bank.balance,
                         day=bank.last_interest_day + i + 1,
                         title="Daily interest",
+                        ts=(self.clock.now().isoformat(timespec="seconds") if self.clock else f"{getattr(self.state,'date','')}T{datetime.now().strftime('%H:%M:%S')}")
                     )
                 )
         bank.last_interest_day = current_day
@@ -152,6 +160,7 @@ class BankService:
             day_taken=self.state.day,
             rate_annual=apr,
             accrued_interest=0.0,
+            ts=(self.clock.now().isoformat(timespec="seconds") if self.clock else ""),
         )
         self.state.loans.append(loan)
 
@@ -257,3 +266,20 @@ class BankService:
             pass
         self.state.debt = int(total)
         return self.state.debt
+
+    # Utility to credit bank balance with a labeled transaction (does not touch cash)
+    def credit(self, amount: int, tx_type: str = "interest", title: str = "") -> None:
+        if amount <= 0:
+            return
+        bank = self.state.bank
+        bank.balance += int(amount)
+        bank.transactions.append(
+            BankTransaction(
+                tx_type=tx_type if tx_type in ("deposit", "withdraw", "interest") else "interest",
+                amount=int(amount),
+                balance_after=bank.balance,
+                day=self.state.day,
+                title=title or ("Interest" if tx_type == "interest" else ""),
+                ts=(self.clock.now().isoformat(timespec="seconds") if self.clock else f"{getattr(self.state,'date','')}T{datetime.now().strftime('%H:%M:%S')}")
+            )
+        )

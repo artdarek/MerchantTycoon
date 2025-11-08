@@ -1,20 +1,22 @@
 import random
-from typing import Dict, TYPE_CHECKING
+from typing import Dict, TYPE_CHECKING, Optional
 
 from merchant_tycoon.model import InvestmentLot, STOCKS, COMMODITIES, CRYPTO
 from merchant_tycoon.config import SETTINGS
 
 if TYPE_CHECKING:
     from merchant_tycoon.engine.game_state import GameState
+    from merchant_tycoon.engine.services.clock_service import ClockService
 
 
 class InvestmentsService:
     """Service for handling investment operations (stocks, commodities, crypto)"""
 
-    def __init__(self, state: "GameState", asset_prices: Dict[str, int], previous_asset_prices: Dict[str, int]):
+    def __init__(self, state: "GameState", asset_prices: Dict[str, int], previous_asset_prices: Dict[str, int], clock_service: Optional["ClockService"] = None):
         self.state = state
         self.asset_prices = asset_prices
         self.previous_asset_prices = previous_asset_prices
+        self.clock = clock_service
 
     def generate_asset_prices(self) -> None:
         """Generate random prices for stocks and commodities"""
@@ -72,6 +74,7 @@ class InvestmentsService:
             quantity=quantity,
             purchase_price=price,
             day=self.state.day,
+            ts=(self.clock.now().isoformat(timespec="seconds") if getattr(self, 'clock', None) else ""),
         )
         self.state.investment_lots.append(lot)
 
