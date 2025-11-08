@@ -10,11 +10,14 @@ from merchant_tycoon.model import STOCKS, COMMODITIES, CRYPTO
 class BuyAssetModal(ModalScreen):
     """Modal for buying stocks/commodities"""
 
-    def __init__(self, engine: GameEngine, callback):
+    def __init__(self, engine: GameEngine, callback, default_symbol: str | None = None, default_quantity: int | None = None):
         super().__init__()
         self.engine = engine
         self.callback = callback
         self.max_quantities = {}  # Store max quantity for each asset
+        self.default_symbol = default_symbol
+        self.default_quantity = default_quantity
+        self._suppress_autofill = False
 
     def compose(self) -> ComposeResult:
         with Container(id="buy-modal"):
@@ -57,8 +60,31 @@ class BuyAssetModal(ModalScreen):
                 yield Button("Buy", variant="primary", id="confirm-btn")
                 yield Button("Cancel", variant="default", id="cancel-btn")
 
+    def on_mount(self) -> None:
+        # Preselect asset and quantity if provided
+        try:
+            select_widget = self.query_one("#asset-select", Select)
+            input_widget = self.query_one("#quantity-input", Input)
+        except Exception:
+            return
+        if self.default_symbol:
+            try:
+                self._suppress_autofill = True
+                select_widget.value = self.default_symbol
+            except Exception:
+                pass
+            finally:
+                self._suppress_autofill = False
+        if self.default_quantity is not None:
+            try:
+                input_widget.value = str(int(self.default_quantity))
+            except Exception:
+                pass
+
     def on_select_changed(self, event: Select.Changed) -> None:
         """Auto-fill quantity when asset is selected"""
+        if getattr(self, "_suppress_autofill", False):
+            return
         if event.select.id == "asset-select" and event.value:
             max_qty = self.max_quantities.get(event.value, 0)
             input_widget = self.query_one("#quantity-input", Input)

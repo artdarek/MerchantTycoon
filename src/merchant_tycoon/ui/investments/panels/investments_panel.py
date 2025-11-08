@@ -12,6 +12,7 @@ class InvestmentsPanel(Static):
     def __init__(self, engine: GameEngine):
         super().__init__()
         self.engine = engine
+        self._row_to_symbol = {}
 
     def compose(self) -> ComposeResult:
         yield Label("💼 YOUR INVESTMENTS", id="investments-header", classes="panel-title")
@@ -37,6 +38,7 @@ class InvestmentsPanel(Static):
             table.clear(rows=True)
         except Exception:
             table.clear()
+        self._row_to_symbol = {}
 
         if not self.engine.state.portfolio:
             table.add_row("(no investments)", "", "", "", "", "", "", "")
@@ -71,7 +73,7 @@ class InvestmentsPanel(Static):
                 pl_cell = Text("$0", style="dim")
                 pl_pct_cell = Text("0%", style="dim")
 
-            table.add_row(
+            row_key = table.add_row(
                 symbol,
                 asset_name,
                 str(quantity),
@@ -81,3 +83,27 @@ class InvestmentsPanel(Static):
                 pl_cell,
                 pl_pct_cell,
             )
+            try:
+                self._row_to_symbol[row_key] = symbol
+            except Exception:
+                pass
+
+    def on_data_table_row_selected(self, event: DataTable.RowSelected) -> None:
+        # Open SellAsset modal with default = owned quantity
+        try:
+            table = event.data_table
+        except Exception:
+            table = None
+        if not table or getattr(table, "id", None) != "portfolio-table":
+            return
+        symbol = self._row_to_symbol.get(getattr(event, "row_key", None))
+        if not symbol:
+            return
+        owned = int(self.engine.state.portfolio.get(symbol, 0))
+        if owned <= 0:
+            return
+        try:
+            from ..modals import SellAssetModal
+            self.app.push_screen(SellAssetModal(self.engine, self.app._handle_asset_trade, default_symbol=symbol, default_quantity=owned))
+        except Exception:
+            pass

@@ -12,6 +12,7 @@ class ExchangePricesPanel(Static):
     def __init__(self, engine: GameEngine):
         super().__init__()
         self.engine = engine
+        self._row_to_symbol = {}
 
     def compose(self) -> ComposeResult:
         yield Label("📈 EXCHANGE PRICES", id="exchange-prices-header", classes="panel-title")
@@ -37,6 +38,7 @@ class ExchangePricesPanel(Static):
             table.clear(rows=True)
         except Exception:
             table.clear()
+        self._row_to_symbol = {}
 
         # Helper to add asset rows
         def add_asset_row(name: str, symbol: str, asset_type: str):
@@ -65,7 +67,7 @@ class ExchangePricesPanel(Static):
             # Display asset type
             type_display = "Stock" if asset_type == "stock" else "Commodity" if asset_type == "commodity" else "Crypto"
 
-            table.add_row(
+            row_key = table.add_row(
                 symbol,
                 name,
                 price_str,
@@ -73,6 +75,10 @@ class ExchangePricesPanel(Static):
                 str(owned),
                 type_display,
             )
+            try:
+                self._row_to_symbol[row_key] = symbol
+            except Exception:
+                pass
 
         for stock in STOCKS:
             add_asset_row(stock.name, stock.symbol, stock.asset_type)
@@ -80,3 +86,23 @@ class ExchangePricesPanel(Static):
             add_asset_row(commodity.name, commodity.symbol, commodity.asset_type)
         for crypto in CRYPTO:
             add_asset_row(crypto.name, crypto.symbol, crypto.asset_type)
+
+    def on_data_table_row_selected(self, event: DataTable.RowSelected) -> None:
+        # Open BuyAsset modal with default = max affordable quantity
+        try:
+            table = event.data_table
+        except Exception:
+            table = None
+        if not table or getattr(table, "id", None) != "exchange-table":
+            return
+        symbol = self._row_to_symbol.get(getattr(event, "row_key", None))
+        if not symbol:
+            return
+        price = float(self.engine.asset_prices.get(symbol, 0))
+        cash = float(self.engine.state.cash)
+        max_affordable = int(cash // price) if price > 0 else 0
+        try:
+            from ..modals import BuyAssetModal
+            self.app.push_screen(BuyAssetModal(self.engine, self.app._handle_asset_trade, default_symbol=symbol, default_quantity=max_affordable))
+        except Exception:
+            pass

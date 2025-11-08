@@ -15,11 +15,14 @@ class LoanRepayModal(ModalScreen):
     On confirm, calls the provided callback with (loan_id: int, amount: int).
     """
 
-    def __init__(self, engine: GameEngine, callback):
+    def __init__(self, engine: GameEngine, callback, default_loan_id: int | None = None, default_amount: int | None = None):
         super().__init__()
         self.engine = engine
         self.callback = callback
         self._loan_map: dict[str, Loan] = {}
+        self.default_loan_id = default_loan_id
+        self.default_amount = default_amount
+        self._suppress_autofill = False
 
     def compose(self) -> ComposeResult:
         with Container(id="repay-modal"):
@@ -65,19 +68,41 @@ class LoanRepayModal(ModalScreen):
                 yield Button("Cancel", variant="default", id="cancel-btn")
 
     def on_mount(self) -> None:
-        """Prefill amount for the initially selected loan if present."""
+        """Preselect loan and preflll amount if defaults provided; otherwise use remaining."""
         try:
             select_widget = self.query_one("#loan-select", Select)
-            if select_widget.value:
-                ln = self._loan_map.get(select_widget.value)
-                if ln:
-                    amt = ln.remaining
-                    self.query_one("#amount-input", Input).value = str(int(amt))
+            amount_input = self.query_one("#amount-input", Input)
         except Exception:
-            pass
+            return
+        if self.default_loan_id is not None:
+            try:
+                self._suppress_autofill = True
+                select_widget.value = str(int(self.default_loan_id))
+            except Exception:
+                pass
+            finally:
+                self._suppress_autofill = False
+        # Determine base amount: default_amount if provided else remaining for selected loan
+        loan_key = select_widget.value
+        ln = self._loan_map.get(loan_key) if loan_key else None
+        base_amount = None
+        if self.default_amount is not None:
+            try:
+                base_amount = int(self.default_amount)
+            except Exception:
+                base_amount = None
+        if base_amount is None and ln is not None:
+            base_amount = int(getattr(ln, "remaining", 0))
+        if base_amount is not None:
+            try:
+                amount_input.value = str(int(base_amount))
+            except Exception:
+                pass
 
     def on_select_changed(self, event: Select.Changed) -> None:
         if event.select.id == "loan-select" and event.value:
+            if getattr(self, "_suppress_autofill", False):
+                return
             ln = self._loan_map.get(event.value)
             if ln:
                 try:

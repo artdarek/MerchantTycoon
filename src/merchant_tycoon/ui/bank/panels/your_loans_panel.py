@@ -11,6 +11,7 @@ class YourLoansPanel(Static):
     def __init__(self, engine: GameEngine):
         super().__init__()
         self.engine = engine
+        self._row_to_loan_id: dict[object, int] = {}
 
     def compose(self) -> ComposeResult:
         yield Label("📋 YOUR LOANS", id="your-loans-header", classes="panel-title")
@@ -45,6 +46,7 @@ class YourLoansPanel(Static):
                 table.clear()
             except Exception:
                 pass
+        self._row_to_loan_id = {}
 
         loans = list(self.engine.state.loans or [])
         if not loans:
@@ -77,7 +79,7 @@ class YourLoansPanel(Static):
             daily = apr / 365.0
             rate_cell = f"{apr*100:.2f}% | {daily*100:.4f}%"
 
-            table.add_row(
+            row_key = table.add_row(
                 str(day),
                 f"${int(principal):,}",
                 f"${int(repaid):,}",
@@ -85,3 +87,33 @@ class YourLoansPanel(Static):
                 rate_cell,
                 status_cell,
             )
+            try:
+                self._row_to_loan_id[row_key] = int(getattr(ln, 'loan_id', -1))
+            except Exception:
+                pass
+
+    def on_data_table_row_selected(self, event: DataTable.RowSelected) -> None:
+        # Open Repay modal with selected loan and default amount = min(remaining, cash)
+        try:
+            table = event.data_table
+        except Exception:
+            table = None
+        if not table or getattr(table, "id", None) != "your-loans-table":
+            return
+        loan_id = self._row_to_loan_id.get(getattr(event, "row_key", None))
+        if not loan_id or loan_id < 0:
+            return
+        # Find the loan to compute remaining
+        ln = next((ln for ln in (self.engine.state.loans or []) if getattr(ln, 'loan_id', -1) == loan_id), None)
+        if not ln:
+            return
+        remaining = int(getattr(ln, 'remaining', 0))
+        cash = int(getattr(self.engine.state, 'cash', 0))
+        default_amount = min(remaining, cash)
+        if default_amount <= 0:
+            return
+        try:
+            from ..modals import LoanRepayModal
+            self.app.push_screen(LoanRepayModal(self.engine, self.app._handle_repay_selected, default_loan_id=loan_id, default_amount=default_amount))
+        except Exception:
+            pass
