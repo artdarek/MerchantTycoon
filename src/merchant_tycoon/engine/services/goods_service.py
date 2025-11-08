@@ -187,3 +187,169 @@ class GoodsService:
         self.state.transaction_history.append(transaction)
 
         return True, f"Sold {quantity}x {good_name} for ${total_value}"
+
+    def sell_lot_by_ts(self, good_name: str, lot_ts: str) -> tuple[bool, str]:
+        """Sell exactly the specified purchase lot identified by its ISO timestamp.
+        This bypasses FIFO and removes that specific lot.
+        """
+        if not lot_ts:
+            return False, "Invalid lot selection"
+        # Find the lot
+        lot_index = -1
+        target: Optional[PurchaseLot] = None
+        for i, lot in enumerate(self.state.purchase_lots):
+            if lot.good_name == good_name and getattr(lot, "ts", "") == lot_ts:
+                lot_index = i
+                target = lot
+                break
+        if target is None or lot_index < 0:
+            return False, "Lot not found"
+
+        qty = int(getattr(target, "quantity", 0))
+        if qty <= 0:
+            return False, "Nothing to sell in this lot"
+
+        have = int(self.state.inventory.get(good_name, 0))
+        if have < qty:
+            return False, f"Not enough {good_name} in inventory to sell this lot"
+
+        price = int(self.prices.get(good_name, 0))
+        total_value = price * qty
+
+        # Remove the lot and update inventory/cash
+        # Remove specific lot by index
+        try:
+            self.state.purchase_lots.pop(lot_index)
+        except Exception:
+            return False, "Failed to remove lot"
+
+        self.state.inventory[good_name] = have - qty
+        if self.state.inventory[good_name] <= 0:
+            del self.state.inventory[good_name]
+
+        self.state.cash += total_value
+
+        # Record transaction
+        city_name = CITIES[self.state.current_city].name
+        tx = Transaction(
+            transaction_type="sell",
+            good_name=good_name,
+            quantity=qty,
+            price_per_unit=price,
+            total_value=total_value,
+            day=self.state.day,
+            city=city_name,
+            ts=(self.clock.now().isoformat(timespec="seconds") if self.clock else ""),
+        )
+        self.state.transaction_history.append(tx)
+
+        return True, f"Sold lot: {qty}x {good_name} for ${total_value:,}"
+
+    def sell_from_lot(self, good_name: str, lot_ts: str, quantity: int) -> tuple[bool, str]:
+        """Sell a specific quantity from the selected lot. If quantity equals the lot's
+        quantity, the lot is removed; otherwise it is reduced. Updates inventory/cash and
+        records a sell transaction at current price.
+        """
+        if not lot_ts or quantity <= 0:
+            return False, "Invalid lot or quantity"
+        # Locate the lot
+        lot_index = -1
+        target: Optional[PurchaseLot] = None
+        for i, lot in enumerate(self.state.purchase_lots):
+            if lot.good_name == good_name and getattr(lot, "ts", "") == lot_ts:
+                lot_index = i
+                target = lot
+                break
+        if target is None:
+            return False, "Lot not found"
+
+        have = int(self.state.inventory.get(good_name, 0))
+        if have < quantity:
+            return False, f"Not enough {good_name} to sell"
+
+        price = int(self.prices.get(good_name, 0))
+        total_value = price * quantity
+
+        # Reduce/remove lot
+        if quantity > target.quantity:
+            return False, "Quantity exceeds lot size"
+        if quantity == target.quantity:
+            try:
+                self.state.purchase_lots.pop(lot_index)
+            except Exception:
+                return False, "Failed to remove lot"
+        else:
+            target.quantity -= quantity
+
+        # Update inventory and cash
+        self.state.inventory[good_name] = have - quantity
+        if self.state.inventory[good_name] <= 0:
+            del self.state.inventory[good_name]
+        self.state.cash += total_value
+
+        # Record transaction
+        city_name = CITIES[self.state.current_city].name
+        tx = Transaction(
+            transaction_type="sell",
+            good_name=good_name,
+            quantity=quantity,
+            price_per_unit=price,
+            total_value=total_value,
+            day=self.state.day,
+            city=city_name,
+            ts=(self.clock.now().isoformat(timespec="seconds") if self.clock else ""),
+        )
+        self.state.transaction_history.append(tx)
+
+        return True, f"Sold {quantity}x {good_name} for ${total_value:,}"
+
+    # --- Helpers to keep lots consistent when inventory changes outside sell() ---
+    def _remove_from_lots_fifo(self, good_name: str, quantity: int) -> int:
+        """Remove quantity from purchase_lots for given good using FIFO. Returns removed qty."""
+        if quantity <= 0:
+            return 0
+        remaining = int(quantity)
+        lots_to_remove = []
+        for i, lot in enumerate(self.state.purchase_lots):
+            if lot.good_name != good_name:
+                continue
+            if remaining <= 0:
+                break
+            if lot.quantity <= remaining:
+                remaining -= lot.quantity
+                lots_to_remove.append(i)
+            else:
+                lot.quantity -= remaining
+                remaining = 0
+                break
+        for i in reversed(lots_to_remove):
+            try:
+                self.state.purchase_lots.pop(i)
+            except Exception:
+                pass
+        return int(quantity) - int(remaining)
+
+    def _remove_from_lots_from_last(self, good_name: str, quantity: int) -> int:
+        """Remove quantity from purchase_lots for given good starting from the last lot.
+        Returns removed qty.
+        """
+        if quantity <= 0:
+            return 0
+        remaining = int(quantity)
+        for i in range(len(self.state.purchase_lots) - 1, -1, -1):
+            lot = self.state.purchase_lots[i]
+            if lot.good_name != good_name:
+                continue
+            if remaining <= 0:
+                break
+            if lot.quantity <= remaining:
+                remaining -= lot.quantity
+                try:
+                    self.state.purchase_lots.pop(i)
+                except Exception:
+                    pass
+            else:
+                lot.quantity -= remaining
+                remaining = 0
+                break
+        return int(quantity) - int(remaining)

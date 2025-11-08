@@ -22,6 +22,7 @@ from merchant_tycoon.ui.goods.panels import (
     MarketPanel,
     GoodsTradeActionsPanel,
     InventoryPanel,
+    InventoryLotsPanel,
 )
 from merchant_tycoon.ui.investments.panels import (
     ExchangePricesPanel,
@@ -93,6 +94,7 @@ class MerchantTycoon(App):
         self.stats_panel = None
         self.market_panel = None
         self.inventory_panel = None
+        self.inventory_lots_panel = None
         self.exchange_prices_panel = None
         self.trade_actions_panel = None
         self.investments_panel = None
@@ -115,6 +117,7 @@ class MerchantTycoon(App):
                 with Vertical(id="goods-right-col"):
                     yield GoodsTradeActionsPanel(self.engine)
                     yield InventoryPanel(self.engine)
+                    yield InventoryLotsPanel(self.engine)
             with TabPane("💼 Investments", id="investments-tab"):
                 yield ExchangePricesPanel(self.engine)
                 with Vertical(id="investments-right-col"):
@@ -138,6 +141,10 @@ class MerchantTycoon(App):
         self.stats_panel = self.query_one(StatsPanel)
         self.market_panel = self.query_one(MarketPanel)
         self.inventory_panel = self.query_one(InventoryPanel)
+        try:
+            self.inventory_lots_panel = self.query_one(InventoryLotsPanel)
+        except Exception:
+            self.inventory_lots_panel = None
         self.exchange_prices_panel = self.query_one(ExchangePricesPanel)
         self.trade_actions_panel = self.query_one(TradeActionsPanel)
         self.investments_panel = self.query_one(InvestmentsPanel)
@@ -208,6 +215,8 @@ class MerchantTycoon(App):
             self.market_panel.update_market()
         if self.inventory_panel:
             self.inventory_panel.update_inventory()
+        if self.inventory_lots_panel:
+            self.inventory_lots_panel.update_lots()
         if self.exchange_prices_panel:
             self.exchange_prices_panel.update_exchange_prices()
         if self.trade_actions_panel:
@@ -313,6 +322,15 @@ class MerchantTycoon(App):
             return
 
         success, msg = self.engine.sell(product, quantity)
+        self.game_log(msg)
+        self.refresh_all()
+
+    def _handle_sell_from_lot(self, product: str, lot_ts: str, quantity: int):
+        """Handle sell from a specific lot (partial or full)."""
+        if quantity <= 0:
+            self.game_log("Quantity must be positive!")
+            return
+        ok, msg = self.engine.goods_service.sell_from_lot(product, lot_ts, quantity)
         self.game_log(msg)
         self.refresh_all()
 

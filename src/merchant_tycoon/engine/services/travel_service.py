@@ -84,6 +84,7 @@ class TravelService:
                 self.goods_service.prices,
                 getattr(self.investments_service, "asset_prices", {}),
                 bank_service=self.bank_service,
+                goods_service=self.goods_service,
             )
         except Exception:
             event_data = None

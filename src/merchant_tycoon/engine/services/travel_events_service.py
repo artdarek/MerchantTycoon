@@ -18,7 +18,7 @@ class TravelEventsService:
     - This class is stateless; all state is taken from the provided engine instance.
     """
 
-    def trigger(self, state, prices: dict, asset_prices: dict, bank_service=None) -> Optional[tuple[str, bool]]:
+    def trigger(self, state, prices: dict, asset_prices: dict, bank_service=None, goods_service=None) -> Optional[tuple[str, bool]]:
         """Trigger at most one weighted random travel event.
 
         Parameters:
@@ -91,6 +91,12 @@ class TravelEventsService:
             lost = max(1, int(qty * random.uniform(a, b)))
             lost = min(lost, qty)
             state.inventory[good] = qty - lost
+            # Adjust lots (FIFO) to reflect loss
+            try:
+                if goods_service is not None:
+                    goods_service._remove_from_lots_fifo(good, lost)
+            except Exception:
+                pass
             if state.inventory[good] <= 0:
                 del state.inventory[good]
             return (f"🚨 ROBBERY! Lost {lost}x {good}.", False)
@@ -118,6 +124,11 @@ class TravelEventsService:
                 destroyed.append(f"{d}x {g}")
                 if state.inventory[g] <= 0:
                     del state.inventory[g]
+                try:
+                    if goods_service is not None:
+                        goods_service._remove_from_lots_fifo(g, d)
+                except Exception:
+                    pass
             if not destroyed:
                 return None
             return ("🔥 WAREHOUSE FIRE! Destroyed " + ", ".join(destroyed) + ".", False)
@@ -145,6 +156,11 @@ class TravelEventsService:
                 destroyed.append(f"{d}x {g}")
                 if state.inventory[g] <= 0:
                     del state.inventory[g]
+                try:
+                    if goods_service is not None:
+                        goods_service._remove_from_lots_fifo(g, d)
+                except Exception:
+                    pass
             if not destroyed:
                 return None
             return ("🌊 FLOOD! Destroyed " + ", ".join(destroyed) + ".", False)
@@ -168,6 +184,12 @@ class TravelEventsService:
                     state.inventory[g] = qty - remove
                     if state.inventory[g] <= 0:
                         del state.inventory[g]
+                    # Remove from last lot(s) as the event targets the last purchase
+                    try:
+                        if goods_service is not None:
+                            goods_service._remove_from_lots_from_last(g, remove)
+                    except Exception:
+                        pass
                     return (f"🛠️ DEFECTIVE BATCH! Supplier bankrupt. Lost {remove}x {g} (last lot).", False)
             return None
 
@@ -203,6 +225,12 @@ class TravelEventsService:
             state.inventory[g] = have - remove
             if state.inventory[g] <= 0:
                 del state.inventory[g]
+            # Confiscate from last buy lot(s)
+            try:
+                if goods_service is not None:
+                    goods_service._remove_from_lots_from_last(g, remove)
+            except Exception:
+                pass
             return (f"🚔 STOLEN GOODS! Your last purchase was confiscated: lost {remove}x {g}.", False)
 
         def evt_cash_damage() -> Optional[tuple[str, bool]]:

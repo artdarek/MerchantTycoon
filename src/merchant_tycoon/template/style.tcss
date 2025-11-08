@@ -70,6 +70,18 @@ InventoryPanel {
     layout: vertical;
 }
 
+InventoryLotsPanel {
+    border: solid $accent;
+    padding: 0 1;
+    margin: 0;
+    width: 1fr;
+    height: 1fr;
+}
+
+#inventory-lots-content {
+    height: 1fr;
+}
+
 /* Goods trade actions panel (right column on Goods tab) */
 GoodsTradeActionsPanel {
     border: solid $accent;
