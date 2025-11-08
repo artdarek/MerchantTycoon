@@ -45,4 +45,4 @@ package-dir = {"" = "src"}
 where = ["src"]
 
 [tool.setuptools.package-data]
-merchant_tycoon = ["style.tcss"]
+merchant_tycoon = ["template/style.tcss"]

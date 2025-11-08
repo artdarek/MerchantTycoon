@@ -89,7 +89,7 @@ class MerchantTycoon(App):
     """Main game application"""
 
     # Load styles from external file created in Stage 5
-    CSS_PATH = "style.tcss"
+    CSS_PATH = "template/style.tcss"
 
     # All bindings are visible in footer - key actions depend on active tab
     BINDINGS = [
