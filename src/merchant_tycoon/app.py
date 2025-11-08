@@ -46,13 +46,6 @@ from .ui.modals import (
     LoanRepayModal,
     CargoExtendModal,
 )
-from .savegame import (
-    is_save_present,
-    load_game,
-    apply_loaded_game,
-    save_game as save_game_to_disk,
-    delete_save as delete_save_from_disk,
-)
 
 
 class GlobalActionsBar(Static):
@@ -202,9 +195,9 @@ class MerchantTycoon(App):
 
         # Auto-load savegame if present
         try:
-            if is_save_present():
-                data = load_game()
-                if data and apply_loaded_game(self.engine, data):
+            if self.engine.savegame_service.is_save_present():
+                data = self.engine.savegame_service.load()
+                if data and self.engine.savegame_service.apply(data):
                     msgs = data.get("messages") or []
                     if self.message_log and msgs:
                         self.message_log.set_messages(msgs)
@@ -529,7 +522,7 @@ class MerchantTycoon(App):
         """Save current game to disk (single slot)."""
         try:
             msgs = self.message_log.messages if self.message_log else []
-            ok, msg = save_game_to_disk(self.engine, msgs)
+            ok, msg = self.engine.savegame_service.save(msgs)
             if ok:
                 self.game_log("Game saved.")
             else:
@@ -539,14 +532,14 @@ class MerchantTycoon(App):
 
     def action_load(self):
         """Load saved game from disk."""
-        if not is_save_present():
+        if not self.engine.savegame_service.is_save_present():
             self.game_log("No save file found!")
             return
 
         def _confirm_load():
             try:
-                data = load_game()
-                if data and apply_loaded_game(self.engine, data):
+                data = self.engine.savegame_service.load()
+                if data and self.engine.savegame_service.apply(data):
                     msgs = data.get("messages") or []
                     if self.message_log and msgs:
                         self.message_log.set_messages(msgs)
@@ -569,7 +562,7 @@ class MerchantTycoon(App):
         def _confirm_new():
             try:
                 # Delete save file if exists
-                delete_save_from_disk()
+                self.engine.savegame_service.delete_save()
             except Exception:
                 pass
             # Reset engine state safely via engine helper (rebinding services & prices)
@@ -599,7 +592,7 @@ class MerchantTycoon(App):
             # Save game, then exit regardless of save outcome
             try:
                 msgs = self.message_log.messages if self.message_log else []
-                ok, msg = save_game_to_disk(self.engine, msgs)
+                ok, msg = self.engine.savegame_service.save(msgs)
                 if ok:
                     self.game_log("Game saved.")
                 else:
