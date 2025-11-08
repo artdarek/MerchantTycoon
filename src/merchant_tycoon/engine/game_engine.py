@@ -5,6 +5,7 @@ from .bank_service import BankService
 from .goods_service import GoodsService
 from .investments_service import InvestmentsService
 from .travel_service import TravelService
+from .savegame_service import SavegameService
 
 
 class GameEngine:
@@ -30,6 +31,8 @@ class GameEngine:
             self.goods_service,
             self.investments_service,
         )
+        # Savegame service (persistence)
+        self.savegame_service = SavegameService(self)
 
         # Generate initial prices
         self.generate_prices()
@@ -47,6 +50,73 @@ class GameEngine:
 
         # Ensure aggregate debt synchronized with loans list
         self._sync_total_debt()
+
+    # ---------- Lifecycle helpers ----------
+    def reset_state(self) -> None:
+        """Reset the engine to a fresh GameState and rebind all services.
+        Keeps the same engine instance so UI references remain valid.
+        """
+        # Replace state object
+        self.state = GameState()
+
+        # Rebind service state references
+        try:
+            self.bank_service.state = self.state
+        except Exception:
+            pass
+        try:
+            self.goods_service.state = self.state
+        except Exception:
+            pass
+        try:
+            self.investments_service.state = self.state
+        except Exception:
+            pass
+        try:
+            self.travel_service.state = self.state
+        except Exception:
+            pass
+
+        # Clear price dicts; services keep references to the same dict objects
+        try:
+            self.prices.clear()
+            self.previous_prices.clear()
+            self.asset_prices.clear()
+            self.previous_asset_prices.clear()
+        except Exception:
+            self.prices = {}
+            self.previous_prices = {}
+            self.asset_prices = {}
+            self.previous_asset_prices = {}
+
+        # Initialize bank last interest day to current day
+        if getattr(self.state.bank, "last_interest_day", 0) == 0:
+            self.state.bank.last_interest_day = self.state.day
+
+        # Sync legacy daily rate field from APR for consistency
+        try:
+            _ = self.get_bank_daily_rate()
+        except Exception:
+            pass
+
+        # Ensure aggregate debt synchronized with loans list
+        try:
+            self._sync_total_debt()
+        except Exception:
+            pass
+
+    def new_game(self) -> None:
+        """Start a new game using a fresh GameState and regenerated prices."""
+        self.reset_state()
+        # Generate fresh prices
+        try:
+            self.generate_prices()
+        except Exception:
+            pass
+        try:
+            self.generate_asset_prices()
+        except Exception:
+            pass
 
     # Legacy properties for backward compatibility
     @property

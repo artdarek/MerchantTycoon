@@ -18,6 +18,7 @@ from .bank_service import BankService
 from .goods_service import GoodsService
 from .investments_service import InvestmentsService
 from .travel_service import TravelService
+from .savegame_service import SavegameService
 
 __all__ = [
     "GameState",

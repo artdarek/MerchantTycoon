@@ -572,10 +572,14 @@ class MerchantTycoon(App):
                 delete_save_from_disk()
             except Exception:
                 pass
-            # Reset engine state in-place (keep object for UI references)
-            self.engine.state = GameState()
-            self.engine.generate_prices()
-            self.engine.generate_asset_prices()
+            # Reset engine state safely via engine helper (rebinding services & prices)
+            try:
+                self.engine.new_game()
+            except Exception:
+                # Fallback to legacy behavior if helper not present
+                self.engine.state = GameState()
+                self.engine.generate_prices()
+                self.engine.generate_asset_prices()
             # Reset messages to default welcome
             if self.message_log:
                 self.message_log.reset_messages()

@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import List, Tuple, Optional, Dict, Any
 
 from .engine import GameEngine, GameState
+from .engine.savegame_service import SavegameService
 from .model import PurchaseLot, Transaction, InvestmentLot, BankTransaction, BankAccount, Loan
 
 
@@ -13,16 +14,18 @@ SCHEMA_VERSION = 1
 
 
 def get_save_dir() -> Path:
-    home = Path(os.path.expanduser("~"))
-    return home / ".merchant_tycoon"
+    """[DEPRECATED] Use engine.SavegameService.get_save_dir()."""
+    return SavegameService.get_save_dir()
 
 
 def get_save_path() -> Path:
-    return get_save_dir() / "savegame.json"
+    """[DEPRECATED] Use engine.SavegameService.get_save_path()."""
+    return SavegameService.get_save_path()
 
 
 def is_save_present() -> bool:
-    return get_save_path().exists()
+    """[DEPRECATED] Use engine.SavegameService.is_save_present()."""
+    return SavegameService.is_save_present()
 
 
 def _lots_to_dicts(lots: List[PurchaseLot]) -> List[Dict[str, Any]]:
@@ -191,82 +194,22 @@ def _dicts_to_loans(items: List[Dict[str, Any]]) -> List[Loan]:
 
 
 def save_game(engine: GameEngine, messages: List[str]) -> Tuple[bool, str]:
-    """Persist the current game to JSON file.
-
-    Returns (ok, message).
-    """
+    """[DEPRECATED] Use engine.SavegameService(engine).save(messages)."""
     try:
-        save_dir = get_save_dir()
-        save_dir.mkdir(parents=True, exist_ok=True)
-        path = get_save_path()
-
-        state = engine.state
-        bank = state.bank
-        # Convert bank transactions to dicts
-        bank_txs = [
-            {
-                "type": tx.tx_type,
-                "amount": tx.amount,
-                "balance_after": tx.balance_after,
-                "day": tx.day,
-                "title": getattr(tx, "title", ""),
-            }
-            for tx in bank.transactions
-        ]
-
-        payload = {
-            "schema_version": SCHEMA_VERSION,
-            "state": {
-                "cash": state.cash,
-                "debt": state.debt,
-                "day": state.day,
-                "current_city": state.current_city,
-                "inventory": dict(state.inventory),
-                "max_inventory": state.max_inventory,
-                "purchase_lots": _lots_to_dicts(state.purchase_lots),
-                "transaction_history": _tx_to_dicts(state.transaction_history),
-                "portfolio": dict(state.portfolio),
-                "investment_lots": _inv_lots_to_dicts(state.investment_lots),
-                # Loans list (multi-loan support). Optional for backward compatibility.
-                "loans": _loans_to_dicts(state.loans),
-                # Current global loan rates offer (optional; defaults on load if missing)
-                "loan_rate_annual": float(getattr(engine, "loan_apr_today", 0.10)),
-                "loan_rate_daily": float(getattr(engine, "interest_rate", 0.10)),  # legacy
-                # New optional bank section (backward compatible)
-                "bank": {
-                    "balance": bank.balance,
-                    # Persist both annual APR and legacy daily rate for backward compatibility
-                    "rate_annual": getattr(bank, "interest_rate_annual", 0.02),
-                    "rate": getattr(bank, "interest_rate_daily", 0.0005),
-                    "accrued": bank.accrued_interest,
-                    "last_day": bank.last_interest_day,
-                    "transactions": bank_txs,
-                },
-            },
-            "prices": {
-                "goods": dict(engine.prices),
-                "goods_prev": dict(engine.previous_prices),
-                "assets": dict(engine.asset_prices),
-                "assets_prev": dict(engine.previous_asset_prices),
-            },
-            "messages": list(messages[:10]),
-        }
-
-        with path.open("w", encoding="utf-8") as f:
-            json.dump(payload, f, ensure_ascii=False, indent=2)
-        return True, f"Saved to {path}"
+        # Prefer the service attached to engine if present
+        service = getattr(engine, "savegame_service", None)
+        if service is None:
+            from .engine.savegame_service import SavegameService as _Svc
+            service = _Svc(engine)
+        return service.save(messages)
     except Exception as e:
         return False, f"Save failed: {e}"
 
 
 def load_game() -> Optional[Dict[str, Any]]:
-    """Load and parse the save file. Returns dict or None if missing/invalid."""
-    path = get_save_path()
-    if not path.exists():
-        return None
+    """[DEPRECATED] Use engine.SavegameService.load()."""
     try:
-        with path.open("r", encoding="utf-8") as f:
-            data = json.load(f)
+        data = SavegameService.load()
         if not isinstance(data, dict):
             return None
         if int(data.get("schema_version", 0)) != SCHEMA_VERSION:
@@ -278,131 +221,21 @@ def load_game() -> Optional[Dict[str, Any]]:
 
 
 def apply_loaded_game(engine: GameEngine, data: Dict[str, Any]) -> bool:
-    """Apply loaded payload to the existing engine/state. Returns success flag."""
+    """[DEPRECATED] Use engine.SavegameService(engine).apply(data)."""
     try:
-        s = data.get("state", {})
-        p = data.get("prices", {})
-
-        # Update existing state object in-place to preserve service references
-        # DO NOT replace engine.state - services hold references to it!
-        state = engine.state
-        state.cash = int(s.get("cash", state.cash))
-        state.debt = int(s.get("debt", state.debt))
-        state.day = int(s.get("day", state.day))
-        state.current_city = int(s.get("current_city", state.current_city))
-        state.inventory = dict(s.get("inventory", {}))
-        state.max_inventory = int(s.get("max_inventory", state.max_inventory))
-        state.purchase_lots = _dicts_to_lots(list(s.get("purchase_lots", [])))
-        state.transaction_history = _dicts_to_txs(list(s.get("transaction_history", [])))
-        state.portfolio = dict(s.get("portfolio", {}))
-        state.investment_lots = _dicts_to_inv_lots(list(s.get("investment_lots", [])))
-
-        # Loans (explicit multi-loan support). Legacy single-loan synthesis removed.
-        has_loans_key = "loans" in s
-        try:
-            loans_list = _dicts_to_loans(list(s.get("loans", [])))
-        except Exception:
-            loans_list = []
-        state.loans = loans_list
-
-        # Bank (optional for backward compatibility)
-        bank_data = s.get("bank")
-        if bank_data:
-            txs: List[BankTransaction] = []
-            for d in bank_data.get("transactions", []):
-                try:
-                    txs.append(
-                        BankTransaction(
-                            tx_type=str(d.get("type", "")),
-                            amount=int(d.get("amount", 0)),
-                            balance_after=int(d.get("balance_after", 0)),
-                            day=int(d.get("day", state.day)),
-                            title=str(d.get("title", "")),
-                        )
-                    )
-                except Exception:
-                    continue
-            # Prefer annual rate if present; keep legacy daily for backward compatibility
-            try:
-                rate_annual = float(bank_data.get("rate_annual"))
-            except Exception:
-                rate_annual = None
-            if rate_annual is None or rate_annual <= 0:
-                # If only legacy daily provided, we will not upscale *365; per user we use a sensible default APR
-                rate_annual = 0.02
-            # Set daily from provided legacy if any; otherwise derive from APR
-            try:
-                rate_daily = float(bank_data.get("rate", 0.0005))
-            except Exception:
-                rate_daily = rate_annual / 365.0
-            state.bank = BankAccount(
-                balance=int(bank_data.get("balance", 0)),
-                interest_rate_daily=rate_daily,
-                interest_rate_annual=rate_annual,
-                accrued_interest=float(bank_data.get("accrued", 0.0)),
-                last_interest_day=int(bank_data.get("last_day", state.day)),
-                transactions=txs,
-            )
-        else:
-            # Defaults if not present
-            state.bank = BankAccount(
-                balance=0,
-                interest_rate_daily=0.0005,
-                interest_rate_annual=0.02,
-                accrued_interest=0.0,
-                last_interest_day=state.day,
-                transactions=[],
-            )
-
-        # Prices - update in-place to preserve service references
-        engine.prices.clear()
-        engine.prices.update(dict(p.get("goods", {})))
-        engine.previous_prices.clear()
-        engine.previous_prices.update(dict(p.get("goods_prev", {})))
-        engine.asset_prices.clear()
-        engine.asset_prices.update(dict(p.get("assets", {})))
-        engine.previous_asset_prices.clear()
-        engine.previous_asset_prices.update(dict(p.get("assets_prev", {})))
-
-        # Restore current global loan rates if present (optional fields)
-        try:
-            engine.loan_apr_today = float(s.get("loan_rate_annual", getattr(engine, "loan_apr_today", 0.10)))
-        except Exception:
-            # fallback if only daily provided
-            try:
-                engine.loan_apr_today = float(s.get("loan_rate_daily", 0.10)) * 365.0
-            except Exception:
-                engine.loan_apr_today = getattr(engine, "loan_apr_today", 0.10)
-        # Keep legacy daily rate synchronized for compatibility
-        try:
-            engine.interest_rate = float(s.get("loan_rate_daily", engine.loan_apr_today / 365.0))
-        except Exception:
-            engine.interest_rate = engine.loan_apr_today / 365.0
-
-        # Ensure aggregate debt is consistent when loans are present
-        if getattr(engine.state, "loans", None):
-            try:
-                engine._sync_total_debt()
-            except Exception:
-                pass
-
-        # Accrue any missed interest up to the loaded current day (idempotent)
-        try:
-            engine.accrue_bank_interest()
-        except Exception:
-            pass
-
-        return True
+        service = getattr(engine, "savegame_service", None)
+        if service is None:
+            from .engine.savegame_service import SavegameService as _Svc
+            service = _Svc(engine)
+        return service.apply(data)
     except Exception:
         return False
 
 
 def delete_save() -> Tuple[bool, str]:
+    """[DEPRECATED] Use engine.SavegameService.delete_save()."""
     try:
-        path = get_save_path()
-        if path.exists():
-            path.unlink()
-            return True, "Save deleted"
-        return True, "No save to delete"
+        SavegameService.delete_save()
+        return True, "Save deleted"
     except Exception as e:
         return False, f"Delete failed: {e}"
