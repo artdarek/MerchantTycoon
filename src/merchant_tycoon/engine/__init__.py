@@ -12,13 +12,13 @@ The engine is organized into specialized services:
 GameEngine acts as a facade over these services, providing a unified API.
 """
 
-from .game_state import GameState
-from .game_engine import GameEngine
-from .bank_service import BankService
-from .goods_service import GoodsService
-from .investments_service import InvestmentsService
-from .travel_service import TravelService
-from .savegame_service import SavegameService
+from merchant_tycoon.engine.game_state import GameState
+from merchant_tycoon.engine.game_engine import GameEngine
+from merchant_tycoon.engine.bank_service import BankService
+from merchant_tycoon.engine.goods_service import GoodsService
+from merchant_tycoon.engine.investments_service import InvestmentsService
+from merchant_tycoon.engine.travel_service import TravelService
+from merchant_tycoon.engine.savegame_service import SavegameService
 
 __all__ = [
     "GameState",

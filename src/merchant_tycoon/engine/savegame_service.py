@@ -5,7 +5,7 @@ import os
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, List, Tuple
 
-from ..model import (
+from merchant_tycoon.model import (
     PurchaseLot,
     Transaction,
     InvestmentLot,
@@ -14,7 +14,7 @@ from ..model import (
 )
 
 if TYPE_CHECKING:
-    from .game_engine import GameEngine
+    from merchant_tycoon.engine.game_engine import GameEngine
 
 
 SCHEMA_VERSION = 1

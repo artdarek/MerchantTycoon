@@ -6,7 +6,7 @@ from textual.widgets import Label, Button
 from textual.screen import ModalScreen
 
 if TYPE_CHECKING:
-    from ...engine import GameEngine
+    from merchant_tycoon.engine import GameEngine
 
 
 class CargoExtendModal(ModalScreen):

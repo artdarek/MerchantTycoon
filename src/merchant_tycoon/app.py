@@ -12,10 +12,10 @@ from textual.app import App, ComposeResult
 from textual.containers import Vertical, Horizontal
 from textual.widgets import Header, Footer, TabbedContent, TabPane, Static, Label, Button
 from textual.binding import Binding
-from .engine import GameEngine, GameState
-from .model import CITIES
+from merchant_tycoon.engine import GameEngine, GameState
+from merchant_tycoon.model import CITIES
 # UI modules extracted in Stage 3
-from .ui.panels import (
+from merchant_tycoon.ui.panels import (
     StatsPanel,
     MarketPanel,
     InventoryPanel,
@@ -31,7 +31,7 @@ from .ui.panels import (
     LoanBalancePanel,
     YourLoansPanel,
 )
-from .ui.modals import (
+from merchant_tycoon.ui.modals import (
     InputModal,
     CitySelectModal,
     BuyModal,

@@ -3,7 +3,7 @@ from textual.containers import Container, Horizontal
 from textual.widgets import Label, Button, Input, Select
 from textual.screen import ModalScreen
 
-from ...engine import GameEngine
+from merchant_tycoon.engine import GameEngine
 
 
 class SellModal(ModalScreen):

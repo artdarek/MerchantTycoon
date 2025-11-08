@@ -2,7 +2,7 @@ from textual.app import ComposeResult
 from textual.containers import Horizontal
 from textual.widgets import Static, Label, Button
 
-from ...engine import GameEngine
+from merchant_tycoon.engine import GameEngine
 
 
 class GoodsTradeActionsPanel(Static):

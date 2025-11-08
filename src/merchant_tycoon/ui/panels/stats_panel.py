@@ -1,8 +1,8 @@
 from textual.app import ComposeResult
 from textual.widgets import Static, Label
 
-from ...engine import GameEngine
-from ...model import CITIES
+from merchant_tycoon.engine import GameEngine
+from merchant_tycoon.model import CITIES
 
 
 class StatsPanel(Static):

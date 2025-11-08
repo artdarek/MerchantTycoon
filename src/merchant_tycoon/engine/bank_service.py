@@ -1,10 +1,10 @@
 import random
 from typing import TYPE_CHECKING
 
-from ..model import BankTransaction, Loan
+from merchant_tycoon.model import BankTransaction, Loan
 
 if TYPE_CHECKING:
-    from .game_state import GameState
+    from merchant_tycoon.engine.game_state import GameState
 
 
 class BankService:

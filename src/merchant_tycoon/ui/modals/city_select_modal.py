@@ -6,7 +6,7 @@ from textual.widgets import Label, Button, OptionList
 from textual.widgets.option_list import Option
 from textual.screen import ModalScreen
 
-from ...model import City
+from merchant_tycoon.model import City
 
 
 class CitySelectModal(ModalScreen):

@@ -1,11 +1,11 @@
 from typing import Dict, Optional
 
-from .game_state import GameState
-from .bank_service import BankService
-from .goods_service import GoodsService
-from .investments_service import InvestmentsService
-from .travel_service import TravelService
-from .savegame_service import SavegameService
+from merchant_tycoon.engine.game_state import GameState
+from merchant_tycoon.engine.bank_service import BankService
+from merchant_tycoon.engine.goods_service import GoodsService
+from merchant_tycoon.engine.investments_service import InvestmentsService
+from merchant_tycoon.engine.travel_service import TravelService
+from merchant_tycoon.engine.savegame_service import SavegameService
 
 
 class GameEngine:

@@ -2,7 +2,7 @@ from textual.app import ComposeResult
 from textual.containers import Horizontal
 from textual.widgets import Static, Label, Button
 
-from ...engine import GameEngine
+from merchant_tycoon.engine import GameEngine
 
 # Import modals lazily at runtime via self.app.push_screen to avoid circulars.
 # Type hints avoided for self.app to prevent import cycles.

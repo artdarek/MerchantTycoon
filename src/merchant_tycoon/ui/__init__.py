@@ -1,4 +1,4 @@
-from .panels import (
+from merchant_tycoon.ui.panels import (
     StatsPanel,
     MarketPanel,
     InventoryPanel,
@@ -8,7 +8,7 @@ from .panels import (
     TradeActionsPanel,
     GoodsTradeActionsPanel,
 )
-from .modals import (
+from merchant_tycoon.ui.modals import (
     InputModal,
     CitySelectModal,
     BuyModal,

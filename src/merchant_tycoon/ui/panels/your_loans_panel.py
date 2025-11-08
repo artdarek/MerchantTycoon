@@ -2,7 +2,7 @@ from textual.app import ComposeResult
 from textual.widgets import Static, Label, DataTable
 from rich.text import Text
 
-from ...engine import GameEngine
+from merchant_tycoon.engine import GameEngine
 
 
 class YourLoansPanel(Static):

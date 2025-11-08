@@ -4,7 +4,7 @@ from textual.widgets import Label, Button
 from textual.screen import ModalScreen
 from rich.text import Text
 
-from ...engine import GameEngine
+from merchant_tycoon.engine import GameEngine
 
 
 class InventoryTransactionsModal(ModalScreen):

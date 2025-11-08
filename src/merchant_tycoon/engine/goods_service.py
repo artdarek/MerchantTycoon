@@ -1,10 +1,10 @@
 import random
 from typing import Dict, TYPE_CHECKING
 
-from ..model import PurchaseLot, Transaction, GOODS, CITIES
+from merchant_tycoon.model import PurchaseLot, Transaction, GOODS, CITIES
 
 if TYPE_CHECKING:
-    from .game_state import GameState
+    from merchant_tycoon.engine.game_state import GameState
 
 
 class GoodsService:

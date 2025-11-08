@@ -2,7 +2,7 @@ from textual.app import ComposeResult
 from textual.widgets import Static, Label
 from textual.containers import Horizontal
 
-from ...engine import GameEngine
+from merchant_tycoon.engine import GameEngine
 
 
 class AccountBalancePanel(Static):

@@ -4,8 +4,8 @@ from textual.widgets import Label, Button
 from textual.screen import ModalScreen
 from rich.text import Text
 
-from ...engine import GameEngine
-from ...model import STOCKS, COMMODITIES, CRYPTO
+from merchant_tycoon.engine import GameEngine
+from merchant_tycoon.model import STOCKS, COMMODITIES, CRYPTO
 
 
 class InvestmentsTransactionsModal(ModalScreen):

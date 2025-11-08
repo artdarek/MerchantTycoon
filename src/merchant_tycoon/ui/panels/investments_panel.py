@@ -2,8 +2,8 @@ from textual.app import ComposeResult
 from textual.widgets import Static, Label, DataTable
 from rich.text import Text
 
-from ...engine import GameEngine
-from ...model import STOCKS, COMMODITIES, CRYPTO
+from merchant_tycoon.engine import GameEngine
+from merchant_tycoon.model import STOCKS, COMMODITIES, CRYPTO
 
 
 class InvestmentsPanel(Static):
