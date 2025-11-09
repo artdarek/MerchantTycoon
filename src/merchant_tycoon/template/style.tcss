@@ -411,6 +411,15 @@ AccountActionsPanel {
     margin-right: 2;
 }
 
+#bank-rate-summary {
+    height: auto;
+    content-align: left middle;
+}
+
+#bank-rate-summary > Label {
+    margin-right: 2;
+}
+
 AccountTransactionsPanel {
     border: solid $accent;
     padding: 0 1;
@@ -459,6 +468,7 @@ LoanBalancePanel {
     padding: 0 1;
     margin: 0;
     width: 1fr;
+    height: auto;
 }
 
 #loan-summary {
@@ -467,6 +477,15 @@ LoanBalancePanel {
 }
 
 #loan-summary > Label {
+    margin-right: 2;
+}
+
+#loan-credit-summary {
+    height: auto;
+    content-align: left middle;
+}
+
+#loan-credit-summary > Label {
     margin-right: 2;
 }
 

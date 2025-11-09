@@ -149,8 +149,12 @@ class BankService:
         """
         if amount <= 0:
             return False, "Invalid loan amount"
-        if amount > SETTINGS.bank.loan_max_amount:
-            return False, f"Maximum loan is ${SETTINGS.bank.loan_max_amount:,}"
+
+        # Credit capacity check (optional)
+        if getattr(SETTINGS.bank, "credit_enabled", True):
+            cap_msg = self._check_credit_capacity(amount)
+            if cap_msg:
+                return False, cap_msg
 
         # Determine today's APR offer
         try:
@@ -198,6 +202,83 @@ class BankService:
             f"Commission: ${fee:,} ({fee_rate*100:.0f}%). "
             f"Total to repay: ${total_to_repay:,} (APR {apr*100:.2f}%)."
         )
+
+    # ---- Credit capacity helpers ----
+    def _portfolio_value_with_haircuts(self) -> int:
+        total = 0.0
+        try:
+            # asset_prices may be provided by engine (injected)
+            prices = getattr(self, "asset_prices", {}) or {}
+        except Exception:
+            prices = {}
+        # optional: investments_service to resolve asset types
+        inv = getattr(self, "investments_service", None)
+        for symbol, qty in (getattr(self.state, "portfolio", {}) or {}).items():
+            try:
+                price = int(prices.get(symbol, 0))
+            except Exception:
+                price = 0
+            if price <= 0 or qty <= 0:
+                continue
+            asset_type = ""
+            try:
+                if inv is not None:
+                    a = inv.get_asset(symbol)
+                    asset_type = getattr(a, "asset_type", "") if a else ""
+            except Exception:
+                asset_type = ""
+            if asset_type == "stock":
+                hc = float(getattr(SETTINGS.bank, "credit_haircut_stock", 0.8))
+            elif asset_type == "commodity":
+                hc = float(getattr(SETTINGS.bank, "credit_haircut_commodity", 0.7))
+            elif asset_type == "crypto":
+                hc = float(getattr(SETTINGS.bank, "credit_haircut_crypto", 0.5))
+            else:
+                hc = 0.0
+            total += qty * price * hc
+        return int(total)
+
+    def compute_wealth(self) -> int:
+        """Compute player's wealth used for credit capacity: cash + bank + haircut(portfolio)."""
+        wealth = 0
+        # Cash with haircut
+        try:
+            cash = int(getattr(self.state, "cash", 0))
+        except Exception:
+            cash = 0
+        try:
+            cash_hc = float(getattr(SETTINGS.bank, "credit_haircut_cash", 0.5))
+        except Exception:
+            cash_hc = 0.5
+        wealth += int(max(0, cash) * max(0.0, cash_hc))
+        try:
+            wealth += int(getattr(self.state.bank, "balance", 0))
+        except Exception:
+            pass
+        wealth += self._portfolio_value_with_haircuts()
+        # Optionally include goods inventory value (disabled by default)
+        # Not implemented unless SETTINGS.bank.credit_include_goods_inventory is True
+        return int(max(0, wealth))
+
+    def compute_credit_limits(self) -> tuple[int, int, int]:
+        """Return (wealth, max_total_debt, max_new_loan) based on config and current debt."""
+        wealth = self.compute_wealth()
+        lev = float(getattr(SETTINGS.bank, "credit_leverage_factor", 0.8))
+        base = int(getattr(SETTINGS.bank, "credit_base_allowance", 0))
+        max_total = int(wealth * lev) + base
+        cur_debt = int(getattr(self.state, "debt", 0))
+        max_new = max(0, max_total - cur_debt)
+        return wealth, max_total, max_new
+
+    def _check_credit_capacity(self, requested_amount: int) -> Optional[str]:
+        """Return message if requested_amount exceeds capacity; otherwise None."""
+        _, max_total, max_new = self.compute_credit_limits()
+        if requested_amount > max_new:
+            return (
+                f"Requested amount ${requested_amount:,} exceeds credit capacity. "
+                f"Max new loan: ${max_new:,}; Total cap: ${max_total:,}."
+            )
+        return None
 
     def repay_loan_for(self, loan_id: int, amount: int) -> tuple[bool, str]:
         """Repay a specific loan by ID.

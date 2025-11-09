@@ -14,8 +14,11 @@ class AccountBalancePanel(Static):
 
     def compose(self) -> ComposeResult:
         yield Label("🏦 ACCOUNT BALANCE", id="bank-header", classes="panel-title")
+        # First line: balance only (better readability)
         with Horizontal(id="bank-summary"):
             yield Label("Balance: $0", id="bank-balance")
+        # Second line: APR and accrued
+        with Horizontal(id="bank-rate-summary"):
             yield Label("APR: 0.00% (Daily: 0.0000%)", id="bank-rate")
             yield Label("Accrued: $0", id="bank-accrued")
 

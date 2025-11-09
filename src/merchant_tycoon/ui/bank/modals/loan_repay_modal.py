@@ -78,6 +78,18 @@ class LoanRepayModal(ModalScreen):
             amount_input = self.query_one("#amount-input", Input)
         except Exception:
             return
+        # If no explicit default, select the first available loan by default
+        try:
+            if not isinstance(select_widget.value, str) or not select_widget.value:
+                # Select first option if present
+                opts = list(select_widget.options or [])
+                if opts:
+                    # options are (label, key)
+                    first_key = opts[0][1]
+                    self._suppress_autofill = True
+                    select_widget.value = first_key
+        except Exception:
+            pass
         if self.default_loan_id is not None:
             try:
                 self._suppress_autofill = True
@@ -87,7 +99,7 @@ class LoanRepayModal(ModalScreen):
             finally:
                 self._suppress_autofill = False
         # Determine base amount: default_amount if provided else remaining for selected loan
-        loan_key = select_widget.value
+        loan_key = select_widget.value if isinstance(select_widget.value, str) else ""
         ln = self._loan_map.get(loan_key) if loan_key else None
         base_amount = None
         if self.default_amount is not None:
@@ -123,13 +135,21 @@ class LoanRepayModal(ModalScreen):
             loan_key = select_widget.value
             amount_str = input_widget.value.strip()
             self.dismiss()
-            if loan_key and amount_str:
+            if isinstance(loan_key, str) and loan_key and amount_str:
                 try:
                     loan_id = int(loan_key)
                     amount = int(amount_str)
                     self.callback(loan_id, amount)
                 except ValueError:
                     # Ignore invalid input silently
+                    pass
+            else:
+                # No selection; inform user via messenger
+                try:
+                    if self.engine.messenger:
+                        self.engine.messenger.warn("Please select a loan to repay.", tag="bank")
+                        self.app.refresh_all()
+                except Exception:
                     pass
         else:
             self.dismiss()

@@ -16,6 +16,7 @@ from textual.containers import Vertical, Horizontal
 from textual.widgets import Header, Footer, TabbedContent, TabPane, Static, Label, Button
 from textual.binding import Binding
 from merchant_tycoon.engine import GameEngine, GameState
+from merchant_tycoon.config import SETTINGS
 from merchant_tycoon.domain.constants import CITIES
 from merchant_tycoon.ui.general.panels import StatsPanel, MessangerPanel, GlobalActionsBar
 from merchant_tycoon.ui.goods.panels import (
@@ -421,16 +422,28 @@ class MerchantTycoon(App):
         except Exception:
             apr_offer = 0.10
         apr_pct = f"{apr_offer*100:.2f}"
-        max_amount = 10000
+        try:
+            _, _, max_new = self.engine.bank_service.compute_credit_limits()
+        except Exception:
+            max_new = 0
+        if int(max_new) <= 0:
+            # No capacity left: inform user and return
+            self.engine.messenger.warn(
+                "No credit capacity available. Repay loans or increase wealth to borrow more.",
+                tag="bank",
+            )
+            self.refresh_all()
+            return
+        suggested = max(0, int(max_new))
         prompt = (
             "How much would you like to borrow?\n"
-            f"(Max: ${max_amount:,} | Today's offer: {apr_pct}% APR, accrued daily)"
+            f"(Max new loan by capacity: ${max_new:,} | Today's offer: {apr_pct}% APR)"
         )
         modal = InputModal(
             "🏦 Bank Loan",
             prompt,
             self._handle_loan,
-            str(max_amount),
+            str(suggested),
         )
         self.push_screen(modal)
 

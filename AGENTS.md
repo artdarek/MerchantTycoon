@@ -20,6 +20,7 @@
 - Keep domain boundaries: engine logic in `engine/`, data classes in `model/`, TUI in `ui/`, events in `events/`.
 - Prefer absolute imports within the package; avoid circular deps by isolating services.
 - Lint/format: ruff recommended (not enforced yet). Examples: `ruff check src/`, `ruff format src/`.
+- Use English language in comments and docstrings.
 
 ## Testing Guidelines
 - No tests configured yet. If adding tests, use `pytest` with files `tests/test_*.py` mirroring package structure.

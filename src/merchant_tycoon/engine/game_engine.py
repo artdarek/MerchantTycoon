@@ -54,6 +54,13 @@ class GameEngine:
         # Savegame service (persistence)
         self.savegame_service = SavegameService(self)
 
+        # Provide references for cross-service credit capacity computation
+        try:
+            self.bank_service.investments_service = self.investments_service
+            self.bank_service.asset_prices = self.asset_prices
+        except Exception:
+            pass
+
         # Generate initial prices
         self.generate_prices()
         self.generate_asset_prices()

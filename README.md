@@ -194,6 +194,16 @@ The game has **3 tabs** (Goods, Investments, Bank) with context-sensitive contro
 - Fractional interest accrues until it reaches $1, then adds to loan balance
 - Use loans strategically when you have clear profit opportunities (>20-25% margin)
 
+#### 🧮 Credit Capacity
+- Purpose: caps total debt based on your wealth to prevent unlimited borrowing.
+- Wealth = cash × cash_haircut + bank_balance + Σ(portfolio_qty × price × asset_haircut)
+- Total debt cap = wealth × leverage_factor + base_allowance
+- Max new loan = max(0, debt cap − current total debt)
+- Default haircuts (configurable in `BankSettings`):
+  - cash: 0.5, stocks: 0.8, commodities: 0.7, crypto: 0.5
+- Defaults: `leverage_factor=0.8`, `base_allowance=$1,000`.
+- Example: if cash=$5,000, bank=$2,000, portfolio=$10,000 (stocks), wealth≈$5,000×0.5+$2,000+$10,000×0.8=$2,500+$2,000+$8,000=$12,500 → cap≈$12,500×0.8+$1,000=$11,000; if current debt=$3,000 → max new loan ≈ $8,000.
+
 #### 🏦 Banking System
 - **Deposit cash** into your bank account to keep it safe
 - Earn **interest** on deposits (1-3% APR, randomized each travel)

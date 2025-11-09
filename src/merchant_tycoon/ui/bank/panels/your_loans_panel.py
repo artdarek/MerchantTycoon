@@ -119,10 +119,49 @@ class YourLoansPanel(Static):
         if not ln:
             return
         remaining = int(getattr(ln, 'remaining', 0))
+        if remaining <= 0:
+            # Selected loan is already fully repaid – inform and do not open modal
+            try:
+                if self.engine.messenger:
+                    self.engine.messenger.warn("This loan is already fully repaid.", tag="bank")
+                    try:
+                        self.app.refresh_all()
+                    except Exception:
+                        pass
+            except Exception:
+                pass
+            return
         cash = int(getattr(self.engine.state, 'cash', 0))
         default_amount = min(remaining, cash)
-        if default_amount <= 0:
+        # No cash at all
+        if cash <= 0:
+            try:
+                if self.engine.messenger:
+                    self.engine.messenger.warn(
+                        "Not enough cash to repay this loan.", tag="bank"
+                    )
+                # Ensure messenger panel updates immediately
+                try:
+                    self.app.refresh_all()
+                except Exception:
+                    pass
+            except Exception:
+                pass
             return
+        # Inform if user cannot fully repay selected loan
+        if cash < remaining:
+            try:
+                if self.engine.messenger:
+                    self.engine.messenger.warn(
+                        f"Insufficient funds to fully repay this loan. Required ${remaining:,}, you have ${cash:,}.",
+                        tag="bank",
+                    )
+                try:
+                    self.app.refresh_all()
+                except Exception:
+                    pass
+            except Exception:
+                pass
         try:
             from merchant_tycoon.ui.bank.modals import LoanRepayModal
             self.app.push_screen(LoanRepayModal(self.engine, self.app._handle_repay_selected, default_loan_id=loan_id, default_amount=default_amount))

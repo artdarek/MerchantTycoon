@@ -41,3 +41,10 @@ class LoanActionsPanel(Static):
             repay_btn.disabled = (self.engine.state.debt <= 0 or self.engine.state.cash <= 0)
         except Exception:
             pass
+        # Disable Loan button when there is no credit capacity available
+        try:
+            loan_btn = self.query_one("#loan-take-btn", Button)
+            _w, _cap, max_new = self.engine.bank_service.compute_credit_limits()
+            loan_btn.disabled = (int(max_new) <= 0)
+        except Exception:
+            pass
