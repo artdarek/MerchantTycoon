@@ -67,11 +67,17 @@ class CargoExtendModal(ModalScreen):
             f"Note: {note}"
         )
         with Container(id="input-modal"):
-            yield Label("📦 Extend Cargo", id="modal-title")
+            t = "📦 Extend Cargo"
+            parts = t.split(None, 1)
+            if len(parts) == 2:
+                t = f"{parts[0]} {parts[1].upper()}"
+            else:
+                t = t.upper()
+            yield Label(t, id="modal-title")
             yield Label(prompt, id="modal-prompt")
             with Horizontal(id="modal-buttons"):
-                yield Button("Extend", id="extend-btn", variant="primary")
-                yield Button("Cancel", id="cancel-btn", variant="default")
+                yield Button("Extend", id="extend-btn", variant="success")
+                yield Button("Cancel", id="cancel-btn", variant="error")
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "extend-btn":

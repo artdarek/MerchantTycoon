@@ -30,7 +30,13 @@ class LoanRepayModal(ModalScreen):
 
     def compose(self) -> ComposeResult:
         with Container(id="repay-modal"):
-            yield Label("💳 Repay Loan", id="modal-title")
+            title = "💳 Repay Loan"
+            parts = title.split(None, 1)
+            if len(parts) == 2:
+                title = f"{parts[0]} {parts[1].upper()}"
+            else:
+                title = title.upper()
+            yield Label(title, id="modal-title")
 
             # Informational note about rates (APR)
             try:
@@ -68,8 +74,8 @@ class LoanRepayModal(ModalScreen):
             yield Input(placeholder="Amount...", type="integer", id="amount-input")
 
             with Horizontal(id="modal-buttons"):
-                yield Button("Repay", variant="primary", id="confirm-btn")
-                yield Button("Cancel", variant="default", id="cancel-btn")
+                yield Button("Repay", variant="success", id="confirm-btn")
+                yield Button("Cancel", variant="error", id="cancel-btn")
 
     def on_mount(self) -> None:
         """Preselect loan and preflll amount if defaults provided; otherwise use remaining."""

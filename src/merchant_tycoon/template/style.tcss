@@ -1,10 +1,14 @@
 Screen {
     layout: vertical;
+    /* Dark slate base inspired by reference screenshot */
+    background: #262c38;      /* app background */
+    color: #cdd3df;           /* default text */
 }
 
 GlobalActionsBar {
-    background: $panel;
-    color: $text;
+    /* Top stats/action strip */
+    background: #1b202b;  /* even darker */
+    color: #cdd3df;
     height: auto;
     padding: 0;              /* no padding for top menu panel */
     margin-bottom: 0;
@@ -17,7 +21,7 @@ GlobalActionsBar {
 }
 
 .action-item {
-    color: #7a7a7a;         /* dark gray */
+    color: #9aa3b2;         /* muted label tone */
     margin: 0;            /* no outer spacing */
     text-style: bold;
 }
@@ -26,9 +30,9 @@ GlobalActionsBar {
 GlobalActionsBar Button.action-item {
     background: transparent;
     border: none;
-    padding: 0;           /* no inner spacing */
+    padding: 1;           /* add inner spacing */
     margin: 0;            /* no outer spacing */
-    color: #7a7a7a;       /* dark gray */
+    color: #9aa3b2;       /* muted label tone */
 }
 /* Let top-menu buttons size to content, not equal widths */
 GlobalActionsBar Button {
@@ -37,7 +41,6 @@ GlobalActionsBar Button {
 }
 /* Ensure absolutely no left padding on any top-menu button */
 GlobalActionsBar Button {
-    padding-left: 0;
     margin-left: 0;
 }
 /* Also strip any left padding from internal labels inside buttons */
@@ -49,23 +52,25 @@ GlobalActionsBar .label {
     padding-left: 0;
     margin-left: 0;
 }
+
+/* removed two-column layout; revert to simple left-aligned bar */
 /* Keep focus/pressed flat by default... */
 GlobalActionsBar Button.action-item:focus,
 GlobalActionsBar Button.action-item.-pressed {
-    background: transparent;         /* no special color when focused/clicked */
-    color: #7a7a7a;                  /* keep dark gray when focused/pressed */
+    background: transparent;         /* keep flat style */
+    color: #9aa3b2;
 }
-/* ...but when hovered, show hover color even if focused/pressed */
+/* ...but when hovered, show subtle highlight */
 GlobalActionsBar Button.action-item:hover,
 GlobalActionsBar Button.action-item.-pressed:hover,
 GlobalActionsBar Button.action-item:focus:hover {
-    background: $primary-darken-1;
+    background: #3a4151;
     color: #ffffff;                  /* white on hover */
 }
 
 StatsPanel {
-    background: $primary;
-    color: $text;
+    background: #2f3543;  /* match the top strip */
+    color: #cdd3df;
     padding: 1;
     text-style: bold;
     height: auto;
@@ -82,7 +87,7 @@ TabPane {
 }
 
 GoodsPricesPanel {
-    border: solid $accent;
+    border: solid #3f4557;
     padding: 0 1;
     margin: 0;
     width: 1fr;
@@ -90,7 +95,7 @@ GoodsPricesPanel {
 }
 
 InventoryPanel {
-    border: solid $accent;
+    border: solid #3f4557;
     padding: 0 1;
     margin: 0;
     width: 1fr;
@@ -99,7 +104,7 @@ InventoryPanel {
 }
 
 InventoryLotsPanel {
-    border: solid $accent;
+    border: solid #3f4557;
     padding: 0 1;
     margin: 0;
     width: 1fr;
@@ -112,7 +117,7 @@ InventoryLotsPanel {
 
 /* Investments lots panel mirrors purchased lots styling */
 InvestmentsLotsPanel {
-    border: solid $accent;
+    border: solid #3f4557;
     padding: 0 1;
     margin: 0;
     width: 1fr;
@@ -125,7 +130,7 @@ InvestmentsLotsPanel {
 
 /* Goods trade actions panel (right column on Goods tab) */
 GoodsTradeActionsPanel {
-    border: solid $accent;
+    border: solid #3f4557;
     /* Visual balance: terminal cells are taller than wide; use less vertical padding */
     padding: 0 1;
     margin: 0;
@@ -160,14 +165,14 @@ GoodsTradeActionsPanel {
 }
 
 ExchangePricesPanel {
-    border: solid $accent;
+    border: solid #3f4557;
     padding: 0 1;
     margin: 0;
     width: 1fr;
 }
 
 InvestmentsPanel {
-    border: solid $accent;
+    border: solid #3f4557;
     padding: 0 1;
     margin: 0;
     width: 1fr;
@@ -175,7 +180,7 @@ InvestmentsPanel {
 }
 
 TradeActionsPanel {
-    border: solid $accent;
+    border: solid #3f4557;
     padding: 0 1;
     margin: 0;
     width: 1fr;
@@ -197,8 +202,8 @@ TradeActionsPanel {
 
 MessangerPanel {
     border: none;                 /* no frame */
-    background: #3a3a3a;          /* light-ish dark grey for contrast */
-    color: #ffffff;               /* force white text for readability */
+    background: #303645;          /* darker card, like screenshot */
+    color: #e3e8f2;               /* bright text for readability */
     padding: 1 1 0 1;            /* add top padding for header spacing */
     padding-bottom: 0;           /* ensure no bottom padding */
     margin: 0;
@@ -207,7 +212,7 @@ MessangerPanel {
 
 .panel-title {
     text-style: bold;
-    color: $text;
+    color: #dfe5ef;
     margin-bottom: 1;
 }
 
@@ -245,13 +250,23 @@ MessangerPanel {
     margin: 0;                    /* ensure no extra bottom spacing */
 }
 
-/* Modal styles */
-#input-modal, #city-modal, #buy-modal, #sell-modal, #confirm-modal, #repay-modal, #about-modal, #splash-modal {
-    width: 60;
+/* Modal styles (non-splash) */
+#input-modal, #city-modal, #buy-modal, #sell-modal, #confirm-modal, #repay-modal, #about-modal {
+    width: 48;              /* smaller panels */
+    max-width: 60%;
     height: auto;
-    border: thick $accent;
-    background: $surface;
+    border: thick #3f4557;
+    background: #2b3140;
     padding: 1 2;
+}
+
+/* Center all modals (except Splash which is fullscreen), and make overlay transparent
+   so underlying app remains visible around the dialog. */
+InputModal, CitySelectModal, BuyModal, SellModal, SellLotModal,
+BuyAssetModal, SellAssetModal, LoanRepayModal, HelpModal,
+ConfirmModal, AboutModal, CargoExtendModal {
+    align: center middle;
+    background: transparent;
 }
 
 /* removed transactions modal styles */
@@ -274,25 +289,25 @@ MessangerPanel {
 
 .splash-ascii {
     text-style: bold;
-    color: $accent;
+    color: #9fd0c9;   /* teal accent */
     margin-bottom: 1;
 }
 
 .splash-note {
-    color: $text-muted;
+    color: #9aa3b2;
 }
 
 #splash-instruction {
     width: 100%;
     text-align: center;
-    color: $text-muted;
+    color: #9aa3b2;
     padding: 1;
 }
 
 /* Modal common selectors */
 #modal-title {
     text-style: bold;
-    color: $accent;
+    color: #ffffff; /* white, match panel title vibe */
     text-align: center;
     margin-bottom: 1;
 }
@@ -305,6 +320,8 @@ MessangerPanel {
 #modal-buttons Button {
     width: 1fr;
     margin: 0 1;
+    height: 3;            /* taller buttons */
+    padding: 0 2;         /* add vertical space */
 }
 
 #city-list {
@@ -313,57 +330,67 @@ MessangerPanel {
     margin: 1 0;
 }
 
+/* Ensure single-action modal buttons are also comfortably tall */
+#help-modal Button,
+#about-modal Button,
+#alert-modal-positive Button,
+#alert-modal-negative Button {
+    height: 3;
+    padding: 0 2;
+}
+
 /* Help modal styles */
 #help-modal {
-    width: 90;
-    height: 40;
-    border: thick $accent;
-    background: $surface;
+    width: 66;
+    height: 28;
+    border: thick #3f4557;
+    background: #2b3140;
     padding: 1 2;
     layout: vertical;
 }
 
 #help-content {
     width: 100%;
-    height: 30;
+    height: 1fr;           /* fill remaining space so button sits at bottom */
     margin: 1 0;
     padding: 1;
-    border: solid $primary;
-    background: $panel;
+    border: solid #3f4557;
+    background: #2f3543;
 }
 
 /* Alert modal styles */
 AlertModal {
     align: center middle;
+    background: transparent;   /* keep app visible under alerts */
 }
 
 #alert-modal-negative {
-    width: 70;
+    width: 50;
     height: auto;
-    border: thick $error;
-    background: $surface;
+    border: thick #d16a66;   /* salmon */
+    background: #2b3140;
     padding: 1 2;
 }
 
 #alert-modal-positive {
-    width: 70;
+    width: 50;
     height: auto;
-    border: thick $success;
-    background: $surface;
+    border: thick #4ea59a;   /* teal */
+    background: #2b3140;
     padding: 1 2;
 }
 
 #alert-message {
     margin: 1 0;
     padding: 1;
-    background: $panel;
-    color: $text;
+    background: #2f3543;
+    color: #dfe5ef;
 }
 
 .section-header {
     text-style: bold;
-    color: $accent;
-    background: $primary-darken-2;
+    color: #dfe5ef;
+    background: #3a4151;  /* subtle header band */
     padding: 0 1;
 }
 
@@ -395,14 +422,14 @@ AlertModal {
 
 /* --- Bank tab styles (mirror Investments tab) --- */
 AccountBalancePanel {
-    border: solid $accent;
+    border: solid #3f4557;
     padding: 0 1;
     margin: 0;
     width: 1fr;
 }
 
 AccountActionsPanel {
-    border: solid $accent;
+    border: solid #3f4557;
     padding: 0 1;
     margin: 0;
     width: 1fr;
@@ -457,7 +484,7 @@ AccountActionsPanel {
 }
 
 AccountTransactionsPanel {
-    border: solid $accent;
+    border: solid #3f4557;
     padding: 0 1;
     margin: 0;
     width: 1fr;
@@ -471,7 +498,7 @@ AccountTransactionsPanel {
 
 /* --- Loan actions styles (mirror Bank actions) --- */
 LoanActionsPanel {
-    border: solid $accent;
+    border: solid #3f4557;
     padding: 0 1;
     margin: 0;
     width: 1fr;
@@ -500,7 +527,7 @@ LoanActionsPanel {
 
 /* --- Loan balance panel (under Loan actions) --- */
 LoanBalancePanel {
-    border: solid $accent;
+    border: solid #3f4557;
     padding: 0 1;
     margin: 0;
     width: 1fr;
@@ -528,11 +555,36 @@ LoanBalancePanel {
 
 /* --- Your Loans panel (table under loan balance) --- */
 YourLoansPanel {
-    border: solid $accent;
+    border: solid #3f4557;
     padding: 0 1;
     margin: 0;
     width: 1fr;
     height: 1fr;
+}
+
+/* --- Buttons: Buy/Sell accent variants to match reference --- */
+Button.-success {
+    background: #4ea59a;
+    color: #ffffff;
+    border: none;
+}
+Button.-success:hover,
+Button.-success:focus,
+Button.-success.-pressed {
+    background: #5fb6ab;
+    color: #ffffff;
+}
+
+Button.-error {
+    background: #d16a66;
+    color: #ffffff;
+    border: none;
+}
+Button.-error:hover,
+Button.-error:focus,
+Button.-error.-pressed {
+    background: #de7a73;
+    color: #ffffff;
 }
 
 #your-loans-table {

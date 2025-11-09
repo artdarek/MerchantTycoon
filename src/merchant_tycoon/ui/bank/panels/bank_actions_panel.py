@@ -19,7 +19,7 @@ class AccountActionsPanel(Static):
             yield Button(
                 "Withdraw [W]",
                 id="bank-withdraw-btn",
-                variant="warning",
+                variant="error",   # match Sell styling
                 disabled=self.engine.state.bank.balance <= 0,
             )
 

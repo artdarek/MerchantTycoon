@@ -9,7 +9,8 @@ class ConfirmModal(ModalScreen):
 
     BINDINGS = [
         ("enter", "confirm", "Yes"),
-        ("escape", "cancel", "No"),
+        # ESC only dismisses the modal; it does NOT trigger cancel callback.
+        ("escape", "dismiss_only", "Close"),
     ]
 
     def __init__(self, title: str, message: str, on_confirm, on_cancel=None, *, confirm_label: str = "Yes", cancel_label: str = "No"):
@@ -23,17 +24,38 @@ class ConfirmModal(ModalScreen):
 
     def compose(self) -> ComposeResult:
         with Container(id="confirm-modal"):
-            yield Label(self._title, id="modal-title")
+            # Add emoji by title context and uppercase the rest
+            title = self._title or ""
+            lower = title.lower()
+            emoji = "❓"
+            if "quit" in lower:
+                emoji = "🚪"
+            elif "save" in lower:
+                emoji = "💾"
+            elif "load" in lower:
+                emoji = "📂"
+            elif "new game" in lower or "start" in lower:
+                emoji = "🆕"
+            elif "delete" in lower:
+                emoji = "🗑️"
+            # Always render as "EMOJI {FULL TITLE UPPERCASE}"
+            final = f"{emoji} {title.upper()}"
+            yield Label(final, id="modal-title")
             yield Label(self._message)
             with Horizontal(id="modal-buttons"):
-                yield Button(self._confirm_label, id="yes-btn", variant="primary")
-                yield Button(self._cancel_label, id="no-btn", variant="default")
+                yield Button(self._confirm_label, id="yes-btn", variant="success")
+                yield Button(self._cancel_label, id="no-btn", variant="error")
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "yes-btn":
             self.action_confirm()
         elif event.button.id == "no-btn":
-            self.action_cancel()
+            # Clicking the explicit NO/EXIT button invokes cancel callback
+            try:
+                if callable(self._on_cancel):
+                    self._on_cancel()
+            finally:
+                self.dismiss()
 
     def action_confirm(self) -> None:
         try:
@@ -42,9 +64,8 @@ class ConfirmModal(ModalScreen):
         finally:
             self.dismiss()
 
-    def action_cancel(self) -> None:
-        try:
-            if callable(self._on_cancel):
-                self._on_cancel()
-        finally:
-            self.dismiss()
+    def action_cancel(self) -> None:  # kept for backward compatibility
+        self.dismiss()
+
+    def action_dismiss_only(self) -> None:
+        self.dismiss()

@@ -63,7 +63,7 @@ class HelpModal(ModalScreen):
                 yield Label("  5. Balance trading and investing for maximum wealth")
                 yield Label("")
 
-            yield Button("Close (ESC)", variant="primary", id="close-btn")
+            yield Button("Close (ESC)", variant="success", id="close-btn")
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "close-btn":

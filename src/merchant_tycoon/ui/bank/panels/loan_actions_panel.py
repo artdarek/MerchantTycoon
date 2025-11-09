@@ -18,7 +18,7 @@ class LoanActionsPanel(Static):
             yield Button(
                 "Repay [R]",
                 id="loan-repay-btn",
-                variant="warning",
+                variant="error",   # match Sell styling
                 disabled=(self.engine.state.debt <= 0 or self.engine.state.cash <= 0),
             )
 

@@ -224,6 +224,7 @@ class MerchantTycoon(App):
         self.current_tab = event.pane.id
 
     def refresh_all(self):
+        
         if self.stats_panel:
             self.stats_panel.update_stats()
         if self.market_panel:
@@ -504,6 +505,8 @@ class MerchantTycoon(App):
             f"Cash available: ${cash:,}\nHow much to deposit?",
             self._handle_bank_deposit,
             default_value=str(cash),
+            confirm_variant="success",
+            cancel_variant="error",
         )
         self.push_screen(modal)
 
@@ -529,6 +532,8 @@ class MerchantTycoon(App):
             f"Bank balance: ${bal:,}\nHow much to withdraw?",
             self._handle_bank_withdraw,
             default_value=str(bal),
+            confirm_variant="success",
+            cancel_variant="error",
         )
         self.push_screen(modal)
 
@@ -564,19 +569,28 @@ class MerchantTycoon(App):
                 pass
 
     def action_save(self):
-        """Save current game to disk (single slot)."""
-        try:
-            msgs = self.engine.messenger.get_entries()
-            ok, msg = self.engine.savegame_service.save(msgs)
-            if ok:
-                self.engine.messenger.info("Game saved.", tag="system")
-            else:
-                self.engine.messenger.warn(msg, tag="system")
-        except Exception as e:
-            self.engine.messenger.error(f"Save failed: {e}", tag="system")
-        finally:
-            # Ensure messenger panel reflects the new message immediately
-            self.refresh_all()
+        """Ask for confirmation, then save current game to disk."""
+        def _confirm_save():
+            try:
+                msgs = self.engine.messenger.get_entries()
+                ok, msg = self.engine.savegame_service.save(msgs)
+                if ok:
+                    self.engine.messenger.info("Game saved.", tag="system")
+                else:
+                    self.engine.messenger.warn(msg, tag="system")
+            except Exception as e:
+                self.engine.messenger.error(f"Save failed: {e}", tag="system")
+            finally:
+                self.refresh_all()
+
+        confirm = ConfirmModal(
+            "Save Game",
+            "Do you want to save your progress?",
+            on_confirm=_confirm_save,
+            confirm_label="Yes",
+            cancel_label="No",
+        )
+        self.push_screen(confirm)
 
     def action_load(self):
         """Load saved game from disk."""

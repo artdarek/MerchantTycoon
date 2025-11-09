@@ -24,7 +24,13 @@ class CitySelectModal(ModalScreen):
 
     def compose(self) -> ComposeResult:
         with Container(id="city-modal"):
-            yield Label("🗺️  Select Destination", id="modal-title")
+            title = "🗺️ Select Destination"
+            parts = title.split(None, 1)
+            if len(parts) == 2:
+                title = f"{parts[0]} {parts[1].upper()}"
+            else:
+                title = title.upper()
+            yield Label(title, id="modal-title")
             options = []
             for i, city in enumerate(self.cities):
                 if i == self.current_city:

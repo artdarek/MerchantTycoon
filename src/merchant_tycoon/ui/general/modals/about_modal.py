@@ -29,7 +29,7 @@ class AboutModal(ModalScreen):
             yield Label("Main developer: Dariusz Przada")
             yield Label("Junior developers: Claude Code, Junie, Codex")
 
-            yield Button("Close (ESC)", variant="primary", id="close-btn")
+            yield Button("Close (ESC)", variant="success", id="close-btn")
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "close-btn":
@@ -37,4 +37,3 @@ class AboutModal(ModalScreen):
 
     def action_dismiss_modal(self) -> None:
         self.dismiss()
-

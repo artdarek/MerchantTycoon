@@ -24,7 +24,13 @@ class BuyAssetModal(ModalScreen):
 
     def compose(self) -> ComposeResult:
         with Container(id="buy-modal"):
-            yield Label("💰 Buy Assets", id="modal-title")
+            title = "💰 Buy Assets"
+            parts = title.split(None, 1)
+            if len(parts) == 2:
+                title = f"{parts[0]} {parts[1].upper()}"
+            else:
+                title = title.upper()
+            yield Label(title, id="modal-title")
 
             options = []
             all_assets = []
@@ -68,8 +74,8 @@ class BuyAssetModal(ModalScreen):
             yield Input(placeholder="Quantity...", type="integer", id="quantity-input")
 
             with Horizontal(id="modal-buttons"):
-                yield Button("Buy", variant="primary", id="confirm-btn")
-                yield Button("Cancel", variant="default", id="cancel-btn")
+                yield Button("Buy", variant="success", id="confirm-btn")
+                yield Button("Cancel", variant="error", id="cancel-btn")
 
     def on_mount(self) -> None:
         # Preselect asset and quantity if provided

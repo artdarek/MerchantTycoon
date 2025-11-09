@@ -24,7 +24,13 @@ class SellModal(ModalScreen):
 
     def compose(self) -> ComposeResult:
         with Container(id="sell-modal"):
-            yield Label("💵 Sell Goods", id="modal-title")
+            title = "💵 Sell Goods"
+            parts = title.split(None, 1)
+            if len(parts) == 2:
+                title = f"{parts[0]} {parts[1].upper()}"
+            else:
+                title = title.upper()
+            yield Label(title, id="modal-title")
 
             # Create select options with inventory and prices
             options = []
@@ -46,8 +52,8 @@ class SellModal(ModalScreen):
             yield Input(placeholder="Quantity...", type="integer", id="quantity-input")
 
             with Horizontal(id="modal-buttons"):
-                yield Button("Sell", variant="primary", id="confirm-btn")
-                yield Button("Cancel", variant="default", id="cancel-btn")
+                yield Button("Sell", variant="success", id="confirm-btn")
+                yield Button("Cancel", variant="error", id="cancel-btn")
 
     def on_mount(self) -> None:
         # Preselect product and quantity if provided

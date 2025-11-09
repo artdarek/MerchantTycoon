@@ -1,8 +1,6 @@
 from textual.app import ComposeResult
 from textual.containers import Horizontal
 from textual.widgets import Static, Button, Label
-
-
 class GlobalActionsBar(Static):
     """Top bar showing global actions available at all times"""
 
@@ -35,3 +33,5 @@ class GlobalActionsBar(Static):
                 app.action_quit()
             except Exception:
                 app.exit()
+
+    

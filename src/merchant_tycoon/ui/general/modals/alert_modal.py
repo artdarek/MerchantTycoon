@@ -21,9 +21,16 @@ class AlertModal(ModalScreen):
     def compose(self) -> ComposeResult:
         modal_id = "alert-modal-positive" if self.is_positive else "alert-modal-negative"
         with Container(id=modal_id):
-            yield Label(self.alert_title, id="modal-title")
+            # Uppercase the title while preserving leading emoji + single space
+            t = self.alert_title or ""
+            parts = t.split(None, 1)
+            if len(parts) == 2:
+                t = f"{parts[0]} {parts[1].upper()}"
+            else:
+                t = t.upper()
+            yield Label(t, id="modal-title")
             yield Label(self.alert_message, id="alert-message")
-            yield Button("OK (ENTER)", variant="primary", id="ok-btn")
+            yield Button("OK (ENTER)", variant=("success" if self.is_positive else "error"), id="ok-btn")
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "ok-btn":
