@@ -9,11 +9,12 @@ import merchant_tycoon as pkg
 class SplashModal(ModalScreen):
     """Simple splash screen shown on startup.
 
-    Auto-closes after 10 seconds and can be dismissed with Enter or Escape.
+    Auto-closes after 10 seconds and can be dismissed with Enter, Space, or Escape.
     """
 
     BINDINGS = [
         ("enter", "dismiss", "Close"),
+        ("space", "dismiss", "Close"),
         ("escape", "dismiss", "Close"),
     ]
 
@@ -60,7 +61,7 @@ class SplashModal(ModalScreen):
                 yield Label("Buy low • Sell high • Travel and invest", classes="splash-note")
 
             # Bottom instruction
-            yield Label("Press Enter to continue", id="splash-instruction")
+            yield Label("Press Enter or Space to continue", id="splash-instruction")
 
     def on_mount(self) -> None:
         # Auto-dismiss after 10 seconds
