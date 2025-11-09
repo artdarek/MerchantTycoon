@@ -8,12 +8,13 @@ class GlobalActionsBar(Static):
 
     def compose(self) -> ComposeResult:
         with Horizontal(id="global-actions-bar"):
-            yield Button("🎮 [F1] New Game", id="action-new", classes="action-item")
-            yield Button("💾 [F2] Save", id="action-save", classes="action-item")
-            yield Button("📂 [F3] Load", id="action-load", classes="action-item")
-            yield Button("❓ [F4] Help", id="action-help", classes="action-item")
-            yield Button("ℹ️ [F5] About", id="action-about", classes="action-item")
-            yield Button("🚪 [Q] Quit", id="action-quit", classes="action-item")
+            yield Button("Ⓝ  [F1] New Game", id="action-new", classes="action-item")
+            yield Button("Ⓢ  [F2] Save", id="action-save", classes="action-item")
+            yield Button("Ⓛ  [F3] Load", id="action-load", classes="action-item")
+            yield Button("ⓗ  [F4] Help", id="action-help", classes="action-item")
+            # Use circled info glyph for About; keep space after glyph for clarity
+            yield Button("ⓘ  [F5] About", id="action-about", classes="action-item")
+            yield Button("Ⓠ  [ESC] Quit", id="action-quit", classes="action-item")
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         """Dispatch top bar button clicks to the same actions as hotkeys."""

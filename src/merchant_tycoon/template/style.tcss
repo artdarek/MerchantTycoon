@@ -17,8 +17,8 @@ GlobalActionsBar {
 }
 
 .action-item {
-    color: $text;
-    margin-right: 3;
+    color: #7a7a7a;         /* dark gray */
+    margin: 0;            /* no outer spacing */
     text-style: bold;
 }
 
@@ -26,13 +26,41 @@ GlobalActionsBar {
 GlobalActionsBar Button.action-item {
     background: transparent;
     border: none;
-    padding: 0 1;
-    color: $text;
+    padding: 0;           /* no inner spacing */
+    margin: 0;            /* no outer spacing */
+    color: #7a7a7a;       /* dark gray */
 }
+/* Let top-menu buttons size to content, not equal widths */
+GlobalActionsBar Button {
+    width: auto;
+    min-width: 0;
+}
+/* Ensure absolutely no left padding on any top-menu button */
+GlobalActionsBar Button {
+    padding-left: 0;
+    margin-left: 0;
+}
+/* Also strip any left padding from internal labels inside buttons */
+GlobalActionsBar Button Label {
+    padding-left: 0;
+    margin-left: 0;
+}
+GlobalActionsBar .label {
+    padding-left: 0;
+    margin-left: 0;
+}
+/* Keep focus/pressed flat by default... */
+GlobalActionsBar Button.action-item:focus,
+GlobalActionsBar Button.action-item.-pressed {
+    background: transparent;         /* no special color when focused/clicked */
+    color: #7a7a7a;                  /* keep dark gray when focused/pressed */
+}
+/* ...but when hovered, show hover color even if focused/pressed */
 GlobalActionsBar Button.action-item:hover,
-GlobalActionsBar Button.action-item:focus {
+GlobalActionsBar Button.action-item.-pressed:hover,
+GlobalActionsBar Button.action-item:focus:hover {
     background: $primary-darken-1;
-    text-style: bold;
+    color: #ffffff;                  /* white on hover */
 }
 
 StatsPanel {
