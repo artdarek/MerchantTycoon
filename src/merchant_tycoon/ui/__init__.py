@@ -3,7 +3,7 @@ from merchant_tycoon.ui.general.panels import (
     MessangerPanel,
 )
 from merchant_tycoon.ui.goods.panels import (
-    MarketPanel,
+    GoodsPricesPanel,
     GoodsTradeActionsPanel,
     InventoryPanel,
 )
@@ -36,7 +36,7 @@ from merchant_tycoon.ui.investments.modals import (
 __all__ = [
     # panels
     "StatsPanel",
-    "MarketPanel",
+    "GoodsPricesPanel",
     "InventoryPanel",
     "ExchangePricesPanel",
     "InvestmentsPanel",

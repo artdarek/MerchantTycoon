@@ -19,7 +19,7 @@ from merchant_tycoon.engine import GameEngine, GameState
 from merchant_tycoon.domain.constants import CITIES
 from merchant_tycoon.ui.general.panels import StatsPanel, MessangerPanel, GlobalActionsBar
 from merchant_tycoon.ui.goods.panels import (
-    MarketPanel,
+    GoodsPricesPanel,
     GoodsTradeActionsPanel,
     InventoryPanel,
     InventoryLotsPanel,
@@ -113,7 +113,7 @@ class MerchantTycoon(App):
         yield StatsPanel(self.engine)
         with TabbedContent(initial="goods-tab"):
             with TabPane("📦 Goods", id="goods-tab"):
-                yield MarketPanel(self.engine)
+                yield GoodsPricesPanel(self.engine)
                 with Vertical(id="goods-right-col"):
                     yield GoodsTradeActionsPanel(self.engine)
                     yield InventoryPanel(self.engine)
@@ -139,7 +139,7 @@ class MerchantTycoon(App):
         self.title = "Merchant Tycoon"
         self.message_log = self.query_one(MessangerPanel)
         self.stats_panel = self.query_one(StatsPanel)
-        self.market_panel = self.query_one(MarketPanel)
+        self.market_panel = self.query_one(GoodsPricesPanel)
         self.inventory_panel = self.query_one(InventoryPanel)
         try:
             self.inventory_lots_panel = self.query_one(InventoryLotsPanel)
@@ -215,7 +215,7 @@ class MerchantTycoon(App):
         if self.stats_panel:
             self.stats_panel.update_stats()
         if self.market_panel:
-            self.market_panel.update_market()
+            self.market_panel.update_goods_prices()
         if self.inventory_panel:
             self.inventory_panel.update_inventory()
         if self.inventory_lots_panel:

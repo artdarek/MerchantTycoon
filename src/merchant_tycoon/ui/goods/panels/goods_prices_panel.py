@@ -7,7 +7,7 @@ from merchant_tycoon.config import SETTINGS
 from merchant_tycoon.domain.constants import GOODS
 
 
-class MarketPanel(Static):
+class GoodsPricesPanel(Static):
     """Display market prices and buy/sell options"""
 
     def __init__(self, engine: GameEngine):
@@ -20,7 +20,7 @@ class MarketPanel(Static):
         # Use a DataTable to present goods in a tabular format
         yield DataTable(id="market-table")
 
-    def update_market(self):
+    def update_goods_prices(self):
         table = self.query_one("#market-table", DataTable)
 
         # Configure columns once
