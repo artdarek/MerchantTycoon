@@ -297,7 +297,7 @@ The game uses a **tabbed interface** with three main tabs:
 
 ## 🤖 Created Entirely with AI Agents on board
 
-This game was **100% (ok ok 99%:>) created using AI Agents**.
+This game was **100% created using AI Agents** (well 99% to be honest - I just could not resist).
 Almost every line of code, every feature, and every design decision was made through conversation with AI
 (Claude Code, Codex and Junie). 
 
@@ -314,35 +314,30 @@ The entire development was done through natural language conversations. The deve
 
 1. **Initial Concept**: "Let's create a terminal trading game"
 2. **Iterative Development**: Feature by feature through conversation
-3. **UI Refinements**: Adjusting layouts, adding panels, fixing alignment
+3. **Planning mechanics**: "Let's plan how to implement better loan mechanics"
 4. **Feature Additions**:
    - Started with basic buy/sell mechanics
-   - Added city travel system (5 cities → 11 cities)
+   - Added city travel system
+   - Built banking system with deposits and interest- 
    - Implemented multi-loan system with variable rates
    - Created stock exchange with 12 real company stocks
-   - Added 4 commodities (Gold, Oil, Silver, Copper)
    - Integrated cryptocurrency trading (Bitcoin, Ethereum, Solana, Dogecoin)
-   - Built banking system with deposits and interest
-   - Added investment tracking with FIFO and profit/loss calculations
-   - Created detailed transaction history modals
    - Implemented tabbed interface (Goods, Investments, Bank)
    - Added context-sensitive keyboard controls
-   - Built help system and alert modals
-
-5. **Polish & UX**:
-   - Changed keybindings to be context-sensitive per tab
-   - Fixed data alignment in tables
-   - Added dynamic profit/loss coloring (green/red)
-   - Refactored UI into modular panels and modals
-   - Added proper column formatting and scrolling
-   - Improved modal layouts and styling
+5. **UI Refinements**: Adjusting layouts, adding panels, fixing alignment 
+6. **Iterative Refactoring**:  
+   - Polishing project architecture 
+   - From single file project to well-organized layers
+   - Implementing design patterns and good practices
+   - Cleaning up code 
+   - Adding/Updating documentation and comments
 
 ### What This Demonstrates
 
 This project showcases:
 - **Natural Language Programming**: Building software by describing what you want
 - **Iterative Development**: Refining features through conversation
-- **AI-Human Collaboration**: Combining human creativity with AI implementation
+- **AI-Human Collaboration**: Combining human creativity, experience and knowledge with AI implementation
 - **Rapid Prototyping**: From concept to working game in a single session
 
 ## 📝 License
@@ -354,7 +349,7 @@ MIT License - feel free to use, modify, and distribute.
 - Built with [Textual](https://github.com/Textualize/textual) by Textualize
 - Inspired by classic trading games like Dope Wars and Drug Wars
 - Proof of concept created using [Claude](https://www.anthropic.com/claude) by Anthropic
-- Special thanks to [JuniePro](https://www.jetbrains.com/idea/) for stepping in to support development whenever Claude's rate limit hit
+- Special thanks to [JuniePro](https://www.jetbrains.com/junie/) for stepping in to support development whenever Claude's rate limit hit
 - [OpenAI Codex](https://openai.com/research/codex) stepped in when Junie left the team (she wanted more money that we couldn't afford), 
 
 ## 🎮 Start Playing!
@@ -369,11 +364,8 @@ Good luck, and may your trades be profitable! 🚀💰
 
 *"In code we trust, in Claude we build."* - A demonstration of AI-powered software development
 
-## 🛠️ Development Tools
+## 🛠️ Other Tools Used
 
-- Claude Code: https://www.anthropic.com/
-- Codex: https://beta.openai.com/docs/api-reference/chat/create
-- Junie: https://junie.pro/
 - ASCII logo generator: https://patorjk.com/software/taag/#p=display&f=Big+Money-ne&t=Merchant%0ATycoon%0AT-ai-coon%0A&x=none&v=4&h=4&w=80&we=false
   - Font: Big Money-ne
   - Used to create the splash screen ASCII art variants (Merchant Tycoon / T-ai-coon)
