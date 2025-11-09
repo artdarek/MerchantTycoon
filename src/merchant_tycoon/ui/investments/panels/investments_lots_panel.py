@@ -4,6 +4,7 @@ from textual.widgets import Static, Label, DataTable
 from rich.text import Text
 
 from merchant_tycoon.engine import GameEngine
+from merchant_tycoon.domain.constants import STOCKS, COMMODITIES, CRYPTO
 
 
 class InvestmentsLotsPanel(Static):
@@ -31,11 +32,28 @@ class InvestmentsLotsPanel(Static):
         state = self.engine.state
         prices = self.engine.asset_prices
 
+        # Build lookup for asset names/type by symbol
+        assets = STOCKS + COMMODITIES + CRYPTO
+        symbol_to_name = {a.symbol: a.name for a in assets}
+
         # Only display assets that are currently owned (>0)
         owned = [sym for sym, qty in (state.portfolio or {}).items() if qty > 0]
         owned.sort()
         if not owned:
             return
+
+        # Build a single DataTable for all assets' lots
+        table = DataTable()
+        try:
+            table.cursor_type = "row"
+            table.show_header = True
+            table.zebra_stripes = True
+        except Exception:
+            pass
+        table.add_columns("Symbol", "Name", "Date", "Qty", "Price", "Total", "P/L", "P/L%")
+
+        meta = {"rows": {}}
+        self._tables[id(table)] = meta
 
         for symbol in owned:
             current_price = int(prices.get(symbol, 0))
@@ -43,22 +61,7 @@ class InvestmentsLotsPanel(Static):
             if not lots:
                 continue
 
-            # Header for this asset
-            container.mount(Label(f" {symbol} ", classes="section-header"))
-
-            # Build a DataTable for this asset's lots
-            table = DataTable()
-            try:
-                table.cursor_type = "row"
-                table.show_header = True
-                table.zebra_stripes = True
-            except Exception:
-                pass
-            table.add_columns("Date", "Qty", "Price", "Total", "P/L", "P/L%")
-
-            # Register table meta
-            meta = {"symbol": symbol, "rows": {}}
-            self._tables[id(table)] = meta
+            asset_name = symbol_to_name.get(symbol, symbol)
 
             for lot in lots:
                 qty = int(getattr(lot, "quantity", 0))
@@ -84,6 +87,8 @@ class InvestmentsLotsPanel(Static):
                 date_only = ts[:10] if ts and len(ts) >= 10 else ""
 
                 row_key = table.add_row(
+                    symbol,
+                    asset_name,
                     date_only,
                     str(qty),
                     f"${pp:,}",
@@ -92,11 +97,11 @@ class InvestmentsLotsPanel(Static):
                     pl_pct_cell,
                 )
                 try:
-                    meta["rows"][row_key] = {"qty": qty}
+                    meta["rows"][row_key] = {"symbol": symbol, "qty": qty}
                 except Exception:
                     pass
 
-            container.mount(table)
+        container.mount(table)
 
     def on_data_table_row_selected(self, event: DataTable.RowSelected) -> None:
         # Open SellAssetModal with asset symbol and lot quantity prefilled
@@ -110,8 +115,8 @@ class InvestmentsLotsPanel(Static):
         row_key = getattr(event, "row_key", None)
         if row_key is None:
             return
-        symbol = meta.get("symbol")
         entry = meta.get("rows", {}).get(row_key, {})
+        symbol = entry.get("symbol")
         qty = int(entry.get("qty", 0))
         if not symbol or qty <= 0:
             return
