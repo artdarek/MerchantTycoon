@@ -8,3 +8,6 @@ class Good:
     name: str
     base_price: int
     price_variance: float = 0.3  # 30% variance
+    # Classification
+    type: str = "standard"   # "standard" | "luxury"
+    category: str = "hardware"  # e.g., "hardware" | "jewelry"

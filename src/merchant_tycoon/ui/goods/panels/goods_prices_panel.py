@@ -29,10 +29,12 @@ class GoodsPricesPanel(Static):
             window = int(SETTINGS.pricing.history_window)
             table.add_columns(
                 "Product",
+                "Category",
                 "Price",
                 "Change",
                 f"Min ({window}d)",
                 f"Max ({window}d)",
+                "Type",
             )
             # Optional: make table non-selectable for now (purely informational)
             try:
@@ -81,10 +83,12 @@ class GoodsPricesPanel(Static):
 
             row_key = table.add_row(
                 good.name,
+                getattr(good, "category", "hardware"),
                 f"${price:,}",
                 change_cell,
                 minp,
                 maxp,
+                getattr(good, "type", "standard"),
             )
             try:
                 self._row_to_product[row_key] = good.name

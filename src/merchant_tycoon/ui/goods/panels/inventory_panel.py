@@ -3,6 +3,9 @@ from textual.widgets import Static, Label, DataTable
 from rich.text import Text
 
 from merchant_tycoon.engine import GameEngine
+from merchant_tycoon.domain.constants import GOODS
+
+GOODS_BY_NAME = {g.name: g for g in GOODS}
 
 
 class InventoryPanel(Static):
@@ -23,7 +26,7 @@ class InventoryPanel(Static):
         # Configure columns once
         if not getattr(self, "_inventory_table_initialized", False):
             table.clear(columns=True)
-            table.add_columns("Product", "Qty", "Price", "Value", "Avg Cost", "P/L", "P/L%")
+            table.add_columns("Product", "Category", "Qty", "Price", "Value", "Avg Cost", "P/L", "P/L%", "Type")
             try:
                 table.cursor_type = "row"
                 table.show_header = True
@@ -68,14 +71,20 @@ class InventoryPanel(Static):
                 pl_cell = Text("$0", style="dim")
                 pl_pct_cell = Text("0.0%", style="dim")
 
+            good_obj = GOODS_BY_NAME.get(good_name)
+            g_type = getattr(good_obj, "type", "standard") if good_obj else "standard"
+            g_cat = getattr(good_obj, "category", "hardware") if good_obj else "hardware"
+
             row_key = table.add_row(
                 good_name,
+                g_cat,
                 str(quantity),
                 f"${current_price:,}",
                 f"${current_value:,}",
                 f"${avg_cost:,}",
                 pl_cell,
                 pl_pct_cell,
+                g_type,
             )
             try:
                 self._row_to_product[row_key] = good_name

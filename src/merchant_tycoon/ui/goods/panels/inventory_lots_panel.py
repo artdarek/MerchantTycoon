@@ -4,6 +4,9 @@ from textual.widgets import Static, Label, DataTable
 from rich.text import Text
 
 from merchant_tycoon.engine import GameEngine
+from merchant_tycoon.domain.constants import GOODS
+
+GOODS_BY_NAME = {g.name: g for g in GOODS}
 
 
 class InventoryLotsPanel(Static):
@@ -46,7 +49,7 @@ class InventoryLotsPanel(Static):
             table.zebra_stripes = True
         except Exception:
             pass
-        table.add_columns("Product", "Date", "City", "Qty", "Price", "Total", "P/L", "P/L%")
+        table.add_columns("Product", "Category", "Date", "City", "Qty", "Price", "Total", "P/L", "P/L%", "Type")
 
         meta = {"rows": {}}
         self._tables[id(table)] = meta
@@ -81,8 +84,13 @@ class InventoryLotsPanel(Static):
                 ts = str(getattr(lot, "ts", ""))
                 date_only = ts[:10] if ts and len(ts) >= 10 else ""
 
+                good_obj = GOODS_BY_NAME.get(good_name)
+                g_type = getattr(good_obj, "type", "standard") if good_obj else "standard"
+                g_cat = getattr(good_obj, "category", "hardware") if good_obj else "hardware"
+
                 row_key = table.add_row(
                     good_name,
+                    g_cat,
                     date_only,
                     city,
                     str(qty),
@@ -90,6 +98,7 @@ class InventoryLotsPanel(Static):
                     f"${total:,}",
                     pl_cell,
                     pl_pct_cell,
+                    g_type,
                 )
                 try:
                     meta["rows"][row_key] = {"good": good_name, "qty": qty, "ts": ts}
