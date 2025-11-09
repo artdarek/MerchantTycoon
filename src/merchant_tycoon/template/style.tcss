@@ -84,6 +84,23 @@ StatsPanel {
     height: auto;
 }
 
+/* Stats row layout: left metrics + right-aligned cargo */
+#stats-row {
+    width: 1fr;
+    align-horizontal: left;
+    content-align: center middle;
+    height: auto;
+}
+#stats-left {
+    width: 6fr;            /* maximum space for left side */
+    overflow: hidden;
+}
+#stats-spacer { width: 1fr; }
+#stats-cargo {
+    text-align: right;
+    overflow: hidden;
+}
+
 TabbedContent {
     height: 1fr;
 }
