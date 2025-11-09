@@ -9,7 +9,7 @@ A terminal-based trading game where you buy low, sell high, travel between citie
 ## 📸 Screenshots
 
 ### 🚀 Splash Screen
-![Merchant Tycoon - Splash Screen](docs/images/splash.png)
+![Merchant Tycoon - Splash Screen](docs/images/splash.gif)
 *Startup screen with animated ASCII logo and version info*
 
 ### 📦 Goods Trading
