@@ -49,6 +49,14 @@ The game combines:
 
 ### Installation
 
+**Quick install (no clone)**
+```bash
+pip install git+https://github.com/artdarek/MerchantTycoon.git
+
+# Run the game
+python3 -m merchant_tycoon
+```
+
 **Option 1: Install with uv (recommended)**
 ```bash
 # Clone the repository
