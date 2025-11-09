@@ -13,7 +13,7 @@ import os
 from datetime import datetime
 from textual.app import App, ComposeResult
 from textual.containers import Vertical, Horizontal
-from textual.widgets import Header, Footer, TabbedContent, TabPane, Static, Label, Button
+from textual.widgets import Footer, TabbedContent, TabPane, Static, Label, Button
 from textual.binding import Binding
 from merchant_tycoon.engine import GameEngine, GameState
 from merchant_tycoon.config import SETTINGS
@@ -66,6 +66,9 @@ class MerchantTycoon(App):
     # Load styles from external file created in Stage 5
     CSS_PATH = "template/style.tcss"
 
+    # Explicitly disable Textual's command palette if present
+    ENABLE_COMMAND_PALETTE = False
+
     # All bindings are visible in footer - key actions depend on active tab
     BINDINGS = [
         # Global actions (hidden from footer, shown in top bar)
@@ -77,6 +80,9 @@ class MerchantTycoon(App):
         Binding("f1", "new_game", "New Game", show=False),
         Binding("f5", "about", "About", show=False),
         Binding("f9", "splash", "Splash", show=False),
+        # Override common command-palette shortcuts with no-ops
+        Binding("ctrl+k", "noop", show=False),
+        Binding("ctrl+p", "noop", show=False),
         # Context-sensitive actions (always visible, behavior depends on active tab)
         Binding("t", "travel", "Travel", show=True),
         Binding("b", "buy", "Buy", show=True),
@@ -110,7 +116,6 @@ class MerchantTycoon(App):
         self.current_tab = "goods-tab"  # Track current tab
 
     def compose(self) -> ComposeResult:
-        yield Header()
         yield GlobalActionsBar()
         yield StatsPanel(self.engine)
         with TabbedContent(initial="goods-tab"):
@@ -660,3 +665,7 @@ class MerchantTycoon(App):
             cancel_label="Exit",
         )
         self.push_screen(confirm)
+
+    def action_noop(self):
+        """No-op action used to swallow global shortcuts like Ctrl+K/Ctrl+P."""
+        pass
