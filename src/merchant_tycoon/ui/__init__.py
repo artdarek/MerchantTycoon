@@ -14,7 +14,7 @@ from merchant_tycoon.ui.investments.panels import (
 )
 from merchant_tycoon.ui.general.modals import (
     InputModal,
-    CitySelectModal,
+    TravelModal,
     HelpModal,
     AboutModal,
     SplashModal,
@@ -44,7 +44,7 @@ __all__ = [
     "GoodsTradeActionsPanel",
     # modals
     "InputModal",
-    "CitySelectModal",
+    "TravelModal",
     "BuyModal",
     "SellModal",
     "BuyAssetModal",

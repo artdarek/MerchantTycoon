@@ -74,10 +74,16 @@ class SellAssetModal(ModalScreen):
             yield Label("Select asset to sell:")
             yield Select(options, prompt="Choose an asset...", id="asset-select")
             yield Label("Enter quantity to sell:")
-            yield Input(placeholder="Quantity...", type="integer", id="quantity-input")
+            qty = Input(placeholder="Quantity...", type="integer", id="quantity-input")
+            try:
+                qty.disabled = True
+                qty.can_focus = False
+            except Exception:
+                pass
+            yield qty
 
             with Horizontal(id="modal-buttons"):
-                yield Button("Sell", variant="success", id="confirm-btn")
+                yield Button("Sell", variant="success", id="confirm-btn", disabled=True)
                 yield Button("Cancel", variant="error", id="cancel-btn")
 
     def on_mount(self) -> None:
@@ -100,6 +106,17 @@ class SellAssetModal(ModalScreen):
                 input_widget.value = str(int(self.default_quantity))
             except Exception:
                 pass
+        # Disable quantity until an asset is selected
+        try:
+            enabled = bool(select_widget.value)
+            input_widget.disabled = not enabled
+            try:
+                input_widget.can_focus = enabled
+            except Exception:
+                pass
+        except Exception:
+            pass
+        self._update_sell_enabled()
 
     def on_select_changed(self, event: Select.Changed) -> None:
         """Auto-fill quantity when asset is selected"""
@@ -109,6 +126,53 @@ class SellAssetModal(ModalScreen):
             max_qty = self.max_quantities.get(event.value, 0)
             input_widget = self.query_one("#quantity-input", Input)
             input_widget.value = str(max_qty)
+            input_widget.disabled = False
+            try:
+                input_widget.can_focus = True
+            except Exception:
+                pass
+        elif event.select.id == "asset-select" and not event.value:
+            try:
+                qty = self.query_one("#quantity-input", Input)
+                qty.disabled = True
+                try:
+                    qty.can_focus = False
+                except Exception:
+                    pass
+            except Exception:
+                pass
+            self._update_sell_enabled()
+
+    def on_input_changed(self, event: Input.Changed) -> None:
+        if event.input.id == "quantity-input":
+            try:
+                select_widget = self.query_one("#asset-select", Select)
+                if not bool(select_widget.value):
+                    event.input.value = ""
+                    event.input.disabled = True
+                    try:
+                        event.input.can_focus = False
+                    except Exception:
+                        pass
+                    self._update_sell_enabled()
+                    return
+            except Exception:
+                pass
+            self._update_sell_enabled()
+
+    def _update_sell_enabled(self) -> None:
+        try:
+            select_widget = self.query_one("#asset-select", Select)
+            input_widget = self.query_one("#quantity-input", Input)
+            btn = self.query_one("#confirm-btn", Button)
+        except Exception:
+            return
+        has_symbol = bool(select_widget.value)
+        try:
+            qty = int((input_widget.value or "0").strip())
+        except Exception:
+            qty = 0
+        btn.disabled = not (has_symbol and qty >= 1)
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "confirm-btn":
@@ -123,9 +187,10 @@ class SellAssetModal(ModalScreen):
             if symbol and quantity_str:
                 try:
                     quantity = int(quantity_str)
-                    success, msg = self.engine.sell_asset(symbol, quantity)
-                    # Service logs; no callback needed for logging
-                    self.callback(msg)
+                    if quantity >= 1:
+                        success, msg = self.engine.sell_asset(symbol, quantity)
+                        # Service logs; no callback needed for logging
+                        self.callback(msg)
                 except ValueError:
                     pass
         else:

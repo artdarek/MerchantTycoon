@@ -41,7 +41,7 @@ from merchant_tycoon.ui.bank.panels import (
 )
 from merchant_tycoon.ui.general.modals import (
     InputModal,
-    CitySelectModal,
+    TravelModal,
     HelpModal,
     AboutModal,
     SplashModal,
@@ -377,7 +377,7 @@ class MerchantTycoon(App):
 
     def action_travel(self):
         """Travel to another city"""
-        modal = CitySelectModal(CITIES, self.engine.state.current_city, self._handle_travel)
+        modal = TravelModal(CITIES, self.engine.state.current_city, self._handle_travel)
         self.push_screen(modal)
 
     def action_cargo(self):

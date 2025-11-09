@@ -288,7 +288,7 @@ MessangerPanel {
 
 /* Center all modals (except Splash which is fullscreen), and make overlay transparent
    so underlying app remains visible around the dialog. */
-InputModal, CitySelectModal, BuyModal, SellModal, SellLotModal,
+InputModal, TravelModal, BuyModal, SellModal, SellLotModal,
 BuyAssetModal, SellAssetModal, LoanRepayModal, HelpModal,
 ConfirmModal, AboutModal, CargoExtendModal {
     align: center middle;
@@ -585,6 +585,15 @@ LoanBalancePanel {
 }
 
 #loan-credit-summary > Label {
+    margin-right: 2;
+}
+
+#loan-rate-summary {
+    height: auto;
+    content-align: left middle;
+}
+
+#loan-rate-summary > Label {
     margin-right: 2;
 }
 

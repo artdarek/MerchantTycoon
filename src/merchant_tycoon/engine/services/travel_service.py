@@ -108,7 +108,15 @@ class TravelService:
             if self.messenger:
                 self.messenger.info(msg, tag="travel")
             if event_data and self.messenger:
-                self.messenger.info(event_data[0], tag="events")
+                try:
+                    event_msg, is_positive = event_data
+                except Exception:
+                    event_msg, is_positive = event_data[0], True
+                if is_positive:
+                    # Log gains as warnings per UI color scheme request
+                    self.messenger.warn(event_msg, tag="events")
+                else:
+                    self.messenger.error(event_msg, tag="events")
         except Exception:
             pass
         return True, msg, event_data

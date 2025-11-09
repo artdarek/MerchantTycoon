@@ -9,7 +9,7 @@ from textual.screen import ModalScreen
 from merchant_tycoon.domain.model.city import City
 
 
-class CitySelectModal(ModalScreen):
+class TravelModal(ModalScreen):
     """City selection modal with current/destination read-only fields and Travel/Cancel buttons."""
 
     def __init__(self, cities: List[City], current_city: int, callback):

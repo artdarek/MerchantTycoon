@@ -39,6 +39,14 @@ class MessangerPanel(Static):
         for e in entries:
             ts = e.get("ts", "")
             body = e.get("text", "")
+            level = str(e.get("level", "info")).lower()
+            # Color mapping for the filled dot by level
+            if level == "error":
+                dot_color = "#d16a66"  # salmon/red
+            elif level == "warn" or level == "warning":
+                dot_color = "#e0b15a"  # amber
+            else:
+                dot_color = "#4ea59a"  # teal for info/default
             render = Text()
             if ts:
                 try:
@@ -47,15 +55,18 @@ class MessangerPanel(Static):
                     time_str = dt.strftime('%H:%M:%S')
                     render.append("→ ", style="white")
                     render.append(f"[{date_str}: {time_str}]", style="white")
+                    render.append(" ●", style=dot_color)
                     render.append(" → ", style="white")
                 except Exception:
                     # Fallback formatting
                     if len(ts) >= 19 and ts[10] in ("T", " "):
                         render.append("→ ", style="white")
                         render.append(f"[{ts[:10]}: {ts[11:19]}]", style="white")
+                        render.append(" ●", style=dot_color)
                         render.append(" → ", style="white")
                     else:
-                        render.append(f"[{ts}] ", style="white")
+                        render.append(f"[{ts}]", style="white")
+                        render.append(" ● ", style=dot_color)
             # Message body in slightly dimmer color
             render.append(body, style="#c2c9d6")
             container.mount(Label(render))
