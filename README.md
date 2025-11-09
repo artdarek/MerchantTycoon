@@ -353,9 +353,9 @@ MIT License - feel free to use, modify, and distribute.
 
 - Built with [Textual](https://github.com/Textualize/textual) by Textualize
 - Inspired by classic trading games like Dope Wars and Drug Wars
-- PoC **Entirely created using [Claude Code](https://www.anthropic.com/) by Anthropic**
-- Special thanks to JuniePro for stepping in to support development whenever Claude Code's rate limit hits
-- When Junie left the team (She wanted more money that we coudnt afford) Codex from OpenAI stepped in. 
+- Proof of concept created using [Claude](https://www.anthropic.com/claude) by Anthropic
+- Special thanks to [JuniePro](https://www.jetbrains.com/idea/) for stepping in to support development whenever Claude's rate limit hit
+- [OpenAI Codex](https://openai.com/research/codex) stepped in when Junie left the team (she wanted more money that we couldn't afford), 
 
 ## 🎮 Start Playing!
 
