@@ -353,7 +353,12 @@ ConfirmModal, AboutModal, CargoExtendModal {
 #city-list {
     height: auto;
     max-height: 10;
-    margin: 1 0;
+    margin: 0 0;      /* no extra space above */
+    margin-bottom: 1; /* one line after the select */
+}
+
+#current-input {
+    margin-bottom: 1; /* add spacing after current city field */
 }
 
 /* Ensure single-action modal buttons are also comfortably tall */
