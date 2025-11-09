@@ -8,11 +8,11 @@ class GlobalActionsBar(Static):
 
     def compose(self) -> ComposeResult:
         with Horizontal(id="global-actions-bar"):
-            yield Button("🎮 [N] New Game", id="action-new", classes="action-item")
-            yield Button("💾 [A] Save", id="action-save", classes="action-item")
-            yield Button("📂 [O] Load", id="action-load", classes="action-item")
-            yield Button("❓ [H] Help", id="action-help", classes="action-item")
-            yield Button("ℹ️ [F2] About", id="action-about", classes="action-item")
+            yield Button("🎮 [F1] New Game", id="action-new", classes="action-item")
+            yield Button("💾 [F2] Save", id="action-save", classes="action-item")
+            yield Button("📂 [F3] Load", id="action-load", classes="action-item")
+            yield Button("❓ [F4] Help", id="action-help", classes="action-item")
+            yield Button("ℹ️ [F5] About", id="action-about", classes="action-item")
             yield Button("🚪 [Q] Quit", id="action-quit", classes="action-item")
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
@@ -34,4 +34,3 @@ class GlobalActionsBar(Static):
                 app.action_quit()
             except Exception:
                 app.exit()
-

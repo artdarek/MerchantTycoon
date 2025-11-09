@@ -70,11 +70,13 @@ class MerchantTycoon(App):
     BINDINGS = [
         # Global actions (hidden from footer, shown in top bar)
         Binding("q", "quit", "Quit", show=False),
-        Binding("h", "help", "Help", show=False),
-        Binding("a", "save", "Save", show=False),
-        Binding("o", "load", "Load", show=False),
-        Binding("n", "new_game", "New Game", show=False),
-        Binding("f2", "about", "About", show=False),
+        Binding("escape", "quit", "Quit", show=False),
+        Binding("f4", "help", "Help", show=False),
+        Binding("f2", "save", "Save", show=False),
+        Binding("f3", "load", "Load", show=False),
+        Binding("f1", "new_game", "New Game", show=False),
+        Binding("f5", "about", "About", show=False),
+        Binding("f9", "splash", "Splash", show=False),
         # Context-sensitive actions (always visible, behavior depends on active tab)
         Binding("t", "travel", "Travel", show=True),
         Binding("b", "buy", "Buy", show=True),
@@ -544,6 +546,17 @@ class MerchantTycoon(App):
     def action_about(self):
         """Show About modal with app info"""
         self.push_screen(AboutModal())
+
+    def action_splash(self):
+        """Show Splash modal on demand (F9)."""
+        try:
+            self.push_screen(SplashModal())
+        except Exception as e:
+            try:
+                self.engine.messenger.error(f"Failed to open splash: {e}", tag="system")
+                self.refresh_all()
+            except Exception:
+                pass
 
     def action_save(self):
         """Save current game to disk (single slot)."""

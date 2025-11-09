@@ -8,6 +8,10 @@ A terminal-based trading game where you buy low, sell high, travel between citie
 
 ## 📸 Screenshots
 
+### 🚀 Splash Screen
+![Merchant Tycoon - Splash Screen](docs/images/splash.png)
+*Startup screen with animated ASCII logo and version info*
+
 ### 📦 Goods Trading
 ![Merchant Tycoon - Goods Trading Screen](docs/images/goods.png)
 *Main trading interface with market prices, inventory management, and real-time price trends*
@@ -45,7 +49,7 @@ The game combines:
 5. Save excess cash in the bank to earn interest
 6. Build a diversified portfolio while continuing to trade
 
-## 🚀 How To Play
+## 🚀 How to install and run
 
 ### Installation
 
@@ -128,12 +132,14 @@ The game has **3 tabs** (Goods, Investments, Bank) with context-sensitive contro
 #### Global Controls (Always Available)
 | Key | Action | Description |
 |-----|--------|-------------|
-| **N** | New Game | Start a new game (deletes current save) |
-| **A** | Save | Save current game progress |
-| **O** | Load | Load saved game |
-| **H** | Help | Show in-game instructions |
-| **Q** | Quit | Exit the game |
-| **C** | Cargo | Extend cargo capacity by +1 slot (cost doubles per slot) |
+| **F1** | New Game | Start a new game (deletes current save) |
+| **F2** | Save | Save current game progress |
+| **F3** | Load | Load saved game |
+| **F4** | Help | Show in-game instructions |
+| **F5** | About | Show About modal |
+| **Q / ESC** | Quit | Exit the game |
+| **F9** | Splash | Show splash screen |
+| **C** | Cargo | Extend cargo capacity by +1 slot (pricing per config) |
 
 #### 📦 Goods Tab Controls
 | Key | Action | Description |
@@ -141,7 +147,6 @@ The game has **3 tabs** (Goods, Investments, Bank) with context-sensitive contro
 | **T** | Travel | Move to another city to find better prices |
 | **B** | Buy | Purchase goods at current city prices |
 | **S** | Sell | Sell goods from your inventory |
-| **I** | Transactions | View detailed purchase history with profit/loss |
 | **L** | Loan | Borrow money (up to $10,000 per loan) |
 | **R** | Repay | Pay back your loans |
 
@@ -150,7 +155,6 @@ The game has **3 tabs** (Goods, Investments, Bank) with context-sensitive contro
 |-----|--------|-------------|
 | **B** | Buy | Purchase stocks, commodities, or crypto |
 | **S** | Sell | Sell assets from your portfolio |
-| **I** | Transactions | View detailed investment history with profit/loss |
 
 #### 🏦 Bank Tab Controls
 | Key | Action | Description |
@@ -273,10 +277,8 @@ The game uses a **tabbed interface** with three main tabs:
 ## 🛠️ Technical Details
 
 ### Built With
-- **Python 3.8+**
+- **Python 3.14**
 - **Textual Framework**: Modern TUI (Text User Interface) framework
-- **Architecture**: Event-driven with modal screens
-- **Data Structures**: FIFO queues for inventory tracking
 
 ### Features
 - **Tabbed Interface**: 3 main tabs (Goods, Investments, Bank) with context-sensitive controls
@@ -293,9 +295,18 @@ The game uses a **tabbed interface** with three main tabs:
 - **Auto-save/Load**: Persistent game state across sessions
 - **Responsive Terminal UI**: Colorful, styled interface using Textual framework
 
-## 🤖 Created Entirely with Claude Code
+## 🤖 Created Entirely with AI Agents on board
 
-This game was **100% created using Claude Code** - Anthropic's AI-powered coding assistant. Every line of code, every feature, and every design decision was made through conversation with Claude Code.
+This game was **100% (ok ok 99%:>) created using AI Agents**.
+Almost every line of code, every feature, and every design decision was made through conversation with AI
+(Claude Code, Codex and Junie). 
+
+### No Manual Coding
+
+- Almost **Zero lines** written by hand in a traditional code editor
+- All logic, UI, styling, and documentation generated through AI conversation
+- Demonstrates the power of conversational programming
+- Shows how complex applications can be built through natural language
 
 ### Development Process
 
@@ -326,13 +337,6 @@ The entire development was done through natural language conversations. The deve
    - Added proper column formatting and scrolling
    - Improved modal layouts and styling
 
-### No Manual Coding
-
-- **Zero lines** written by hand in a traditional code editor
-- All logic, UI, styling, and documentation generated through AI conversation
-- Demonstrates the power of conversational programming
-- Shows how complex applications can be built through natural language
-
 ### What This Demonstrates
 
 This project showcases:
@@ -349,8 +353,9 @@ MIT License - feel free to use, modify, and distribute.
 
 - Built with [Textual](https://github.com/Textualize/textual) by Textualize
 - Inspired by classic trading games like Dope Wars and Drug Wars
-- **Entirely created using [Claude Code](https://www.anthropic.com/) by Anthropic**
+- PoC **Entirely created using [Claude Code](https://www.anthropic.com/) by Anthropic**
 - Special thanks to JuniePro for stepping in to support development whenever Claude Code's rate limit hits
+- When Junie left the team (She wanted more money that we coudnt afford) Codex from OpenAI stepped in. 
 
 ## 🎮 Start Playing!
 
@@ -363,3 +368,12 @@ Good luck, and may your trades be profitable! 🚀💰
 ---
 
 *"In code we trust, in Claude we build."* - A demonstration of AI-powered software development
+
+## 🛠️ Development Tools
+
+- Claude Code: https://www.anthropic.com/
+- Codex: https://beta.openai.com/docs/api-reference/chat/create
+- Junie: https://junie.pro/
+- ASCII logo generator: https://patorjk.com/software/taag/#p=display&f=Big+Money-ne&t=Merchant%0ATycoon%0AT-ai-coon%0A&x=none&v=4&h=4&w=80&we=false
+  - Font: Big Money-ne
+  - Used to create the splash screen ASCII art variants (Merchant Tycoon / T-ai-coon)

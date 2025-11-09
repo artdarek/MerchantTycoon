@@ -99,7 +99,7 @@ class SplashModal(ModalScreen):
                 yield Label("(C) Dariusz Przada", id="splash-author")
 
             # Bottom instruction
-            yield Label("Press Enter or Space to continue", id="splash-instruction")
+            yield Label("Press [Enter] or [Space] to continue", id="splash-instruction")
 
     def on_mount(self) -> None:
         # Auto-dismiss after 10 seconds
