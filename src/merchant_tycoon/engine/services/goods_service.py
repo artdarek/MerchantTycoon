@@ -1,5 +1,5 @@
 import random
-from typing import Dict, TYPE_CHECKING, Optional
+from typing import Dict, TYPE_CHECKING, Optional, List
 
 from merchant_tycoon.domain.model.purchase_lot import PurchaseLot
 from merchant_tycoon.domain.model.transaction import Transaction
@@ -9,6 +9,7 @@ from merchant_tycoon.config import SETTINGS
 if TYPE_CHECKING:
     from merchant_tycoon.engine.game_state import GameState
     from merchant_tycoon.engine.services.clock_service import ClockService
+    from merchant_tycoon.domain.model.good import Good
 
 
 class GoodsService:
@@ -392,3 +393,34 @@ class GoodsService:
                 remaining = 0
                 break
         return int(quantity) - int(remaining)
+
+    # ---- Public helper functions (filtering and lookup) ----
+    def get_goods(self, *, type: Optional[str] = None, category: Optional[str] = None) -> List["Good"]:
+        """Return goods filtered by optional type and/or category.
+
+        Examples:
+          get_goods() -> all goods
+          get_goods(type="luxury") -> only luxury goods
+          get_goods(category="jewelry") -> only jewelry goods
+          get_goods(type="luxury", category="hardware") -> luxury hardware goods
+        """
+        items = GOODS
+        if type is not None:
+            t = str(type).lower()
+            items = [g for g in items if str(getattr(g, "type", "standard")).lower() == t]
+        if category is not None:
+            c = str(category).lower()
+            items = [g for g in items if str(getattr(g, "category", "")).lower() == c]
+        return list(items)
+
+    def get_good(self, name: str) -> Optional["Good"]:
+        """Return Good by exact name, or None if not found."""
+        for g in GOODS:
+            if g.name == name:
+                return g
+        return None
+
+    def is_luxury(self, name: str) -> bool:
+        """True if the named good has type == 'luxury'."""
+        g = self.get_good(name)
+        return str(getattr(g, "type", "")).lower() == "luxury" if g else False
