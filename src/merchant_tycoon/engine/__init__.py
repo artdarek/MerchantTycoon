@@ -14,17 +14,7 @@ GameEngine acts as a facade over these services, providing a unified API.
 
 from merchant_tycoon.engine.game_state import GameState
 from merchant_tycoon.engine.game_engine import GameEngine
-from merchant_tycoon.engine.services.bank_service import BankService
-from merchant_tycoon.engine.services.goods_service import GoodsService
-from merchant_tycoon.engine.services.investments_service import InvestmentsService
-from merchant_tycoon.engine.services.travel_service import TravelService
-from merchant_tycoon.engine.services.savegame_service import SavegameService
-
 __all__ = [
     "GameState",
     "GameEngine",
-    "BankService",
-    "GoodsService",
-    "InvestmentsService",
-    "TravelService",
 ]
