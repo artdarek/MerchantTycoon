@@ -4,7 +4,7 @@ from rich.text import Text
 
 from merchant_tycoon.engine import GameEngine
 from merchant_tycoon.config import SETTINGS
-from merchant_tycoon.model import GOODS
+from merchant_tycoon.domain.constants import GOODS
 
 
 class MarketPanel(Static):
@@ -109,7 +109,7 @@ class MarketPanel(Static):
         max_affordable = (cash // price) if price > 0 else 0
         max_buyable = min(max_affordable, available_space)
         try:
-            from ..modals import BuyModal
+            from merchant_tycoon.ui.goods.modals import BuyModal
             self.app.push_screen(BuyModal(self.engine, self.app._handle_buy, default_product=product, default_quantity=max_buyable))
         except Exception:
             pass

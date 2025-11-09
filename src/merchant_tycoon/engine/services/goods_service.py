@@ -1,7 +1,9 @@
 import random
 from typing import Dict, TYPE_CHECKING, Optional
 
-from merchant_tycoon.model import PurchaseLot, Transaction, GOODS, CITIES
+from merchant_tycoon.domain.model.purchase_lot import PurchaseLot
+from merchant_tycoon.domain.model.transaction import Transaction
+from merchant_tycoon.domain.constants import GOODS, CITIES
 from merchant_tycoon.config import SETTINGS
 
 if TYPE_CHECKING:

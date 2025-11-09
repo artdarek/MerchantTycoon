@@ -1,13 +1,11 @@
 from dataclasses import dataclass, field
 from typing import Dict, List
 
-from merchant_tycoon.model import (
-    PurchaseLot,
-    Transaction,
-    InvestmentLot,
-    BankAccount,
-    Loan,
-)
+from merchant_tycoon.domain.model.purchase_lot import PurchaseLot
+from merchant_tycoon.domain.model.transaction import Transaction
+from merchant_tycoon.domain.model.investment_lot import InvestmentLot
+from merchant_tycoon.domain.model.bank_account import BankAccount
+from merchant_tycoon.domain.model.loan import Loan
 
 
 @dataclass

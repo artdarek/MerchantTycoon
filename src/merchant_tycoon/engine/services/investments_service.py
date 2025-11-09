@@ -2,7 +2,8 @@ import random
 from typing import Dict, TYPE_CHECKING, Optional
 import math
 
-from merchant_tycoon.model import InvestmentLot, STOCKS, COMMODITIES, CRYPTO
+from merchant_tycoon.domain.model.investment_lot import InvestmentLot
+from merchant_tycoon.domain.constants import STOCKS, COMMODITIES, CRYPTO
 from merchant_tycoon.config import SETTINGS
 
 if TYPE_CHECKING:

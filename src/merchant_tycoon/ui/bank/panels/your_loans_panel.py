@@ -124,7 +124,7 @@ class YourLoansPanel(Static):
         if default_amount <= 0:
             return
         try:
-            from ..modals import LoanRepayModal
+            from merchant_tycoon.ui.bank.modals import LoanRepayModal
             self.app.push_screen(LoanRepayModal(self.engine, self.app._handle_repay_selected, default_loan_id=loan_id, default_amount=default_amount))
         except Exception:
             pass

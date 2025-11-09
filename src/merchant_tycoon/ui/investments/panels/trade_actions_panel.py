@@ -23,7 +23,7 @@ class TradeActionsPanel(Static):
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         # Import here to avoid top-level circular imports
-        from ..modals import BuyAssetModal, SellAssetModal
+        from merchant_tycoon.ui.investments.modals import BuyAssetModal, SellAssetModal
         if event.button.id == "exchange-buy-btn":
             try:
                 self.app.push_screen(BuyAssetModal(self.engine, self.app._handle_asset_trade))

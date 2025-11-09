@@ -4,7 +4,7 @@ from textual.widgets import Label, Button, Input, Select
 from textual.screen import ModalScreen
 
 from merchant_tycoon.engine import GameEngine
-from merchant_tycoon.model import STOCKS, COMMODITIES, CRYPTO
+from merchant_tycoon.domain.constants import STOCKS, COMMODITIES, CRYPTO
 
 
 class SellAssetModal(ModalScreen):

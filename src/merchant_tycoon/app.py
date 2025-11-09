@@ -16,7 +16,7 @@ from textual.containers import Vertical, Horizontal
 from textual.widgets import Header, Footer, TabbedContent, TabPane, Static, Label, Button
 from textual.binding import Binding
 from merchant_tycoon.engine import GameEngine, GameState
-from merchant_tycoon.model import CITIES
+from merchant_tycoon.domain.constants import CITIES
 from merchant_tycoon.ui.general.panels import StatsPanel, MessangerPanel, GlobalActionsBar
 from merchant_tycoon.ui.goods.panels import (
     MarketPanel,
@@ -564,6 +564,9 @@ class MerchantTycoon(App):
                 self.engine.messenger.warn(msg, tag="system")
         except Exception as e:
             self.engine.messenger.error(f"Save failed: {e}", tag="system")
+        finally:
+            # Ensure messenger panel reflects the new message immediately
+            self.refresh_all()
 
     def action_load(self):
         """Load saved game from disk."""
@@ -652,6 +655,3 @@ class MerchantTycoon(App):
             cancel_label="Exit",
         )
         self.push_screen(confirm)
-
-
-# No top-level main() here; entry points use __main__.py

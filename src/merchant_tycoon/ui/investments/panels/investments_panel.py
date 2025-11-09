@@ -3,7 +3,7 @@ from textual.widgets import Static, Label, DataTable
 from rich.text import Text
 
 from merchant_tycoon.engine import GameEngine
-from merchant_tycoon.model import STOCKS, COMMODITIES, CRYPTO
+from merchant_tycoon.domain.constants import STOCKS, COMMODITIES, CRYPTO
 
 
 class InvestmentsPanel(Static):
@@ -103,7 +103,7 @@ class InvestmentsPanel(Static):
         if owned <= 0:
             return
         try:
-            from ..modals import SellAssetModal
+            from merchant_tycoon.ui.investments.modals import SellAssetModal
             self.app.push_screen(SellAssetModal(self.engine, self.app._handle_asset_trade, default_symbol=symbol, default_quantity=owned))
         except Exception:
             pass

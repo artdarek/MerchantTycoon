@@ -1,7 +1,7 @@
-from .buy_modal import BuyModal
-from .sell_modal import SellModal
-from .inventory_transactions_modal import InventoryTransactionsModal
-from .sell_lot_modal import SellLotModal
+from merchant_tycoon.ui.goods.modals.buy_modal import BuyModal
+from merchant_tycoon.ui.goods.modals.sell_modal import SellModal
+from merchant_tycoon.ui.goods.modals.inventory_transactions_modal import InventoryTransactionsModal
+from merchant_tycoon.ui.goods.modals.sell_lot_modal import SellLotModal
 
 __all__ = [
     "BuyModal",

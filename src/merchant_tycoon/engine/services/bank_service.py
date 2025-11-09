@@ -1,7 +1,8 @@
 import random
 from typing import TYPE_CHECKING, Optional
 
-from merchant_tycoon.model import BankTransaction, Loan
+from merchant_tycoon.domain.model.bank_transaction import BankTransaction
+from merchant_tycoon.domain.model.loan import Loan
 from merchant_tycoon.config import SETTINGS
 from datetime import datetime
 

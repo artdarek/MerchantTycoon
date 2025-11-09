@@ -97,7 +97,7 @@ class InventoryPanel(Static):
         if owned <= 0:
             return
         try:
-            from ..modals import SellModal
+            from merchant_tycoon.ui.goods.modals import SellModal
             self.app.push_screen(SellModal(self.engine, self.app._handle_sell, default_product=product, default_quantity=owned))
         except Exception:
             pass

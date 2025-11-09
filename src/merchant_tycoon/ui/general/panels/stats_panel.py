@@ -2,7 +2,7 @@ from textual.app import ComposeResult
 from textual.widgets import Static, Label
 
 from merchant_tycoon.engine import GameEngine
-from merchant_tycoon.model import CITIES
+from merchant_tycoon.domain.constants import CITIES
 
 
 class StatsPanel(Static):

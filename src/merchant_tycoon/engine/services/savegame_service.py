@@ -5,13 +5,11 @@ import os
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, List, Tuple
 
-from merchant_tycoon.model import (
-    PurchaseLot,
-    Transaction,
-    InvestmentLot,
-    BankTransaction,
-    Loan,
-)
+from merchant_tycoon.domain.model.purchase_lot import PurchaseLot
+from merchant_tycoon.domain.model.transaction import Transaction
+from merchant_tycoon.domain.model.investment_lot import InvestmentLot
+from merchant_tycoon.domain.model.bank_transaction import BankTransaction
+from merchant_tycoon.domain.model.loan import Loan
 from merchant_tycoon.config import SETTINGS
 
 if TYPE_CHECKING:

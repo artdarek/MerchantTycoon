@@ -4,7 +4,7 @@ from rich.text import Text
 
 from merchant_tycoon.engine import GameEngine
 from merchant_tycoon.config import SETTINGS
-from merchant_tycoon.model import STOCKS, COMMODITIES, CRYPTO
+from merchant_tycoon.domain.constants import STOCKS, COMMODITIES, CRYPTO
 
 
 class ExchangePricesPanel(Static):
@@ -128,7 +128,7 @@ class ExchangePricesPanel(Static):
         except Exception:
             max_affordable = int(cash // price) if price > 0 else 0
         try:
-            from ..modals import BuyAssetModal
+            from merchant_tycoon.ui.investments.modals import BuyAssetModal
             self.app.push_screen(BuyAssetModal(self.engine, self.app._handle_asset_trade, default_symbol=symbol, default_quantity=max_affordable))
         except Exception:
             pass

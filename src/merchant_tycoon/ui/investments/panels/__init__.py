@@ -1,6 +1,6 @@
-from .exchange_prices_panel import ExchangePricesPanel
-from .investments_panel import InvestmentsPanel
-from .trade_actions_panel import TradeActionsPanel
+from merchant_tycoon.ui.investments.panels.exchange_prices_panel import ExchangePricesPanel
+from merchant_tycoon.ui.investments.panels.investments_panel import InvestmentsPanel
+from merchant_tycoon.ui.investments.panels.trade_actions_panel import TradeActionsPanel
 
 __all__ = [
     "ExchangePricesPanel",

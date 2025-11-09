@@ -5,7 +5,7 @@ from textual.screen import ModalScreen
 from rich.text import Text
 
 from merchant_tycoon.engine import GameEngine
-from merchant_tycoon.model import STOCKS, COMMODITIES, CRYPTO
+from merchant_tycoon.domain.constants import STOCKS, COMMODITIES, CRYPTO
 
 
 class InvestmentsTransactionsModal(ModalScreen):

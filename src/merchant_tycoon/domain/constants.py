@@ -1,9 +1,9 @@
 from __future__ import annotations
 from typing import List
 
-from merchant_tycoon.model.good import Good
-from merchant_tycoon.model.asset import Asset
-from merchant_tycoon.model.city import City
+from merchant_tycoon.domain.model.good import Good
+from merchant_tycoon.domain.model.asset import Asset
+from merchant_tycoon.domain.model.city import City
 
 # Goods
 GOODS: List[Good] = [

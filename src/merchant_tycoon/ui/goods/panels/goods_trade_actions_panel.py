@@ -23,7 +23,7 @@ class GoodsTradeActionsPanel(Static):
             )
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
-        from ..modals import BuyModal, SellModal
+        from merchant_tycoon.ui.goods.modals import BuyModal, SellModal
         if event.button.id == "goods-buy-btn":
             try:
                 self.app.push_screen(BuyModal(self.engine, self.app._handle_buy))

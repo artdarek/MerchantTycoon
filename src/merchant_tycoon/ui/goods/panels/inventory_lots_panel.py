@@ -18,6 +18,8 @@ class InventoryLotsPanel(Static):
         self._tables: dict[int, dict] = {}
 
     def compose(self) -> ComposeResult:
+        # Section header for purchased lots
+        yield Label("🧾 PURCHASED LOTS", id="inventory-lots-header", classes="panel-title")
         yield ScrollableContainer(id="inventory-lots-content")
 
     def update_lots(self) -> None:
@@ -122,7 +124,7 @@ class InventoryLotsPanel(Static):
             return
         # Open modal to confirm/select quantity for this lot (default = lot qty)
         try:
-            from ..modals import SellLotModal
+            from merchant_tycoon.ui.goods.modals import SellLotModal
             self.app.push_screen(SellLotModal(self.engine, good, lot_ts, qty, self.app._handle_sell_from_lot))
         except Exception:
             pass
