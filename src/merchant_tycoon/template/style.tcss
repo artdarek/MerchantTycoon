@@ -6,7 +6,7 @@ GlobalActionsBar {
     background: $primary-darken-2;
     color: $text;
     height: auto;
-    padding: 1 2;
+    padding: 0;              /* no padding for top menu panel */
     margin-bottom: 0;
 }
 
@@ -168,8 +168,11 @@ TradeActionsPanel {
 }
 
 MessangerPanel {
-    border: solid $accent;
-    padding: 0 1;
+    border: none;                 /* no frame */
+    background: #3a3a3a;          /* light-ish dark grey for contrast */
+    color: #ffffff;               /* force white text for readability */
+    padding: 1 1 0 1;            /* add top padding for header spacing */
+    padding-bottom: 0;           /* ensure no bottom padding */
     margin: 0;
     height: 8;
 }
@@ -207,8 +210,11 @@ MessangerPanel {
 }
 
 #log-content {
-    height: 3;
+    height: 4;
     overflow-y: auto;
+    background: transparent;      /* inherit panel bg */
+    padding: 0;                   /* remove any internal padding incl. bottom */
+    margin: 0;                    /* ensure no extra bottom spacing */
 }
 
 /* Modal styles */

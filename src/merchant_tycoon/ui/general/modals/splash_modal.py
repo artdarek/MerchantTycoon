@@ -2,6 +2,7 @@ from textual.app import ComposeResult
 from textual.containers import Container
 from textual.widgets import Label
 from textual.screen import ModalScreen
+from rich.text import Text
 
 import merchant_tycoon as pkg
 
@@ -84,7 +85,11 @@ class SplashModal(ModalScreen):
             # Center container for main content
             with Container(id="splash-center"):
                 # Slogan above the ASCII logo
-                yield Label("Buy low • Sell high • Travel and invest", classes="splash-note")
+                yield Label(
+                    "Buy low • Sell high • Travel and invest",
+                    classes="splash-note",
+                    id="splash-slogan",
+                )
                 # Big ASCII title provided by user
                 yield Label(_pad_art(ART1), classes="splash-ascii", id="splash-ascii")
 
@@ -111,6 +116,14 @@ class SplashModal(ModalScreen):
         except Exception:
             self._blink_timer = None
 
+        # Start shimmer effect on slogan
+        try:
+            self._shimmer_pos = 0
+            # Slightly faster than the ASCII blink to look smooth
+            self._shimmer_timer = self.set_interval(0.07, self._shimmer_tick)
+        except Exception:
+            self._shimmer_timer = None
+
     def action_dismiss(self) -> None:
         self.dismiss()
 
@@ -124,5 +137,45 @@ class SplashModal(ModalScreen):
             # Toggle art
             self._art_index = 1 - int(getattr(self, '_art_index', 0))
             label.update(_pad_art(ART2 if self._art_index else ART1))
+        except Exception:
+            pass
+
+    def _shimmer_tick(self) -> None:
+        """Animate a moving light across the slogan text using Rich styles."""
+        try:
+            label = self.query_one('#splash-slogan', Label)
+        except Exception:
+            return
+
+        try:
+            raw = "Buy low • Sell high • Travel and invest"
+            n = len(raw)
+            if n == 0:
+                return
+
+            # Move the highlight position
+            self._shimmer_pos = (getattr(self, "_shimmer_pos", 0) + 1) % (n + 8)
+
+            # Distance-based simple gradient (center brightest)
+            # Use hex shades to simulate a sweeping light
+            palette = ["#777777", "#999999", "#BBBBBB", "#DDDDDD", "#FFFFFF"]
+            radius = 4  # controls gradient width
+
+            t = Text()
+            center = self._shimmer_pos - 4  # offset so the brightest is not at 0 immediately
+
+            for i, ch in enumerate(raw):
+                d = abs(i - center)
+                if d <= 0:
+                    style = "bold #FFFFFF"
+                elif d <= radius - 1:
+                    style = f"bold {palette[min(len(palette)-1, radius - 1 - int(d))]}"
+                elif d == radius:
+                    style = palette[0]
+                else:
+                    style = palette[0]
+                t.append(ch, style=style)
+
+            label.update(t)
         except Exception:
             pass
