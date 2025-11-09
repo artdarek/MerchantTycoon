@@ -12,9 +12,17 @@ class TravelSettings:
 @dataclass(frozen=True)
 class CargoSettings:
     base_capacity: int = 50
-    extend_base_cost: int = 100
-    extend_cost_factor: int = 2
+    extend_base_cost: int = 10000
     extend_step: int = 10  # number of slots added per purchase
+    # Pricing mode for cargo extensions: "exponential" or "linear"
+    extend_pricing_mode: str = "linear"
+    # Unified factor used by both pricing modes:
+    #  - exponential: multiplier per bundle (e.g., 1.2, 1.5, 2.0)
+    #  - linear: increment per bundle = extend_base_cost * extend_cost_factor
+    #    e.g., base=100, factor=1.0 -> +100 each bundle; factor=1.5 -> +150
+    extend_cost_factor: float = 10
+
+
 
 
 @dataclass(frozen=True)

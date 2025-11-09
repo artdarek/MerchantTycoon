@@ -38,7 +38,16 @@ class GoodsService:
         step = max(1, int(SETTINGS.cargo.extend_step))
         over_base = max(0, current_capacity - SETTINGS.cargo.base_capacity)
         bundles_purchased = over_base // step
-        current_cost = int(SETTINGS.cargo.extend_base_cost) * (SETTINGS.cargo.extend_cost_factor ** bundles_purchased)
+        # Pricing strategy
+        mode = str(getattr(SETTINGS.cargo, "extend_pricing_mode", "linear")).lower()
+        if mode == "exponential":
+            factor = float(getattr(SETTINGS.cargo, "extend_cost_factor", 2.0))
+            current_cost = int(int(SETTINGS.cargo.extend_base_cost) * (factor ** bundles_purchased))
+        else:  # linear (default)
+            base = int(SETTINGS.cargo.extend_base_cost)
+            factor = float(getattr(SETTINGS.cargo, "extend_cost_factor", 1.0))
+            increment = base * factor
+            current_cost = int(base + increment * bundles_purchased)
 
         # Validate cash
         if self.state.cash < current_cost:
@@ -49,7 +58,14 @@ class GoodsService:
         self.state.max_inventory = current_capacity + step
 
         # Compute next cost after purchase
-        next_cost = int(SETTINGS.cargo.extend_base_cost) * (SETTINGS.cargo.extend_cost_factor ** (bundles_purchased + 1))
+        if mode == "exponential":
+            factor = float(getattr(SETTINGS.cargo, "extend_cost_factor", 2.0))
+            next_cost = int(int(SETTINGS.cargo.extend_base_cost) * (factor ** (bundles_purchased + 1)))
+        else:
+            base = int(SETTINGS.cargo.extend_base_cost)
+            factor = float(getattr(SETTINGS.cargo, "extend_cost_factor", 1.0))
+            increment = base * factor
+            next_cost = int(base + increment * (bundles_purchased + 1))
         return True, (
             f"Cargo extended by +{step} slots to {self.state.max_inventory} (-${current_cost:,})"
         ), self.state.max_inventory, next_cost

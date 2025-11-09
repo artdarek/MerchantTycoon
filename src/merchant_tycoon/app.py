@@ -413,6 +413,8 @@ class MerchantTycoon(App):
             self.refresh_all()
         else:
             self.engine.messenger.warn(msg, tag="travel")
+            # Ensure the messenger panel updates immediately on failure
+            self.refresh_all()
 
     def action_loan(self):
         """Take a loan"""
