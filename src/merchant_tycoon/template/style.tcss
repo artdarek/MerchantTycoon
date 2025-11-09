@@ -228,6 +228,7 @@ MessangerPanel {
     height: 1fr;
     border: none;
     layout: vertical;
+    padding: 2 0; /* top padding of two lines for breathing space */
 }
 
 #splash-center {
@@ -248,6 +249,7 @@ MessangerPanel {
 }
 
 #splash-instruction {
+    width: 100%;
     text-align: center;
     color: $text-muted;
     padding: 1;
