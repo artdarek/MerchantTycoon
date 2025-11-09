@@ -5,7 +5,6 @@ from textual.screen import ModalScreen
 from rich.text import Text
 
 from merchant_tycoon.engine import GameEngine
-from merchant_tycoon.domain.constants import STOCKS, COMMODITIES, CRYPTO
 
 
 class InvestmentsTransactionsModal(ModalScreen):
@@ -38,15 +37,16 @@ class InvestmentsTransactionsModal(ModalScreen):
                 container.mount(Label("No investments in portfolio"))
                 return
 
-            all_assets = STOCKS + COMMODITIES + CRYPTO
-
             for symbol in sorted(self.engine.state.portfolio.keys()):
                 total_qty = self.engine.state.portfolio.get(symbol, 0)
                 current_price = self.engine.asset_prices.get(symbol, 0)
                 lots = self.engine.state.get_investment_lots_for_asset(symbol)
 
                 # Find asset info
-                asset = next((a for a in all_assets if a.symbol == symbol), None)
+                try:
+                    asset = self.engine.investments_service.get_asset(symbol)
+                except Exception:
+                    asset = None
                 asset_name = asset.name if asset else symbol
                 asset_type = asset.asset_type if asset else "unknown"
 

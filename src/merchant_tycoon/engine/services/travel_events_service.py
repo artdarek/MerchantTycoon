@@ -2,7 +2,7 @@ import random
 from typing import List, Optional
 
 from merchant_tycoon.domain.model.bank_transaction import BankTransaction
-from merchant_tycoon.domain.constants import STOCKS, GOODS
+from merchant_tycoon.domain.constants import ASSETS
 from merchant_tycoon.config import SETTINGS
 from datetime import datetime
 
@@ -32,6 +32,14 @@ class TravelEventsService:
         if random.random() >= float(SETTINGS.events.base_probability):
             return None
         prices = prices or {}
+
+        def _all_goods_names() -> list[str]:
+            if goods_service is None:
+                return []
+            try:
+                return [g.name for g in goods_service.get_goods()]
+            except Exception:
+                return []
 
         def inv_total_value() -> int:
             total = 0
@@ -247,7 +255,8 @@ class TravelEventsService:
         # GAIN EVENTS
         def evt_dividend() -> Optional[tuple[str, bool]]:
             # Pay dividend for a held stock (not commodity/crypto)
-            held_stocks = [sym for sym, qty in (state.portfolio or {}).items() if qty > 0 and any(s.symbol == sym for s in STOCKS)]
+            stock_symbols = {a.symbol for a in ASSETS if getattr(a, "asset_type", "") == "stock"}
+            held_stocks = [sym for sym, qty in (state.portfolio or {}).items() if qty > 0 and sym in stock_symbols]
             if not held_stocks:
                 return None
             sym = random.choice(held_stocks)
@@ -287,9 +296,10 @@ class TravelEventsService:
 
         def evt_promo_good() -> Optional[tuple[str, bool]]:
             # Promotion - price down 30%–60% for a random good (next prices)
-            if not GOODS:
+            goods = _all_goods_names()
+            if not goods:
                 return None
-            good = random.choice(GOODS).name
+            good = random.choice(goods)
             lo, hi = SETTINGS.events.promo_multiplier
             mult = random.uniform(lo, hi)
             state.price_modifiers[good] = mult
@@ -297,18 +307,20 @@ class TravelEventsService:
 
         def evt_oversupply() -> Optional[tuple[str, bool]]:
             # Very low price for random good
-            if not GOODS:
+            goods = _all_goods_names()
+            if not goods:
                 return None
-            good = random.choice(GOODS).name
+            good = random.choice(goods)
             lo, hi = SETTINGS.events.oversupply_multiplier
             mult = random.uniform(lo, hi)
             state.price_modifiers[good] = mult
             return (f"📉 OVERSUPPLY! {good} prices plunge (−{int((1 - mult) * 100)}%).", True)
 
         def evt_shortage() -> Optional[tuple[str, bool]]:
-            if not GOODS:
+            goods = _all_goods_names()
+            if not goods:
                 return None
-            good = random.choice(GOODS).name
+            good = random.choice(goods)
             lo, hi = SETTINGS.events.shortage_multiplier
             mult = random.uniform(lo, hi)
             state.price_modifiers[good] = mult
@@ -316,9 +328,10 @@ class TravelEventsService:
 
         def evt_loyal_discount() -> Optional[tuple[str, bool]]:
             # Loyal customer special: 95% discount on a random good for today
-            if not GOODS:
+            goods = _all_goods_names()
+            if not goods:
                 return None
-            good = random.choice(GOODS).name
+            good = random.choice(goods)
             mult = SETTINGS.events.loyal_discount_multiplier
             state.price_modifiers[good] = mult
             return (f"🤝 LOYAL CUSTOMER! As a valued customer you get 95% discount on {good} (today only)!", True)
@@ -354,7 +367,8 @@ class TravelEventsService:
             return int(state.cash) > 0
 
         def holds_any_stock() -> bool:
-            return any(qty > 0 and any(s.symbol == sym for s in STOCKS) for sym, qty in (state.portfolio or {}).items())
+            stock_symbols = {a.symbol for a in ASSETS if getattr(a, "asset_type", "") == "stock"}
+            return any(qty > 0 and sym in stock_symbols for sym, qty in (state.portfolio or {}).items())
 
         def bank_has_balance() -> bool:
             try:

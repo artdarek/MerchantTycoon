@@ -4,9 +4,6 @@ from textual.widgets import Static, Label, DataTable
 from rich.text import Text
 
 from merchant_tycoon.engine import GameEngine
-from merchant_tycoon.domain.constants import GOODS
-
-GOODS_BY_NAME = {g.name: g for g in GOODS}
 
 
 class InventoryLotsPanel(Static):
@@ -84,7 +81,10 @@ class InventoryLotsPanel(Static):
                 ts = str(getattr(lot, "ts", ""))
                 date_only = ts[:10] if ts and len(ts) >= 10 else ""
 
-                good_obj = GOODS_BY_NAME.get(good_name)
+                try:
+                    good_obj = self.engine.goods_service.get_good(good_name)
+                except Exception:
+                    good_obj = None
                 g_type = getattr(good_obj, "type", "standard") if good_obj else "standard"
                 g_cat = getattr(good_obj, "category", "hardware") if good_obj else "hardware"
 

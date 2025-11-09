@@ -3,7 +3,6 @@ from textual.widgets import Static, Label, DataTable
 from rich.text import Text
 
 from merchant_tycoon.engine import GameEngine
-from merchant_tycoon.domain.constants import STOCKS, COMMODITIES, CRYPTO
 
 
 class InvestmentsPanel(Static):
@@ -24,7 +23,7 @@ class InvestmentsPanel(Static):
         # Initialize columns once
         if not getattr(self, "_portfolio_table_initialized", False):
             table.clear(columns=True)
-            table.add_columns("Symbol", "Name", "Qty", "Price", "Value", "Avg Cost", "P/L", "P/L%")
+            table.add_columns("Symbol", "Name", "Qty", "Price", "Value", "Avg Cost", "P/L", "P/L%", "Type")
             try:
                 table.cursor_type = "row"
                 table.show_header = True
@@ -44,8 +43,6 @@ class InvestmentsPanel(Static):
             table.add_row("(no investments)", "", "", "", "", "", "", "")
             return
 
-        all_assets = STOCKS + COMMODITIES + CRYPTO
-
         for symbol in sorted(self.engine.state.portfolio.keys()):
             quantity = self.engine.state.portfolio.get(symbol, 0)
             current_price = self.engine.asset_prices.get(symbol, 0)
@@ -59,8 +56,12 @@ class InvestmentsPanel(Static):
             profit = current_value - total_cost
             profit_pct = (profit / total_cost * 100) if total_cost > 0 else 0
 
-            asset = next((a for a in all_assets if a.symbol == symbol), None)
+            try:
+                asset = self.engine.investments_service.get_asset(symbol)
+            except Exception:
+                asset = None
             asset_name = asset.name if asset else symbol
+            asset_type = getattr(asset, "asset_type", "") if asset else ""
 
             # Color profit cells
             if profit > 0:
@@ -82,6 +83,7 @@ class InvestmentsPanel(Static):
                 f"${avg_purchase_price:,}",
                 pl_cell,
                 pl_pct_cell,
+                asset_type,
             )
             try:
                 self._row_to_symbol[row_key] = symbol

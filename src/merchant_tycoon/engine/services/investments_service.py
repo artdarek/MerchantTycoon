@@ -3,12 +3,13 @@ from typing import Dict, TYPE_CHECKING, Optional
 import math
 
 from merchant_tycoon.domain.model.investment_lot import InvestmentLot
-from merchant_tycoon.domain.constants import STOCKS, COMMODITIES, CRYPTO
+from merchant_tycoon.domain.constants import ASSETS
 from merchant_tycoon.config import SETTINGS
 
 if TYPE_CHECKING:
     from merchant_tycoon.engine.game_state import GameState
     from merchant_tycoon.engine.services.clock_service import ClockService
+    from merchant_tycoon.domain.model.asset import Asset
 
 
 class InvestmentsService:
@@ -28,8 +29,7 @@ class InvestmentsService:
         self.previous_asset_prices.update(self.asset_prices)
 
         # Generate prices for all assets - always integers, minimum $1
-        all_assets = STOCKS + COMMODITIES + CRYPTO
-        for asset in all_assets:
+        for asset in ASSETS:
             variance = random.uniform(1 - asset.price_variance, 1 + asset.price_variance) * float(SETTINGS.investments.variance_scale)
             price = asset.base_price * variance
             # Always convert to int and ensure minimum $1
@@ -166,3 +166,28 @@ class InvestmentsService:
             else:
                 hi = mid - 1
         return lo
+
+    # ---- Public helper functions (filtering and lookup) ----
+    def get_assets(self, *, type: Optional[str] = None) -> list["Asset"]:
+        """Return assets filtered by optional type ('stock'|'commodity'|'crypto').
+
+        Examples:
+          get_assets() -> all assets
+          get_assets(type='stock') -> only stocks
+        """
+        items = ASSETS
+        if type is not None:
+            t = str(type).lower()
+            items = [a for a in items if str(getattr(a, "asset_type", "")).lower() == t]
+        return list(items)
+
+    def get_asset(self, symbol: str) -> Optional["Asset"]:
+        """Return Asset by ticker symbol (exact match) or None if not found."""
+        for a in ASSETS:
+            if a.symbol == symbol:
+                return a
+        return None
+
+    def is_crypto(self, symbol: str) -> bool:
+        a = self.get_asset(symbol)
+        return str(getattr(a, "asset_type", "")).lower() == "crypto" if a else False

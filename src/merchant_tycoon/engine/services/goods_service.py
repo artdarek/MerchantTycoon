@@ -78,7 +78,7 @@ class GoodsService:
         self.previous_prices.update(self.prices)
 
         city = CITIES[self.state.current_city]
-        for good in GOODS:
+        for good in self.get_goods():
             variance = random.uniform(1 - good.price_variance, 1 + good.price_variance)
             city_mult = city.price_multiplier.get(good.name, 1.0)
             base_price = good.base_price * city_mult * variance

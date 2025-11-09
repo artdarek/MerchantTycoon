@@ -4,7 +4,7 @@ from rich.text import Text
 
 from merchant_tycoon.engine import GameEngine
 from merchant_tycoon.config import SETTINGS
-from merchant_tycoon.domain.constants import STOCKS, COMMODITIES, CRYPTO
+from merchant_tycoon.domain.constants import ASSETS
 
 
 class ExchangePricesPanel(Static):
@@ -103,11 +103,26 @@ class ExchangePricesPanel(Static):
             except Exception:
                 pass
 
-        for stock in STOCKS:
+        # Show stocks
+        try:
+            stocks = self.engine.investments_service.get_assets(type="stock")
+        except Exception:
+            stocks = [a for a in ASSETS if getattr(a, "asset_type", "") == "stock"]
+        for stock in stocks:
             add_asset_row(stock.name, stock.symbol, stock.asset_type)
-        for commodity in COMMODITIES:
+        # Show commodities
+        try:
+            commodities = self.engine.investments_service.get_assets(type="commodity")
+        except Exception:
+            commodities = [a for a in ASSETS if getattr(a, "asset_type", "") == "commodity"]
+        for commodity in commodities:
             add_asset_row(commodity.name, commodity.symbol, commodity.asset_type)
-        for crypto in CRYPTO:
+        # Show crypto
+        try:
+            cryptos = self.engine.investments_service.get_assets(type="crypto")
+        except Exception:
+            cryptos = [a for a in ASSETS if getattr(a, "asset_type", "") == "crypto"]
+        for crypto in cryptos:
             add_asset_row(crypto.name, crypto.symbol, crypto.asset_type)
 
     def on_data_table_row_selected(self, event: DataTable.RowSelected) -> None:

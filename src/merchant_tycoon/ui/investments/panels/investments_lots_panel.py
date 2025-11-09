@@ -4,7 +4,6 @@ from textual.widgets import Static, Label, DataTable
 from rich.text import Text
 
 from merchant_tycoon.engine import GameEngine
-from merchant_tycoon.domain.constants import STOCKS, COMMODITIES, CRYPTO
 
 
 class InvestmentsLotsPanel(Static):
@@ -33,7 +32,10 @@ class InvestmentsLotsPanel(Static):
         prices = self.engine.asset_prices
 
         # Build lookup for asset names/type by symbol
-        assets = STOCKS + COMMODITIES + CRYPTO
+        try:
+            assets = self.engine.investments_service.get_assets()
+        except Exception:
+            assets = []
         symbol_to_name = {a.symbol: a.name for a in assets}
 
         # Only display assets that are currently owned (>0)
@@ -50,7 +52,7 @@ class InvestmentsLotsPanel(Static):
             table.zebra_stripes = True
         except Exception:
             pass
-        table.add_columns("Symbol", "Name", "Date", "Qty", "Price", "Total", "P/L", "P/L%")
+        table.add_columns("Symbol", "Name", "Date", "Qty", "Price", "Total", "P/L", "P/L%", "Type")
 
         meta = {"rows": {}}
         self._tables[id(table)] = meta
@@ -62,6 +64,11 @@ class InvestmentsLotsPanel(Static):
                 continue
 
             asset_name = symbol_to_name.get(symbol, symbol)
+            try:
+                asset = self.engine.investments_service.get_asset(symbol)
+            except Exception:
+                asset = None
+            asset_type = getattr(asset, "asset_type", "") if asset else ""
 
             for lot in lots:
                 qty = int(getattr(lot, "quantity", 0))
@@ -95,6 +102,7 @@ class InvestmentsLotsPanel(Static):
                     f"${total:,}",
                     pl_cell,
                     pl_pct_cell,
+                    asset_type,
                 )
                 try:
                     meta["rows"][row_key] = {"symbol": symbol, "qty": qty}

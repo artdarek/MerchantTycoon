@@ -4,7 +4,6 @@ from rich.text import Text
 
 from merchant_tycoon.engine import GameEngine
 from merchant_tycoon.config import SETTINGS
-from merchant_tycoon.domain.constants import GOODS
 
 
 class GoodsPricesPanel(Static):
@@ -54,7 +53,11 @@ class GoodsPricesPanel(Static):
         # Rebuild row->product mapping
         self._row_to_product = {}
 
-        for good in GOODS:
+        try:
+            goods = self.engine.goods_service.get_goods()
+        except Exception:
+            goods = []
+        for good in goods:
             price = self.engine.prices.get(good.name, 0)
             hist = (self.engine.state.price_history or {}).get(good.name, [])[-10:]
 

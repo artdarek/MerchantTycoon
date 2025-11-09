@@ -3,9 +3,6 @@ from textual.widgets import Static, Label, DataTable
 from rich.text import Text
 
 from merchant_tycoon.engine import GameEngine
-from merchant_tycoon.domain.constants import GOODS
-
-GOODS_BY_NAME = {g.name: g for g in GOODS}
 
 
 class InventoryPanel(Static):
@@ -71,7 +68,10 @@ class InventoryPanel(Static):
                 pl_cell = Text("$0", style="dim")
                 pl_pct_cell = Text("0.0%", style="dim")
 
-            good_obj = GOODS_BY_NAME.get(good_name)
+            try:
+                good_obj = self.engine.goods_service.get_good(good_name)
+            except Exception:
+                good_obj = None
             g_type = getattr(good_obj, "type", "standard") if good_obj else "standard"
             g_cat = getattr(good_obj, "category", "hardware") if good_obj else "hardware"
 

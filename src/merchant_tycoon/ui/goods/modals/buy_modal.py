@@ -4,7 +4,6 @@ from textual.widgets import Label, Button, Input, Select
 from textual.screen import ModalScreen
 
 from merchant_tycoon.engine import GameEngine
-from merchant_tycoon.domain.constants import GOODS
 
 
 class BuyModal(ModalScreen):
@@ -31,7 +30,11 @@ class BuyModal(ModalScreen):
             options = []
             available_space = self.engine.state.max_inventory - self.engine.state.get_inventory_count()
 
-            for good in GOODS:
+            try:
+                goods = self.engine.goods_service.get_goods()
+            except Exception:
+                goods = []
+            for good in goods:
                 price = self.engine.prices[good.name]
                 # Calculate max affordable based on cash
                 max_affordable = self.engine.state.cash // price if price > 0 else 0

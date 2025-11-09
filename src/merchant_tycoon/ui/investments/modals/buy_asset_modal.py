@@ -4,7 +4,6 @@ from textual.widgets import Label, Button, Input, Select
 from textual.screen import ModalScreen
 
 from merchant_tycoon.engine import GameEngine
-from merchant_tycoon.domain.constants import STOCKS, COMMODITIES, CRYPTO
 
 
 class BuyAssetModal(ModalScreen):
@@ -28,7 +27,11 @@ class BuyAssetModal(ModalScreen):
             yield Label("💰 Buy Assets", id="modal-title")
 
             options = []
-            all_assets = STOCKS + COMMODITIES + CRYPTO
+            all_assets = []
+            try:
+                all_assets = self.engine.investments_service.get_assets()
+            except Exception:
+                pass
             for asset in all_assets:
                 price = self.engine.asset_prices[asset.symbol]
                 max_affordable = 0

@@ -4,7 +4,6 @@ from textual.widgets import Label, Button, Input, Select
 from textual.screen import ModalScreen
 
 from merchant_tycoon.engine import GameEngine
-from merchant_tycoon.domain.constants import STOCKS, COMMODITIES, CRYPTO
 
 
 class SellAssetModal(ModalScreen):
@@ -36,8 +35,10 @@ class SellAssetModal(ModalScreen):
                 self.max_quantities[symbol] = quantity
 
                 # Find asset info
-                all_assets = STOCKS + COMMODITIES + CRYPTO
-                asset = next((a for a in all_assets if a.symbol == symbol), None)
+                try:
+                    asset = self.engine.investments_service.get_asset(symbol)
+                except Exception:
+                    asset = None
 
                 # Choose icon based on asset type
                 if asset and asset.asset_type == "stock":
