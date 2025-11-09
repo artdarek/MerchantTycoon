@@ -93,9 +93,9 @@ class InvestmentsSettings:
     min_unit_price: int = 1  # reuse pricing.min_unit_price by default
     variance_scale: float = 1.0
     # Commissions
-    buy_fee_rate: float = 0.02
+    buy_fee_rate: float = 0.001
     buy_fee_min: int = 1
-    sell_fee_rate: float = 0.005
+    sell_fee_rate: float = 0.003
     sell_fee_min: int = 1
 
 
