@@ -20,6 +20,14 @@ GlobalActionsBar {
     content-align: left middle;
 }
 
+/* Spacer expands to push info label to the right */
+#global-spacer { width: 1fr; }
+#global-info {
+    color: #cfd5e1;
+    text-align: right;
+    padding: 1;           /* space around date/location block */
+}
+
 .action-item {
     color: #9aa3b2;         /* muted label tone */
     margin: 0;            /* no outer spacing */

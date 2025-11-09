@@ -146,6 +146,10 @@ class MerchantTycoon(App):
     def on_mount(self) -> None:
         self.title = "Merchant Tycoon"
         self.message_log = self.query_one(MessangerPanel)
+        try:
+            self.global_actions_bar = self.query_one(GlobalActionsBar)
+        except Exception:
+            self.global_actions_bar = None
         self.stats_panel = self.query_one(StatsPanel)
         self.market_panel = self.query_one(GoodsPricesPanel)
         self.inventory_panel = self.query_one(InventoryPanel)
@@ -259,6 +263,12 @@ class MerchantTycoon(App):
         try:
             if self.message_log:
                 self.message_log.render_messages()
+        except Exception:
+            pass
+        # Update top bar info (date/city)
+        try:
+            if getattr(self, "global_actions_bar", None):
+                self.global_actions_bar.update_info()
         except Exception:
             pass
 
