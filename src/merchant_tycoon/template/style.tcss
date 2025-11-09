@@ -3,7 +3,7 @@ Screen {
 }
 
 GlobalActionsBar {
-    background: $primary-darken-2;
+    background: $panel;
     color: $text;
     height: auto;
     padding: 0;              /* no padding for top menu panel */
