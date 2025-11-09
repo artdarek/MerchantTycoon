@@ -1,6 +1,6 @@
 [project]
 name = "merchant-tycoon"
-version = "0.8.0"
+version = "0.9.0"
 description = "A terminal-based trading game - buy low, sell high, and become a merchant tycoon!"
 authors = [
     {name = "artdarek", email = "artdarek@gmail.com"}
