@@ -63,6 +63,17 @@ class SellLotModal(ModalScreen):
                 yield Button("Sell", variant="success", id="confirm-btn", disabled=True)
                 yield Button("Cancel", variant="error", id="cancel-btn")
 
+    def _set_qty_enabled(self, enabled: bool) -> None:
+        try:
+            qty = self.query_one("#quantity-input", Input)
+            qty.disabled = not enabled
+            try:
+                qty.can_focus = enabled
+            except Exception:
+                pass
+        except Exception:
+            pass
+
     def on_mount(self) -> None:
         # Preselect lot and quantity
         try:
@@ -79,50 +90,29 @@ class SellLotModal(ModalScreen):
         except Exception:
             pass
         # Disable qty until a lot is selected
-        try:
-            enabled = bool(lot_select.value)
-            qty_input.disabled = not enabled
-            try:
-                qty_input.can_focus = enabled
-            except Exception:
-                pass
-        except Exception:
-            pass
+        self._set_qty_enabled(bool(getattr(lot_select, "value", None)))
         self._update_sell_enabled()
 
     def on_select_changed(self, event: Select.Changed) -> None:
-        if event.select.id == "lot-select" and event.value:
-            max_qty = int(self.max_quantities.get(event.value, 0))
-            input_widget = self.query_one("#quantity-input", Input)
-            input_widget.value = str(max_qty)
-            input_widget.disabled = False
-            try:
-                input_widget.can_focus = True
-            except Exception:
-                pass
-        elif event.select.id == "lot-select" and not event.value:
-            try:
-                qty = self.query_one("#quantity-input", Input)
-                qty.disabled = True
+        if event.select.id == "lot-select":
+            if event.value:
+                max_qty = int(self.max_quantities.get(event.value, 0))
                 try:
-                    qty.can_focus = False
+                    self.query_one("#quantity-input", Input).value = str(max_qty)
                 except Exception:
                     pass
-            except Exception:
-                pass
+                self._set_qty_enabled(True)
+            else:
+                self._set_qty_enabled(False)
             self._update_sell_enabled()
 
     def on_input_changed(self, event: Input.Changed) -> None:
         if event.input.id == "quantity-input":
             try:
-                lot_select = self.query_one("#lot-select", Select)
-                if not bool(lot_select.value):
+                selected = bool(getattr(self.query_one("#lot-select", Select), "value", None))
+                if not selected:
                     event.input.value = ""
-                    event.input.disabled = True
-                    try:
-                        event.input.can_focus = False
-                    except Exception:
-                        pass
+                    self._set_qty_enabled(False)
                     self._update_sell_enabled()
                     return
             except Exception:

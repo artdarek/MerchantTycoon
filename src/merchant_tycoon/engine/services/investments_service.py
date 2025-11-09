@@ -145,6 +145,63 @@ class InvestmentsService:
             pass
         return True, f"Sold {quantity}x {symbol} for ${proceeds:,} (after fee)"
 
+    def sell_asset_from_lot(self, symbol: str, lot_ts: str, quantity: int) -> tuple[bool, str]:
+        """Sell a specific quantity from a selected investment lot (identified by ts).
+
+        Applies the same sell commission rules as sell_asset and updates lots/portfolio
+        without enforcing FIFO. If quantity equals lot size the lot is removed.
+        """
+        if not lot_ts or quantity <= 0:
+            return False, "Invalid lot or quantity"
+        # Find the lot
+        lot_index = -1
+        target: Optional[InvestmentLot] = None
+        for i, lot in enumerate(self.state.investment_lots):
+            if lot.asset_symbol == symbol and getattr(lot, "ts", "") == lot_ts:
+                lot_index = i
+                target = lot
+                break
+        if target is None:
+            return False, "Lot not found"
+
+        have = int(self.state.portfolio.get(symbol, 0))
+        if have < quantity:
+            return False, f"Don't have enough! Have {have}x {symbol}"
+        if quantity > int(getattr(target, "quantity", 0)):
+            return False, "Quantity exceeds lot size"
+
+        price = int(self.asset_prices.get(symbol, 0))
+        total_value = price * quantity
+        rate = float(getattr(SETTINGS.investments, "sell_fee_rate", 0.005))
+        min_fee = int(getattr(SETTINGS.investments, "sell_fee_min", 1))
+        fee = max(min_fee, int(math.ceil(total_value * rate)))
+        proceeds = max(0, total_value - fee)
+
+        # Reduce/remove selected lot
+        if quantity == target.quantity:
+            try:
+                self.state.investment_lots.pop(lot_index)
+            except Exception:
+                return False, "Failed to remove lot"
+        else:
+            target.quantity -= quantity
+
+        # Update portfolio and cash
+        self.state.portfolio[symbol] = have - quantity
+        if self.state.portfolio[symbol] <= 0:
+            del self.state.portfolio[symbol]
+        self.state.cash += proceeds
+
+        try:
+            if self.messenger:
+                self.messenger.info(
+                    f"Sold {quantity}x {symbol} (selected lot) for ${total_value:,} (fee ${fee:,}, received ${proceeds:,})",
+                    tag="investments",
+                )
+        except Exception:
+            pass
+        return True, f"Sold {quantity}x {symbol} for ${proceeds:,} (after fee)"
+
     # Utility to compute max affordable quantity including buy commission
     def max_affordable(self, cash: int, price: int) -> int:
         if price <= 0 or cash <= 0:

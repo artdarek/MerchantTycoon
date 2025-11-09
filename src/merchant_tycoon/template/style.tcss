@@ -289,7 +289,7 @@ MessangerPanel {
 /* Center all modals (except Splash which is fullscreen), and make overlay transparent
    so underlying app remains visible around the dialog. */
 InputModal, TravelModal, BuyModal, SellModal, SellLotModal,
-BuyAssetModal, SellAssetModal, LoanRepayModal, HelpModal,
+BuyAssetModal, SellAssetModal, SellAssetLotModal, LoanRepayModal, HelpModal,
 ConfirmModal, AboutModal, CargoExtendModal {
     align: center middle;
     background: transparent;

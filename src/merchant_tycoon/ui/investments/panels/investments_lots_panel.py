@@ -105,14 +105,14 @@ class InvestmentsLotsPanel(Static):
                     asset_type,
                 )
                 try:
-                    meta["rows"][row_key] = {"symbol": symbol, "qty": qty}
+                    meta["rows"][row_key] = {"symbol": symbol, "qty": qty, "ts": ts}
                 except Exception:
                     pass
 
         container.mount(table)
 
     def on_data_table_row_selected(self, event: DataTable.RowSelected) -> None:
-        # Open SellAssetModal with asset symbol and lot quantity prefilled
+        # Open SellAssetLotModal with selected lot and prefilled quantity
         try:
             table = event.data_table
             meta = self._tables.get(id(table))
@@ -126,11 +126,12 @@ class InvestmentsLotsPanel(Static):
         entry = meta.get("rows", {}).get(row_key, {})
         symbol = entry.get("symbol")
         qty = int(entry.get("qty", 0))
-        if not symbol or qty <= 0:
+        ts = entry.get("ts", "")
+        if not symbol or qty <= 0 or not ts:
             return
-        # Launch SellAssetModal with defaults
+        # Launch SellAssetLotModal with defaults
         try:
-            from merchant_tycoon.ui.investments.modals import SellAssetModal
-            self.app.push_screen(SellAssetModal(self.engine, self.app._handle_asset_trade, default_symbol=symbol, default_quantity=qty))
+            from merchant_tycoon.ui.investments.modals import SellAssetLotModal
+            self.app.push_screen(SellAssetLotModal(self.engine, symbol, ts, qty, self.app._handle_asset_trade))
         except Exception:
             pass

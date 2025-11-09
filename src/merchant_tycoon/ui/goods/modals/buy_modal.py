@@ -71,6 +71,18 @@ class BuyModal(ModalScreen):
                 yield Button("Buy", variant="success", id="confirm-btn", disabled=True)
                 yield Button("Cancel", variant="error", id="cancel-btn")
 
+    # --- helpers ---
+    def _set_qty_enabled(self, enabled: bool) -> None:
+        try:
+            qty = self.query_one("#quantity-input", Input)
+            qty.disabled = not enabled
+            try:
+                qty.can_focus = enabled
+            except Exception:
+                pass
+        except Exception:
+            pass
+
     def on_mount(self) -> None:
         # Preselect product and quantity if provided
         try:
@@ -92,15 +104,7 @@ class BuyModal(ModalScreen):
             except Exception:
                 pass
         # Disable quantity field until a product is selected
-        try:
-            enabled = bool(select_widget.value)
-            input_widget.disabled = not enabled
-            try:
-                input_widget.can_focus = enabled
-            except Exception:
-                pass
-        except Exception:
-            pass
+        self._set_qty_enabled(bool(getattr(select_widget, "value", None)))
         # Initialize Buy button enabled state
         self._update_buy_enabled()
 
@@ -108,38 +112,25 @@ class BuyModal(ModalScreen):
         """Auto-fill quantity when product is selected"""
         if getattr(self, "_suppress_autofill", False):
             return
-        if event.select.id == "product-select" and event.value:
-            max_qty = self.max_quantities.get(event.value, 0)
-            input_widget = self.query_one("#quantity-input", Input)
-            input_widget.value = str(max_qty)
-            input_widget.disabled = False
-            try:
-                input_widget.can_focus = True
-            except Exception:
-                pass
-        elif event.select.id == "product-select" and not event.value:
-            try:
-                qty = self.query_one("#quantity-input", Input)
-                qty.disabled = True
+        if event.select.id == "product-select":
+            if event.value:
+                max_qty = self.max_quantities.get(event.value, 0)
                 try:
-                    qty.can_focus = False
+                    self.query_one("#quantity-input", Input).value = str(max_qty)
                 except Exception:
                     pass
-            except Exception:
-                pass
+                self._set_qty_enabled(True)
+            else:
+                self._set_qty_enabled(False)
             self._update_buy_enabled()
 
     def on_input_changed(self, event: Input.Changed) -> None:
         if event.input.id == "quantity-input":
             try:
-                select_widget = self.query_one("#product-select", Select)
-                if not bool(select_widget.value):
+                selected = bool(getattr(self.query_one("#product-select", Select), "value", None))
+                if not selected:
                     event.input.value = ""
-                    event.input.disabled = True
-                    try:
-                        event.input.can_focus = False
-                    except Exception:
-                        pass
+                    self._set_qty_enabled(False)
                     self._update_buy_enabled()
                     return
             except Exception:
