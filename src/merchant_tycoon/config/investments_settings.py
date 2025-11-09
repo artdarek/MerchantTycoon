@@ -1,0 +1,18 @@
+from dataclasses import dataclass
+
+
+@dataclass(frozen=True)
+class InvestmentsSettings:
+    # Minimum unit price for assets (defaults to pricing.min_unit_price)
+    min_unit_price: int = 1
+    # Multiplier applied to asset variance for global tuning
+    variance_scale: float = 1.0
+    # Buy commission rate (fraction of trade value)
+    buy_fee_rate: float = 0.001
+    # Minimum buy commission in currency units
+    buy_fee_min: int = 1
+    # Sell commission rate (fraction of trade value)
+    sell_fee_rate: float = 0.003
+    # Minimum sell commission in currency units
+    sell_fee_min: int = 1
+
