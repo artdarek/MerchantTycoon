@@ -28,6 +28,7 @@ from merchant_tycoon.ui.investments.panels import (
     ExchangePricesPanel,
     InvestmentsPanel,
     TradeActionsPanel,
+    InvestmentsLotsPanel,
 )
 from merchant_tycoon.ui.bank.panels import (
     AccountBalancePanel,
@@ -98,6 +99,7 @@ class MerchantTycoon(App):
         self.exchange_prices_panel = None
         self.trade_actions_panel = None
         self.investments_panel = None
+        self.investments_lots_panel = None
         self.goods_trade_actions_panel = None
         self.bank_panel = None
         self.bank_actions_panel = None
@@ -123,6 +125,7 @@ class MerchantTycoon(App):
                 with Vertical(id="investments-right-col"):
                     yield TradeActionsPanel(self.engine)
                     yield InvestmentsPanel(self.engine)
+                    yield InvestmentsLotsPanel(self.engine)
             with TabPane("🏦 Bank", id="bank-tab"):
                 with Vertical(id="bank-left-col"):
                     yield AccountBalancePanel(self.engine)
@@ -148,6 +151,10 @@ class MerchantTycoon(App):
         self.exchange_prices_panel = self.query_one(ExchangePricesPanel)
         self.trade_actions_panel = self.query_one(TradeActionsPanel)
         self.investments_panel = self.query_one(InvestmentsPanel)
+        try:
+            self.investments_lots_panel = self.query_one(InvestmentsLotsPanel)
+        except Exception:
+            self.investments_lots_panel = None
         # New: goods trade panel reference
         try:
             self.goods_trade_actions_panel = self.query_one(GoodsTradeActionsPanel)
@@ -228,6 +235,8 @@ class MerchantTycoon(App):
             self.goods_trade_actions_panel.update_trade_actions()
         if self.investments_panel:
             self.investments_panel.update_investments()
+        if self.investments_lots_panel:
+            self.investments_lots_panel.update_lots()
         if self.bank_panel:
             self.bank_panel.update_bank()
         if self.bank_actions_panel:

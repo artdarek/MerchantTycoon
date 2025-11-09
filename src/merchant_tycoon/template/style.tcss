@@ -82,6 +82,19 @@ InventoryLotsPanel {
     height: 1fr;
 }
 
+/* Investments lots panel mirrors purchased lots styling */
+InvestmentsLotsPanel {
+    border: solid $accent;
+    padding: 0 1;
+    margin: 0;
+    width: 1fr;
+    height: 1fr;
+}
+
+#investments-lots-content {
+    height: 1fr;
+}
+
 /* Goods trade actions panel (right column on Goods tab) */
 GoodsTradeActionsPanel {
     border: solid $accent;
