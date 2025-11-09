@@ -10,6 +10,10 @@ from merchant_tycoon.domain.constants import STOCKS, COMMODITIES, CRYPTO
 class SellAssetModal(ModalScreen):
     """Modal for selling stocks/commodities"""
 
+    BINDINGS = [
+        ("escape", "dismiss_modal", "Close"),
+    ]
+
     def __init__(self, engine: GameEngine, callback, default_symbol: str | None = None, default_quantity: int | None = None):
         super().__init__()
         self.engine = engine
@@ -119,3 +123,7 @@ class SellAssetModal(ModalScreen):
                     pass
         else:
             self.dismiss()
+
+    def action_dismiss_modal(self) -> None:
+        """Close the modal when ESC is pressed"""
+        self.dismiss()

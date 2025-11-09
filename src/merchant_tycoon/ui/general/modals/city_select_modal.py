@@ -18,6 +18,10 @@ class CitySelectModal(ModalScreen):
         self.current_city = current_city
         self.callback = callback
 
+    BINDINGS = [
+        ("escape", "dismiss_modal", "Close"),
+    ]
+
     def compose(self) -> ComposeResult:
         with Container(id="city-modal"):
             yield Label("🗺️  Select Destination", id="modal-title")
@@ -36,4 +40,7 @@ class CitySelectModal(ModalScreen):
         self.callback(city_index)
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
+        self.dismiss()
+
+    def action_dismiss_modal(self) -> None:
         self.dismiss()

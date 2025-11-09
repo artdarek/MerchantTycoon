@@ -7,6 +7,10 @@ from textual.screen import ModalScreen
 class InputModal(ModalScreen):
     """Generic input modal"""
 
+    BINDINGS = [
+        ("escape", "dismiss_modal", "Close"),
+    ]
+
     def __init__(self, title: str, prompt: str, callback, default_value: str = ""):
         super().__init__()
         self.modal_title = title
@@ -38,3 +42,6 @@ class InputModal(ModalScreen):
         self.dismiss()
         if value:
             self.callback(value)
+
+    def action_dismiss_modal(self) -> None:
+        self.dismiss()

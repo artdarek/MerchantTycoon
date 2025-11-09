@@ -9,6 +9,10 @@ from merchant_tycoon.engine import GameEngine
 class SellModal(ModalScreen):
     """Modal for selling goods with product selector and quantity input"""
 
+    BINDINGS = [
+        ("escape", "dismiss_modal", "Close"),
+    ]
+
     def __init__(self, engine: GameEngine, callback, default_product: str | None = None, default_quantity: int | None = None):
         super().__init__()
         self.engine = engine
@@ -106,3 +110,6 @@ class SellModal(ModalScreen):
                 self.callback(product, quantity)
         except ValueError:
             pass
+
+    def action_dismiss_modal(self) -> None:
+        self.dismiss()

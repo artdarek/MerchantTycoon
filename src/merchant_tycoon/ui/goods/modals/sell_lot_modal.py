@@ -89,3 +89,9 @@ class SellLotModal(ModalScreen):
         else:
             self.dismiss()
 
+    BINDINGS = [
+        ("escape", "dismiss_modal", "Close"),
+    ]
+
+    def action_dismiss_modal(self) -> None:
+        self.dismiss()

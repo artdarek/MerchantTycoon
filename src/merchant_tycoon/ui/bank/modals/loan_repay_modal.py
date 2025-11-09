@@ -24,6 +24,10 @@ class LoanRepayModal(ModalScreen):
         self.default_amount = default_amount
         self._suppress_autofill = False
 
+    BINDINGS = [
+        ("escape", "dismiss_modal", "Close"),
+    ]
+
     def compose(self) -> ComposeResult:
         with Container(id="repay-modal"):
             yield Label("💳 Repay Loan", id="modal-title")
@@ -129,3 +133,6 @@ class LoanRepayModal(ModalScreen):
                     pass
         else:
             self.dismiss()
+
+    def action_dismiss_modal(self) -> None:
+        self.dismiss()

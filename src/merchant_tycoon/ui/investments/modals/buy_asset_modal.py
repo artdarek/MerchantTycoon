@@ -10,6 +10,10 @@ from merchant_tycoon.domain.constants import STOCKS, COMMODITIES, CRYPTO
 class BuyAssetModal(ModalScreen):
     """Modal for buying stocks/commodities"""
 
+    BINDINGS = [
+        ("escape", "dismiss_modal", "Close"),
+    ]
+
     def __init__(self, engine: GameEngine, callback, default_symbol: str | None = None, default_quantity: int | None = None):
         super().__init__()
         self.engine = engine
@@ -114,3 +118,6 @@ class BuyAssetModal(ModalScreen):
                     pass
         else:
             self.dismiss()
+
+    def action_dismiss_modal(self) -> None:
+        self.dismiss()
