@@ -220,28 +220,7 @@ MessangerPanel {
     padding: 1 2;
 }
 
-#transactions-modal {
-    width: 90;
-    height: 35;
-    border: thick $accent;
-    background: $surface;
-    padding: 1 2;
-    layout: vertical;
-}
-
-#transactions-content {
-    width: 100%;
-    height: 20;
-    border: solid $primary;
-    margin: 1 0;
-    padding: 1;
-    background: $panel;
-}
-
-#transactions-instructions {
-    text-style: italic;
-    color: $text-muted;
-}
+/* removed transactions modal styles */
 
 /* Splash screen overrides to make it fullscreen and centered */
 #splash-modal {

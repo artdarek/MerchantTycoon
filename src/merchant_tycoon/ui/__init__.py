@@ -25,12 +25,10 @@ from merchant_tycoon.ui.general.modals import (
 from merchant_tycoon.ui.goods.modals import (
     BuyModal,
     SellModal,
-    InventoryTransactionsModal,
 )
 from merchant_tycoon.ui.investments.modals import (
     BuyAssetModal,
     SellAssetModal,
-    InvestmentsTransactionsModal,
 )
 
 __all__ = [
@@ -49,8 +47,6 @@ __all__ = [
     "CitySelectModal",
     "BuyModal",
     "SellModal",
-    "InventoryTransactionsModal",
-    "InvestmentsTransactionsModal",
     "BuyAssetModal",
     "SellAssetModal",
     "HelpModal",

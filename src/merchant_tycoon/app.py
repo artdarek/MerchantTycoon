@@ -51,12 +51,10 @@ from merchant_tycoon.ui.general.modals import (
 from merchant_tycoon.ui.goods.modals import (
     BuyModal,
     SellModal,
-    InventoryTransactionsModal,
 )
 from merchant_tycoon.ui.investments.modals import (
     BuyAssetModal,
     SellAssetModal,
-    InvestmentsTransactionsModal,
 )
 from merchant_tycoon.ui.bank.modals import LoanRepayModal
 
@@ -80,7 +78,6 @@ class MerchantTycoon(App):
         Binding("t", "travel", "Travel", show=True),
         Binding("b", "buy", "Buy", show=True),
         Binding("s", "sell", "Sell", show=True),
-        Binding("i", "transactions", "Transactions", show=True),
         Binding("l", "loan", "Loan", show=True),
         Binding("r", "repay", "Repay", show=True),
         Binding("d", "bank_deposit", "Deposit", show=True),
@@ -473,36 +470,7 @@ class MerchantTycoon(App):
             self.engine.messenger.warn(msg, tag="bank")
         self.refresh_all()
 
-    def action_transactions(self):
-        """Context-aware Transactions: show goods or investments depending on active tab"""
-        try:
-            tabbed = self.query_one(TabbedContent)
-            active = getattr(tabbed, "active", None)
-        except Exception:
-            active = None
-
-        if active == "investments-tab":
-            self.action_investment_transactions()
-        else:  # goods-tab (default)
-            self.action_goods_transactions()
-
-    def action_goods_transactions(self):
-        """Show detailed inventory with purchase lots"""
-        if not self.engine.state.inventory:
-            self.engine.messenger.warn("No goods in inventory!", tag="goods")
-            return
-
-        modal = InventoryTransactionsModal(self.engine)
-        self.push_screen(modal)
-
-    def action_investment_transactions(self):
-        """Show detailed investments with purchase lots"""
-        if not self.engine.state.portfolio:
-            self.engine.messenger.warn("No investments in portfolio!", tag="investments")
-            return
-
-        modal = InvestmentsTransactionsModal(self.engine)
-        self.push_screen(modal)
+    
 
     # --- Bank actions ---
     def action_bank_deposit(self):
