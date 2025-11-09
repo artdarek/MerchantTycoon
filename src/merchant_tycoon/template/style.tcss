@@ -248,7 +248,6 @@ MessangerPanel {
 /* Make inventory table grow to fill panel space */
 #inventory-table {
     height: 1fr;
-    overflow-y: auto;
 }
 
 /* Exchange Prices footer/action bar */
@@ -430,8 +429,9 @@ AlertModal {
     height: 1fr;
 }
 
+/* ensure inventory table fills panel for consistent scrollbar placement */
 #inventory-table {
-    height: auto;
+    height: 1fr;
 }
 
 
@@ -443,6 +443,10 @@ AlertModal {
 #portfolio-table {
     height: 1fr;
 }
+
+/* Lots panels: make inner DataTable fill available height */
+#inventory-lots-content DataTable { height: 1fr; }
+#investments-lots-content DataTable { height: 1fr; }
 
 
 /* --- Bank tab styles (mirror Investments tab) --- */
