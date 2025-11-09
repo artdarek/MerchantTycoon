@@ -36,30 +36,26 @@ class InventoryLotsPanel(Static):
         goods_owned = [g for g, qty in (state.inventory or {}).items() if qty > 0]
         goods_owned.sort()
         if not goods_owned:
-            return  # no header, no table when nothing owned
+            return
+
+        # Single table for all goods' lots
+        table = DataTable()
+        try:
+            table.cursor_type = "row"
+            table.show_header = True
+            table.zebra_stripes = True
+        except Exception:
+            pass
+        table.add_columns("Product", "Date", "City", "Qty", "Price", "Total", "P/L", "P/L%")
+
+        meta = {"rows": {}}
+        self._tables[id(table)] = meta
 
         for good_name in goods_owned:
             current_price = prices.get(good_name, 0)
             lots = state.get_lots_for_good(good_name)
             if not lots:
                 continue
-
-            # Header for this good
-            container.mount(Label(f" {good_name} ", classes="section-header"))
-
-            # Build a DataTable for this good's lots
-            table = DataTable()
-            try:
-                table.cursor_type = "row"
-                table.show_header = True
-                table.zebra_stripes = True
-            except Exception:
-                pass
-            table.add_columns("Date", "City", "Qty", "Price", "Total", "P/L", "P/L%")
-
-            # Register table meta
-            meta = {"good": good_name, "rows": {}}
-            self._tables[id(table)] = meta
 
             for lot in lots:
                 qty = int(getattr(lot, "quantity", 0))
@@ -83,12 +79,10 @@ class InventoryLotsPanel(Static):
 
                 # Date only (YYYY-MM-DD) from ISO ts if present
                 ts = str(getattr(lot, "ts", ""))
-                if ts and len(ts) >= 10:
-                    date_only = ts[:10]
-                else:
-                    date_only = ""
+                date_only = ts[:10] if ts and len(ts) >= 10 else ""
 
                 row_key = table.add_row(
+                    good_name,
                     date_only,
                     city,
                     str(qty),
@@ -98,11 +92,11 @@ class InventoryLotsPanel(Static):
                     pl_pct_cell,
                 )
                 try:
-                    meta["rows"][row_key] = {"qty": qty, "ts": ts}
+                    meta["rows"][row_key] = {"good": good_name, "qty": qty, "ts": ts}
                 except Exception:
                     pass
 
-            container.mount(table)
+        container.mount(table)
 
     def on_data_table_row_selected(self, event: DataTable.RowSelected) -> None:
         # Open Sell modal with product and lot quantity
@@ -116,8 +110,8 @@ class InventoryLotsPanel(Static):
         row_key = getattr(event, "row_key", None)
         if row_key is None:
             return
-        good = meta.get("good")
         entry = meta.get("rows", {}).get(row_key, {})
+        good = entry.get("good")
         qty = int(entry.get("qty", 0))
         lot_ts = entry.get("ts", "")
         if not good or qty <= 0 or not lot_ts:
