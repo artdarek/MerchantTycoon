@@ -274,6 +274,8 @@ MessangerPanel {
     margin: 0;                    /* ensure no extra bottom spacing */
 }
 
+/* Message text coloring handled in code to keep timestamp white */
+
 /* Modal styles (non-splash) */
 #input-modal, #city-modal, #buy-modal, #sell-modal, #confirm-modal, #repay-modal, #about-modal {
     width: 48;              /* smaller panels */

@@ -5,6 +5,7 @@ from typing import List, Dict
 from textual.app import ComposeResult
 from textual.containers import ScrollableContainer
 from textual.widgets import Static, Label
+from rich.text import Text
 
 
 class MessangerPanel(Static):
@@ -37,19 +38,27 @@ class MessangerPanel(Static):
             entries = []
         for e in entries:
             ts = e.get("ts", "")
-            text = e.get("text", "")
-            display = text
+            body = e.get("text", "")
+            render = Text()
             if ts:
                 try:
                     dt = datetime.fromisoformat(ts)
-                    display = f"[{dt.date().isoformat()}: {dt.strftime('%H:%M:%S')}] {text}"
+                    date_str = dt.date().isoformat()
+                    time_str = dt.strftime('%H:%M:%S')
+                    render.append("→ ", style="white")
+                    render.append(f"[{date_str}: {time_str}]", style="white")
+                    render.append(" → ", style="white")
                 except Exception:
-                    # Fallback: attempt simple slicing if ISO-like
+                    # Fallback formatting
                     if len(ts) >= 19 and ts[10] in ("T", " "):
-                        display = f"[{ts[:10]}: {ts[11:19]}] {text}"
+                        render.append("→ ", style="white")
+                        render.append(f"[{ts[:10]}: {ts[11:19]}]", style="white")
+                        render.append(" → ", style="white")
                     else:
-                        display = f"[{ts}] {text}"
-            container.mount(Label(display))
+                        render.append(f"[{ts}] ", style="white")
+            # Message body in slightly dimmer color
+            render.append(body, style="#c2c9d6")
+            container.mount(Label(render))
         # Ensure view is scrolled to the end (newest entries are last)
         try:
             container.scroll_end(animate=False)
