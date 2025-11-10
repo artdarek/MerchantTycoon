@@ -29,7 +29,16 @@ class YourLoansPanel(Static):
                     table.clear()
                 except Exception:
                     pass
-            table.add_columns("Date", "Amount", "Paid", "Remain", "Rate (APR | Daily)", "Status")
+            table.add_columns(
+                "Date",
+                "Amount",
+                "Paid",
+                "Remain",
+                "Rate (APR)",
+                "Rate (Daily)",
+                "Cost",
+                "Status",
+            )
             try:
                 table.cursor_type = "row"
                 table.show_header = True
@@ -50,7 +59,7 @@ class YourLoansPanel(Static):
 
         loans = list(self.engine.state.loans or [])
         if not loans:
-            table.add_row("-", "(no loans)", "", "", "", "")
+            table.add_row("-", "(no loans)", "", "", "", "", "", "")
             return
 
         # Newest first by day; for same day, keep newer insertions first
@@ -77,7 +86,19 @@ class YourLoansPanel(Static):
             except Exception:
                 apr = 0.10
             daily = apr / 365.0
-            rate_cell = f"{apr*100:.2f}% | {daily*100:.4f}%"
+            apr_cell = f"{apr*100:.2f}%"
+            daily_cell = f"{daily*100:.4f}%"
+
+            # Total cost of the loan so far: fee + accrued interest (paid or still due)
+            # Computed as (repaid + remaining + accrued_interest) - principal
+            try:
+                accrued_frac = float(getattr(ln, 'accrued_interest', 0.0))
+            except Exception:
+                accrued_frac = 0.0
+            try:
+                total_cost = int(max(0, (repaid + remaining - principal) + accrued_frac))
+            except Exception:
+                total_cost = max(0, int(repaid + remaining - principal))
 
             # Date column from ISO ts if present, else fallback to "Day X"
             ts = getattr(ln, 'ts', '')
@@ -95,7 +116,9 @@ class YourLoansPanel(Static):
                 f"${int(principal):,}",
                 f"${int(repaid):,}",
                 f"${int(remaining):,}",
-                rate_cell,
+                apr_cell,
+                daily_cell,
+                f"${int(total_cost):,}",
                 status_cell,
             )
             try:
