@@ -191,6 +191,7 @@ class SellAssetLotModal(ModalScreen):
                 except Exception:
                     pass
             self.dismiss()
+            self.app.screen.set_focus(None)
         else:
             self.dismiss()
 
