@@ -46,7 +46,18 @@ class InventoryLotsPanel(Static):
             table.zebra_stripes = True
         except Exception:
             pass
-        table.add_columns("Product", "Category", "Date", "City", "Qty", "Price", "Total", "P/L", "P/L%", "Type")
+        table.add_columns(
+            "Date",
+            "Product",
+            "Category",
+            "Qty",
+            "Price",
+            "Total",
+            "P/L",
+            "P/L%",
+            "Type",
+            "City",
+        )
 
         meta = {"rows": {}}
         self._tables[id(table)] = meta
@@ -89,16 +100,16 @@ class InventoryLotsPanel(Static):
                 g_cat = getattr(good_obj, "category", "hardware") if good_obj else "hardware"
 
                 row_key = table.add_row(
+                    date_only,
                     good_name,
                     g_cat,
-                    date_only,
-                    city,
                     str(qty),
                     f"${pp:,}",
                     f"${total:,}",
                     pl_cell,
                     pl_pct_cell,
                     g_type,
+                    city,
                 )
                 try:
                     meta["rows"][row_key] = {"good": good_name, "qty": qty, "ts": ts}
