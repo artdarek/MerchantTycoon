@@ -45,6 +45,8 @@ class MessangerPanel(Static):
                 dot_color = "#d16a66"  # salmon/red
             elif level == "warn" or level == "warning":
                 dot_color = "#e0b15a"  # amber
+            elif level == "debug":
+                dot_color = "#8a91a7"  # muted gray/blue for debug
             else:
                 dot_color = "#4ea59a"  # teal for info/default
             render = Text()

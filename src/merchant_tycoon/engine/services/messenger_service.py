@@ -44,6 +44,10 @@ class MessengerService:
     def info(self, text: str, tag: Optional[str] = None, ctx: Optional[Dict] = None) -> None:
         self.append(text, level="info", tag=tag, ctx=ctx)
 
+    def debug(self, text: str, tag: Optional[str] = None, ctx: Optional[Dict] = None) -> None:
+        """Log a debug-level message (system/technical, not core gameplay)."""
+        self.append(text, level="debug", tag=tag, ctx=ctx)
+
     def warn(self, text: str, tag: Optional[str] = None, ctx: Optional[Dict] = None) -> None:
         self.append(text, level="warn", tag=tag, ctx=ctx)
 
@@ -69,4 +73,3 @@ class MessengerService:
 
     def clear(self) -> None:
         self.state.messages = []
-

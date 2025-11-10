@@ -220,7 +220,7 @@ class MerchantTycoon(App):
                     except Exception:
                         pass
                     # Optional: add operational note
-                    self.engine.messenger.info("Loaded savegame.", tag="system")
+                    self.engine.messenger.debug("Loaded savegame.", tag="system")
         except Exception:
             # Ignore autoload errors and start a fresh game
             pass
@@ -611,7 +611,7 @@ class MerchantTycoon(App):
                 msgs = self.engine.messenger.get_entries()
                 ok, msg = self.engine.savegame_service.save(msgs)
                 if ok:
-                    self.engine.messenger.info("Game saved.", tag="system")
+                    self.engine.messenger.debug("Game saved.", tag="system")
                 else:
                     self.engine.messenger.warn(msg, tag="system")
             except Exception as e:
@@ -638,7 +638,7 @@ class MerchantTycoon(App):
             try:
                 data = self.engine.savegame_service.load()
                 if data and self.engine.savegame_service.apply(data):
-                    self.engine.messenger.info("Loaded savegame.", tag="system")
+                    self.engine.messenger.debug("Loaded savegame.", tag="system")
                     self.refresh_all()
                 else:
                     self.engine.messenger.warn("Failed to load save file.", tag="system")
@@ -670,7 +670,7 @@ class MerchantTycoon(App):
                 self.engine.generate_asset_prices()
             # Reset messages
             self.engine.messenger.clear()
-            self.engine.messenger.info("New game started.", tag="system")
+            self.engine.messenger.debug("New game started.", tag="system")
             self.refresh_all()
 
         confirm = ConfirmModal(
@@ -688,7 +688,7 @@ class MerchantTycoon(App):
                 msgs = self.engine.messenger.get_entries()
                 ok, msg = self.engine.savegame_service.save(msgs)
                 if ok:
-                    self.engine.messenger.info("Game saved.", tag="system")
+                    self.engine.messenger.debug("Game saved.", tag="system")
                 else:
                     self.engine.messenger.warn(msg, tag="system")
             except Exception as e:
