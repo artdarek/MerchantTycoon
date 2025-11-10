@@ -30,6 +30,7 @@ class GoodsPricesPanel(Static):
                 "Product",
                 "Category",
                 "Price",
+                "Prev",
                 "Change",
                 f"Min ({window}d)",
                 f"Max ({window}d)",
@@ -59,6 +60,7 @@ class GoodsPricesPanel(Static):
             goods = []
         for good in goods:
             price = self.engine.prices.get(good.name, 0)
+            prev_price_val = self.engine.previous_prices.get(good.name, None)
             hist = (self.engine.state.price_history or {}).get(good.name, [])[-10:]
 
             # Compute price change indicator with color
@@ -84,10 +86,13 @@ class GoodsPricesPanel(Static):
             else:
                 minp = maxp = "-"
 
+            prev_cell = f"${prev_price_val:,}" if prev_price_val is not None else "-"
+
             row_key = table.add_row(
                 good.name,
                 getattr(good, "category", "hardware"),
                 f"${price:,}",
+                prev_cell,
                 change_cell,
                 minp,
                 maxp,
