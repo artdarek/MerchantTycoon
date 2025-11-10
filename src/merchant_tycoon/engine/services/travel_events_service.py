@@ -99,15 +99,16 @@ class TravelEventsService:
             a, b = SETTINGS.events.robbery_loss_pct
             lost = max(1, int(qty * random.uniform(a, b)))
             lost = min(lost, qty)
-            state.inventory[good] = qty - lost
-            # Adjust lots (FIFO) to reflect loss
+            # Apply loss via goods service (handles inventory and lots + loss accounting)
             try:
                 if goods_service is not None:
-                    goods_service._remove_from_lots_fifo(good, lost)
+                    goods_service.record_loss_fifo(good, lost)
+                else:
+                    state.inventory[good] = qty - lost
             except Exception:
-                pass
-            if state.inventory[good] <= 0:
-                del state.inventory[good]
+                state.inventory[good] = max(0, qty - lost)
+            if state.inventory.get(good, 0) <= 0:
+                state.inventory.pop(good, None)
             return (f"🚨 ROBBERY! Lost {lost}x {good}.", False)
 
         def evt_fire() -> Optional[tuple[str, bool]]:
@@ -128,16 +129,17 @@ class TravelEventsService:
                 a, b = SETTINGS.events.fire_per_good_pct
                 d = min(have, max(1, int(have * random.uniform(a, b))))
                 d = min(d, to_destroy)
-                state.inventory[g] = have - d
-                to_destroy -= d
-                destroyed.append(f"{d}x {g}")
-                if state.inventory[g] <= 0:
-                    del state.inventory[g]
                 try:
                     if goods_service is not None:
-                        goods_service._remove_from_lots_fifo(g, d)
+                        goods_service.record_loss_fifo(g, d)
+                    else:
+                        state.inventory[g] = have - d
                 except Exception:
-                    pass
+                    state.inventory[g] = max(0, have - d)
+                to_destroy -= d
+                destroyed.append(f"{d}x {g}")
+                if state.inventory.get(g, 0) <= 0:
+                    state.inventory.pop(g, None)
             if not destroyed:
                 return None
             return ("🔥 WAREHOUSE FIRE! Destroyed " + ", ".join(destroyed) + ".", False)
@@ -160,16 +162,17 @@ class TravelEventsService:
                 a, b = SETTINGS.events.flood_per_good_pct
                 d = min(have, max(1, int(have * random.uniform(a, b))))
                 d = min(d, to_destroy)
-                state.inventory[g] = have - d
-                to_destroy -= d
-                destroyed.append(f"{d}x {g}")
-                if state.inventory[g] <= 0:
-                    del state.inventory[g]
                 try:
                     if goods_service is not None:
-                        goods_service._remove_from_lots_fifo(g, d)
+                        goods_service.record_loss_fifo(g, d)
+                    else:
+                        state.inventory[g] = have - d
                 except Exception:
-                    pass
+                    state.inventory[g] = max(0, have - d)
+                to_destroy -= d
+                destroyed.append(f"{d}x {g}")
+                if state.inventory.get(g, 0) <= 0:
+                    state.inventory.pop(g, None)
             if not destroyed:
                 return None
             return ("🌊 FLOOD! Destroyed " + ", ".join(destroyed) + ".", False)
@@ -190,15 +193,15 @@ class TravelEventsService:
                     remove = min(qty, lot.quantity)
                     if remove <= 0:
                         return None
-                    state.inventory[g] = qty - remove
-                    if state.inventory[g] <= 0:
-                        del state.inventory[g]
-                    # Remove from last lot(s) as the event targets the last purchase
                     try:
                         if goods_service is not None:
-                            goods_service._remove_from_lots_from_last(g, remove)
+                            goods_service.record_loss_from_last(g, remove)
+                        else:
+                            state.inventory[g] = max(0, qty - remove)
                     except Exception:
-                        pass
+                        state.inventory[g] = max(0, qty - remove)
+                    if state.inventory.get(g, 0) <= 0:
+                        state.inventory.pop(g, None)
                     return (f"🛠️ DEFECTIVE BATCH! Supplier bankrupt. Lost {remove}x {g} (last lot).", False)
             return None
 
@@ -231,15 +234,15 @@ class TravelEventsService:
             if have <= 0:
                 return None
             remove = min(have, last_buy.quantity)
-            state.inventory[g] = have - remove
-            if state.inventory[g] <= 0:
-                del state.inventory[g]
-            # Confiscate from last buy lot(s)
             try:
                 if goods_service is not None:
-                    goods_service._remove_from_lots_from_last(g, remove)
+                    goods_service.record_loss_from_last(g, remove)
+                else:
+                    state.inventory[g] = max(0, have - remove)
             except Exception:
-                pass
+                state.inventory[g] = max(0, have - remove)
+            if state.inventory.get(g, 0) <= 0:
+                state.inventory.pop(g, None)
             return (f"🚔 STOLEN GOODS! Your last purchase was confiscated: lost {remove}x {g}.", False)
 
         def evt_cash_damage() -> Optional[tuple[str, bool]]:

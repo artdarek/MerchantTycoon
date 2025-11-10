@@ -11,3 +11,8 @@ class PurchaseLot:
     day: int
     city: str
     ts: str = ""  # ISO datetime when lot was created
+    # New fields for loss accounting (Option A)
+    # initial_quantity is the number of units purchased in this lot
+    # lost_quantity accumulates units lost due to events (recognized immediately)
+    initial_quantity: int = 0
+    lost_quantity: int = 0

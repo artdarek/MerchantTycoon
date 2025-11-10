@@ -141,6 +141,8 @@ class GoodsService:
             day=self.state.day,
             city=city_name,
             ts=(self.clock.now().isoformat(timespec="seconds") if self.clock else ""),
+            initial_quantity=quantity,
+            lost_quantity=0,
         )
         self.state.purchase_lots.append(lot)
 
@@ -342,6 +344,113 @@ class GoodsService:
             pass
         
         return True, f"Sold {quantity}x {good_name} for ${total_value:,}"
+
+    # --- Loss accounting (Option A): recognize loss immediately ---
+    def _record_loss_tx(self, good_name: str, qty: int, price_per_unit: int) -> None:
+        """Record a 'loss' transaction for bookkeeping (one lot slice)."""
+        try:
+            from merchant_tycoon.domain.model.transaction import Transaction
+            from merchant_tycoon.domain.constants import CITIES
+            city_name = CITIES[self.state.current_city].name
+            ts = (self.clock.now().isoformat(timespec="seconds") if self.clock else "")
+            tx = Transaction(
+                transaction_type="loss",
+                good_name=good_name,
+                quantity=int(qty),
+                price_per_unit=int(price_per_unit),
+                total_value=int(qty) * int(price_per_unit),
+                day=self.state.day,
+                city=city_name,
+                ts=ts,
+            )
+            self.state.transaction_history.append(tx)
+        except Exception:
+            pass
+
+    def record_loss_fifo(self, good_name: str, quantity: int) -> int:
+        """Remove quantity from inventory and lots using FIFO and mark as lost.
+        Returns actually lost quantity (may be lower if insufficient stock).
+        """
+        if quantity <= 0:
+            return 0
+        have = int(self.state.inventory.get(good_name, 0))
+        if have <= 0:
+            return 0
+        to_remove = min(int(quantity), have)
+        remaining = to_remove
+        to_remove_indices = []
+        for idx, lot in enumerate(self.state.purchase_lots):
+            if remaining <= 0:
+                break
+            if lot.good_name != good_name:
+                continue
+            take = min(int(getattr(lot, "quantity", 0)), remaining)
+            if take <= 0:
+                continue
+            # Reduce available qty and mark as lost
+            lot.quantity -= take
+            try:
+                lot.lost_quantity = int(getattr(lot, "lost_quantity", 0)) + take
+            except Exception:
+                lot.lost_quantity = take
+            remaining -= take
+            # Recognize loss immediately at purchase price
+            self._record_loss_tx(good_name, take, int(getattr(lot, "purchase_price", 0)))
+            # Remove empty lots
+            if int(getattr(lot, "quantity", 0)) <= 0:
+                to_remove_indices.append(idx)
+        for i in reversed(to_remove_indices):
+            try:
+                self.state.purchase_lots.pop(i)
+            except Exception:
+                pass
+        # Update inventory
+        new_have = have - (to_remove - remaining)
+        if new_have > 0:
+            self.state.inventory[good_name] = new_have
+        else:
+            self.state.inventory.pop(good_name, None)
+        return to_remove - remaining
+
+    def record_loss_from_last(self, good_name: str, quantity: int) -> int:
+        """Remove quantity starting from the last lot (LIFO-ish for event semantics)
+        and mark as lost. Returns actually lost quantity.
+        """
+        if quantity <= 0:
+            return 0
+        have = int(self.state.inventory.get(good_name, 0))
+        if have <= 0:
+            return 0
+        to_remove = min(int(quantity), have)
+        remaining = to_remove
+        for i in range(len(self.state.purchase_lots) - 1, -1, -1):
+            if remaining <= 0:
+                break
+            lot = self.state.purchase_lots[i]
+            if lot.good_name != good_name:
+                continue
+            take = min(int(getattr(lot, "quantity", 0)), remaining)
+            if take <= 0:
+                continue
+            lot.quantity -= take
+            try:
+                lot.lost_quantity = int(getattr(lot, "lost_quantity", 0)) + take
+            except Exception:
+                lot.lost_quantity = take
+            remaining -= take
+            self._record_loss_tx(good_name, take, int(getattr(lot, "purchase_price", 0)))
+            if int(getattr(lot, "quantity", 0)) <= 0:
+                try:
+                    self.state.purchase_lots.pop(i)
+                except Exception:
+                    pass
+        # Update inventory
+        new_have = have - (to_remove - remaining)
+        if new_have > 0:
+            self.state.inventory[good_name] = new_have
+        else:
+            self.state.inventory.pop(good_name, None)
+        return to_remove - remaining
 
     # --- Helpers to keep lots consistent when inventory changes outside sell() ---
     def _remove_from_lots_fifo(self, good_name: str, quantity: int) -> int:

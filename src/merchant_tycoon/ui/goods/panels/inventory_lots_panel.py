@@ -51,11 +51,15 @@ class InventoryLotsPanel(Static):
             "Product",
             "Category",
             "Qty",
-            "Price",
-            "Total",
+            "Qty/L",
+            "Cost/L",
+            "Price/B",
+            "Price/C",
+            "Margin",
+            "Cost",
+            "Value",
             "P/L",
             "P/L%",
-            "Type",
             "City",
         )
 
@@ -72,10 +76,11 @@ class InventoryLotsPanel(Static):
                 qty = int(getattr(lot, "quantity", 0))
                 pp = int(getattr(lot, "purchase_price", 0))
                 city = str(getattr(lot, "city", ""))
-                total = qty * pp
+                cost_remaining = qty * pp
                 profit_per_unit = current_price - pp
                 lot_profit = profit_per_unit * qty
                 lot_profit_pct = (profit_per_unit / pp * 100) if pp > 0 else 0
+                value_current = qty * current_price
 
                 # Color profit cells
                 if lot_profit > 0:
@@ -88,6 +93,14 @@ class InventoryLotsPanel(Static):
                     pl_cell = Text("$0", style="dim")
                     pl_pct_cell = Text("0.0%", style="dim")
 
+                # Margin per unit (current - buy)
+                if profit_per_unit > 0:
+                    margin_cell = Text(f"${profit_per_unit:+,}", style="green")
+                elif profit_per_unit < 0:
+                    margin_cell = Text(f"${profit_per_unit:+,}", style="red")
+                else:
+                    margin_cell = Text("$0", style="dim")
+
                 # Date only (YYYY-MM-DD) from ISO ts if present
                 ts = str(getattr(lot, "ts", ""))
                 date_only = ts[:10] if ts and len(ts) >= 10 else ""
@@ -96,19 +109,41 @@ class InventoryLotsPanel(Static):
                     good_obj = self.engine.goods_service.get_good(good_name)
                 except Exception:
                     good_obj = None
-                g_type = getattr(good_obj, "type", "standard") if good_obj else "standard"
                 g_cat = getattr(good_obj, "category", "hardware") if good_obj else "hardware"
+
+                # Lost per lot
+                try:
+                    lost_q = int(getattr(lot, "lost_quantity", 0))
+                except Exception:
+                    lost_q = 0
+
+                # Lost per lot and its cost at purchase price
+                try:
+                    lost_q = int(getattr(lot, "lost_quantity", 0))
+                except Exception:
+                    lost_q = 0
+                lost_cost = lost_q * pp
+                # Original cost at purchase time for this lot (initial qty * price)
+                try:
+                    init_q = int(getattr(lot, "initial_quantity", 0))
+                except Exception:
+                    init_q = qty + lost_q
+                orig_cost = init_q * pp
 
                 row_key = table.add_row(
                     date_only,
                     good_name,
                     g_cat,
                     str(qty),
+                    str(lost_q),
+                    f"${lost_cost:,}",
                     f"${pp:,}",
-                    f"${total:,}",
+                    f"${current_price:,}",
+                    margin_cell,
+                    f"${orig_cost:,}",
+                    f"${value_current:,}",
                     pl_cell,
                     pl_pct_cell,
-                    g_type,
                     city,
                 )
                 try:

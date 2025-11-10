@@ -23,7 +23,19 @@ class InventoryPanel(Static):
         # Configure columns once
         if not getattr(self, "_inventory_table_initialized", False):
             table.clear(columns=True)
-            table.add_columns("Product", "Category", "Qty", "Price", "Value", "Avg Cost", "P/L", "P/L%", "Type")
+            table.add_columns(
+                "Product",
+                "Category",
+                "Qty",
+                "Qty/L",
+                "Cost/L",
+                "Price",
+                "Value",
+                "Avg Cost",
+                "P/L",
+                "P/L%",
+                "Type",
+            )
             try:
                 table.cursor_type = "row"
                 table.show_header = True
@@ -40,18 +52,28 @@ class InventoryPanel(Static):
         self._row_to_product = {}
 
         if not self.engine.state.inventory:
-            # Show a single informative row
-            table.add_row("(empty)", "", "", "", "", "", "")
+            # Show a single informative row (11 columns)
+            table.add_row("(empty)", "", "", "", "", "", "", "", "", "", "")
             return
 
         for good_name, quantity in sorted(self.engine.state.inventory.items()):
             current_price = self.engine.prices.get(good_name, 0)
             current_value = current_price * quantity
 
-            # Calculate total cost and average cost from FIFO lots
+            # Calculate total cost and average cost from FIFO lots (only remaining qty)
             lots = self.engine.state.get_lots_for_good(good_name)
             total_cost = sum(lot.quantity * lot.purchase_price for lot in lots)
             avg_cost = (total_cost // quantity) if quantity > 0 else 0
+            # Sum lost across lots
+            try:
+                lost_total = sum(int(getattr(lot, "lost_quantity", 0)) for lot in lots)
+            except Exception:
+                lost_total = 0
+            # Sum lost cost across lots at each lot's purchase price
+            try:
+                lost_cost_total = sum(int(getattr(lot, "lost_quantity", 0)) * int(getattr(lot, "purchase_price", 0)) for lot in lots)
+            except Exception:
+                lost_cost_total = 0
 
             # Sum lot-level P/L for robustness (equals current_value - total_cost)
             profit = sum((current_price - lot.purchase_price) * lot.quantity for lot in lots)
@@ -79,6 +101,8 @@ class InventoryPanel(Static):
                 good_name,
                 g_cat,
                 str(quantity),
+                str(int(lost_total)),
+                f"${int(lost_cost_total):,}",
                 f"${current_price:,}",
                 f"${current_value:,}",
                 f"${avg_cost:,}",

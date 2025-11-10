@@ -343,6 +343,9 @@ class SavegameService:
                 "day": lot.day,
                 "city": lot.city,
                 "ts": getattr(lot, "ts", ""),
+                # v2 fields for loss accounting
+                "initial_quantity": int(getattr(lot, "initial_quantity", 0) or 0),
+                "lost_quantity": int(getattr(lot, "lost_quantity", 0) or 0),
             }
             for lot in lots
         ]
@@ -352,14 +355,22 @@ class SavegameService:
         result: List[PurchaseLot] = []
         for d in items:
             try:
+                qty = int(d["quantity"])  # remaining qty
+                init_qty = int(d.get("initial_quantity", 0))
+                lost_qty = int(d.get("lost_quantity", 0))
+                if init_qty <= 0:
+                    # Backward compatibility: if initial missing, assume initial == remaining + lost
+                    init_qty = max(qty + lost_qty, qty)
                 result.append(
                     PurchaseLot(
                         good_name=d["good_name"],
-                        quantity=int(d["quantity"]),
+                        quantity=qty,
                         purchase_price=int(d["purchase_price"]),
                         day=int(d["day"]),
                         city=str(d["city"]),
                         ts=str(d.get("ts", "")),
+                        initial_quantity=init_qty,
+                        lost_quantity=lost_qty,
                     )
                 )
             except Exception:
