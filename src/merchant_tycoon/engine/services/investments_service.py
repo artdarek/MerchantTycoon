@@ -204,6 +204,8 @@ class InvestmentsService:
 
     # Utility to compute max affordable quantity including buy commission
     def max_affordable(self, cash: int, price: int) -> int:
+        """Calculate maximum quantity affordable for given cash and price with fee.
+        """
         if price <= 0 or cash <= 0:
             return 0
         rate = float(getattr(SETTINGS.investments, "buy_fee_rate", 0.02))

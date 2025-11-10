@@ -101,7 +101,7 @@ class MerchantTycoon(App):
     def __init__(self):
         super().__init__()
         self.engine = GameEngine()
-        self.message_log = None
+        self.messanger_panel = None
         self.stats_panel = None
         self.market_panel = None
         self.inventory_panel = None
@@ -149,7 +149,7 @@ class MerchantTycoon(App):
 
     def on_mount(self) -> None:
         self.title = "Merchant Tycoon"
-        self.message_log = self.query_one(MessangerPanel)
+        self.messanger_panel = self.query_one(MessangerPanel)
         try:
             self.global_actions_bar = self.query_one(GlobalActionsBar)
         except Exception:
@@ -216,7 +216,7 @@ class MerchantTycoon(App):
                 if data and self.engine.savegame_service.apply(data):
                     # Messages handled inside savegame apply via messenger
                     try:
-                        self.message_log.render_messages()
+                        self.messanger_panel.update_messages()
                     except Exception:
                         pass
                     # Optional: add operational note
@@ -254,7 +254,7 @@ class MerchantTycoon(App):
             pass
 
     def refresh_all(self):
-        
+
         if self.stats_panel:
             self.stats_panel.update_stats()
         if self.market_panel:
@@ -287,8 +287,8 @@ class MerchantTycoon(App):
             self.bank_transactions_panel.update_transactions()
         # Refresh message log to reflect any new messenger entries
         try:
-            if self.message_log:
-                self.message_log.render_messages()
+            if self.messanger_panel:
+                self.messanger_panel.update_messages()
         except Exception:
             pass
         # Update top bar info (date/city)
@@ -297,23 +297,6 @@ class MerchantTycoon(App):
                 self.global_actions_bar.update_info()
         except Exception:
             pass
-
-    def game_log(self, msg: str):
-        # Use engine clock service to build ISO timestamp from game date + system time
-        try:
-            ts_iso = self.engine.clock_service.now().isoformat(timespec="seconds")
-        except Exception:
-            from datetime import datetime
-            date_str = getattr(self.engine.state, "date", "") or f"Day {self.engine.state.day}"
-            ts_iso = f"{date_str}T{datetime.now().strftime('%H:%M:%S')}"
-        if self.message_log:
-            try:
-                self.message_log.add_entry(ts_iso, msg)
-            except Exception:
-                # Fallback to plain string if needed
-                self.message_log.set_messages([
-                    {"ts": ts_iso, "text": msg}
-                ])
 
     def action_buy(self):
         """Context-aware Buy: goods or assets depending on active tab.
@@ -440,6 +423,7 @@ class MerchantTycoon(App):
             # (False, msg, current_cost)
             msg = result[1] if len(result) > 1 else "Not enough cash to extend cargo."
             self.engine.messenger.warn(msg, tag="goods")
+            self.refresh_all()
             return False
 
     def _handle_travel(self, city_index: int):

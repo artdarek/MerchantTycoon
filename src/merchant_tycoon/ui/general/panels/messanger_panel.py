@@ -20,9 +20,9 @@ class MessangerPanel(Static):
 
     def on_mount(self) -> None:
         # Initial render after container exists
-        self.render_messages()
+        self.update_messages()
 
-    def render_messages(self) -> None:
+    def update_messages(self) -> None:
         try:
             container = self.query_one("#log-content", ScrollableContainer)
         except Exception:

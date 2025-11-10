@@ -10,6 +10,10 @@ class SellLotModal(ModalScreen):
     """Modal for selling goods from a specific lot. Displays lots for a single product
     and lets the user choose a lot and quantity (default to lot size)."""
 
+    BINDINGS = [
+        ("escape", "dismiss_modal", "Close"),
+    ]
+
     def __init__(self, engine: GameEngine, product: str, default_lot_ts: str, default_quantity: int, callback):
         super().__init__()
         self.engine = engine
@@ -149,10 +153,6 @@ class SellLotModal(ModalScreen):
                     self.callback(self.product, lot_ts, qty)
         else:
             self.dismiss()
-
-    BINDINGS = [
-        ("escape", "dismiss_modal", "Close"),
-    ]
 
     def action_dismiss_modal(self) -> None:
         self.dismiss()

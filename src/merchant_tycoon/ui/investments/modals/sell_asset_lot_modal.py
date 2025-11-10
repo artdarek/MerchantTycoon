@@ -31,7 +31,6 @@ class SellAssetLotModal(ModalScreen):
                 title = title.upper()
             yield Label(title, id="modal-title")
 
-        
             # Build select options from lots for this symbol
             options: list[tuple[str, str]] = []
             lots = [lot for lot in (self.engine.state.investment_lots or []) if getattr(lot, "asset_symbol", "") == self.symbol]

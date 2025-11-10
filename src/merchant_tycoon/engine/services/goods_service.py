@@ -41,14 +41,7 @@ class GoodsService:
         bundles_purchased = over_base // step
         # Pricing strategy
         mode = str(getattr(SETTINGS.cargo, "extend_pricing_mode", "linear")).lower()
-        if mode == "exponential":
-            factor = float(getattr(SETTINGS.cargo, "extend_cost_factor", 2.0))
-            current_cost = int(int(SETTINGS.cargo.extend_base_cost) * (factor ** bundles_purchased))
-        else:  # linear (default)
-            base = int(SETTINGS.cargo.extend_base_cost)
-            factor = float(getattr(SETTINGS.cargo, "extend_cost_factor", 1.0))
-            increment = base * factor
-            current_cost = int(base + increment * bundles_purchased)
+        current_cost = self.extend_cargo_current_cost()
 
         # Validate cash
         if self.state.cash < current_cost:
@@ -70,6 +63,25 @@ class GoodsService:
         return True, (
             f"Cargo extended by +{step} slots to {self.state.max_inventory} (-${current_cost:,})"
         ), self.state.max_inventory, next_cost
+
+    def extend_cargo_current_cost(self) -> int:
+        """Mirror GoodsService pricing with selected strategy."""
+        try:
+            cap = int(getattr(self.state, "max_inventory", SETTINGS.cargo.base_capacity))
+        except Exception:
+            cap = SETTINGS.cargo.base_capacity
+        step = max(1, int(SETTINGS.cargo.extend_step))
+        over_base = max(0, cap - SETTINGS.cargo.base_capacity)
+        bundles = over_base // step
+        mode = str(getattr(SETTINGS.cargo, "extend_pricing_mode", "linear")).lower()
+        if mode == "exponential":
+            factor = float(getattr(SETTINGS.cargo, "extend_cost_factor", 2.0))
+            return int(int(SETTINGS.cargo.extend_base_cost) * (factor ** bundles))
+        else:
+            base = int(SETTINGS.cargo.extend_base_cost)
+            factor = float(getattr(SETTINGS.cargo, "extend_cost_factor", 1.0))
+            increment = base * factor
+            return int(base + increment * bundles)
 
     def generate_prices(self) -> None:
         """Generate random prices for current city"""

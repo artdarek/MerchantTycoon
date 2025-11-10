@@ -15,6 +15,10 @@ class LoanRepayModal(ModalScreen):
     On confirm, calls the provided callback with (loan_id: int, amount: int).
     """
 
+    BINDINGS = [
+        ("escape", "dismiss_modal", "Close"),
+    ]
+
     def __init__(self, engine: GameEngine, callback, default_loan_id: int | None = None, default_amount: int | None = None):
         super().__init__()
         self.engine = engine
@@ -23,10 +27,6 @@ class LoanRepayModal(ModalScreen):
         self.default_loan_id = default_loan_id
         self.default_amount = default_amount
         self._suppress_autofill = False
-
-    BINDINGS = [
-        ("escape", "dismiss_modal", "Close"),
-    ]
 
     def compose(self) -> ComposeResult:
         with Container(id="repay-modal"):

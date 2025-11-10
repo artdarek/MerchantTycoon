@@ -28,44 +28,10 @@ class CargoExtendModal(ModalScreen):
         self.engine = engine
         self._on_extend = on_extend
 
-    def _current_cost(self) -> int:
-        """Mirror GoodsService pricing with selected strategy."""
-        try:
-            cap = int(getattr(self.engine.state, "max_inventory", SETTINGS.cargo.base_capacity))
-        except Exception:
-            cap = SETTINGS.cargo.base_capacity
-        step = max(1, int(SETTINGS.cargo.extend_step))
-        over_base = max(0, cap - SETTINGS.cargo.base_capacity)
-        bundles = over_base // step
-        mode = str(getattr(SETTINGS.cargo, "extend_pricing_mode", "linear")).lower()
-        if mode == "exponential":
-            factor = float(getattr(SETTINGS.cargo, "extend_cost_factor", 2.0))
-            return int(int(SETTINGS.cargo.extend_base_cost) * (factor ** bundles))
-        else:
-            base = int(SETTINGS.cargo.extend_base_cost)
-            factor = float(getattr(SETTINGS.cargo, "extend_cost_factor", 1.0))
-            increment = base * factor
-            return int(base + increment * bundles)
-
     def compose(self) -> ComposeResult:
-        used = self.engine.state.get_inventory_count()
-        cap = self.engine.state.max_inventory
         cash = self.engine.state.cash
-        cost = self._current_cost()
-        step = max(1, int(SETTINGS.cargo.extend_step))
-        mode = str(getattr(SETTINGS.cargo, "extend_pricing_mode", "linear")).lower()
-        if mode == "exponential":
-            note = f"Each additional bundle of {step} slot(s) multiplies cost (factor {getattr(SETTINGS.cargo, 'extend_cost_factor', 2.0):g})."
-        else:
-            base = int(SETTINGS.cargo.extend_base_cost)
-            factor = float(getattr(SETTINGS.cargo, "extend_cost_factor", 1.0))
-            inc = int(base * factor)
-            note = f"Each additional bundle of {step} slot(s) increases cost by +${inc:,}."
-        prompt = (
-            f"Extend cargo capacity by +{step} slot(s)?\n"
-            f"(Capacity: {used}/{cap} | Cash: ${cash:,} | Current cost: ${cost:,})\n"
-            f"Note: {note}"
-        )
+        cost = self.engine.goods_service.extend_cargo_current_cost()
+        prompt = self._prepare_content(cash, cost)
         with Container(id="input-modal"):
             t = "📦 Extend Cargo"
             parts = t.split(None, 1)
@@ -76,7 +42,7 @@ class CargoExtendModal(ModalScreen):
             yield Label(t, id="modal-title")
             yield Label(prompt, id="modal-prompt")
             with Horizontal(id="modal-buttons"):
-                yield Button("Extend", id="extend-btn", variant="success")
+                yield Button("Extend", id="extend-btn", variant="success", disabled=cost > cash)
                 yield Button("Cancel", id="cancel-btn", variant="error")
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
@@ -88,7 +54,7 @@ class CargoExtendModal(ModalScreen):
             if ok:
                 self.dismiss()
             else:
-                # Keep modal open; refresh displayed values (cash/cost/capacity)
+                # Keep modal open; refresh displayed valques (cash/cost/capacity)
                 try:
                     self.refresh_content()
                 except Exception:
@@ -99,27 +65,35 @@ class CargoExtendModal(ModalScreen):
     def refresh_content(self) -> None:
         """Re-render the modal prompt to reflect latest state."""
         try:
-            used = self.engine.state.get_inventory_count()
-            cap = self.engine.state.max_inventory
             cash = self.engine.state.cash
-            cost = self._current_cost()
-            step = max(1, int(SETTINGS.cargo.extend_step))
-            mode = str(getattr(SETTINGS.cargo, "extend_pricing_mode", "linear")).lower()
-            if mode == "exponential":
-                note = f"Each additional bundle of {step} slot(s) multiplies cost (factor {getattr(SETTINGS.cargo, 'extend_cost_factor', 2.0):g})."
-            else:
-                base = int(SETTINGS.cargo.extend_base_cost)
-                factor = float(getattr(SETTINGS.cargo, "extend_cost_factor", 1.0))
-                inc = int(base * factor)
-                note = f"Each additional bundle of {step} slot(s) increases cost by +${inc:,}."
-            prompt = (
-                f"Extend cargo capacity by +{step} slot(s)?\n"
-                f"(Capacity: {used}/{cap} | Cash: ${cash:,} | Current cost: ${cost:,})\n"
-                f"Note: {note}"
-            )
+            cost = self.engine.goods_service.extend_cargo_current_cost()
+            self._prepare_content(cash, cost)
+
+            # disable button until we have enough cash
             self.query_one("#modal-prompt", Label).update(prompt)
+            extend_btn = self.query_one("#extend-btn", Button)
+            extend_btn.disabled = cost > cash
         except Exception:
             pass
+
+    def _prepare_content(self, cash: int, cost: int) -> str:
+        step = max(1, int(SETTINGS.cargo.extend_step))
+        mode = str(getattr(SETTINGS.cargo, "extend_pricing_mode", "linear")).lower()
+        if mode == "exponential":
+            note = f"Each additional bundle of {step} slot(s) multiplies cost (factor {getattr(SETTINGS.cargo, 'extend_cost_factor', 2.0):g})."
+        else:
+            base = int(SETTINGS.cargo.extend_base_cost)
+            factor = float(getattr(SETTINGS.cargo, "extend_cost_factor", 1.0))
+            inc = int(base * factor)
+            note = (
+                f"Each additional bundle of {step} slot(s) increases cost by +${inc:,}."
+            )
+        prompt = (
+            f"Extend cargo capacity by +{step} slot(s)?\n"
+            f"Current cost: ${cost:,}\n"
+            f"Note: {note}"
+        )
+        return prompt
 
     def action_dismiss_modal(self) -> None:
         self.dismiss()
