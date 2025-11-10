@@ -80,6 +80,10 @@ class MerchantTycoon(App):
         Binding("f1", "new_game", "New Game", show=False),
         Binding("f5", "about", "About", show=False),
         Binding("f9", "splash", "Splash", show=False),
+        # Tab shortcuts
+        Binding("1", "go_goods_tab", "Goods", show=True),
+        Binding("2", "go_investments_tab", "Investments", show=True),
+        Binding("3", "go_bank_tab", "Bank", show=True),
         # Override common command-palette shortcuts with no-ops
         Binding("ctrl+k", "noop", show=False),
         Binding("ctrl+p", "noop", show=False),
@@ -226,6 +230,28 @@ class MerchantTycoon(App):
     def on_tabbed_content_tab_activated(self, event: TabbedContent.TabActivated) -> None:
         """Handle tab changes - track active tab for context-aware actions"""
         self.current_tab = event.pane.id
+
+    # --- Tab shortcuts ---
+    def action_go_goods_tab(self) -> None:
+        try:
+            self.query_one(TabbedContent).active = "goods-tab"
+            self.current_tab = "goods-tab"
+        except Exception:
+            pass
+
+    def action_go_investments_tab(self) -> None:
+        try:
+            self.query_one(TabbedContent).active = "investments-tab"
+            self.current_tab = "investments-tab"
+        except Exception:
+            pass
+
+    def action_go_bank_tab(self) -> None:
+        try:
+            self.query_one(TabbedContent).active = "bank-tab"
+            self.current_tab = "bank-tab"
+        except Exception:
+            pass
 
     def refresh_all(self):
         
