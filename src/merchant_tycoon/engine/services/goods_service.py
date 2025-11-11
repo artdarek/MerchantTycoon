@@ -3,8 +3,6 @@ from typing import Dict, TYPE_CHECKING, Optional, List
 
 from merchant_tycoon.domain.model.purchase_lot import PurchaseLot
 from merchant_tycoon.domain.model.transaction import Transaction
-from merchant_tycoon.domain.goods import GOODS
-from merchant_tycoon.domain.cities import CITIES
 from merchant_tycoon.config import SETTINGS
 
 if TYPE_CHECKING:
@@ -12,6 +10,7 @@ if TYPE_CHECKING:
     from merchant_tycoon.engine.services.clock_service import ClockService
     from merchant_tycoon.engine.services.goods_cargo_service import GoodsCargoService
     from merchant_tycoon.domain.model.good import Good
+    from merchant_tycoon.repositories import GoodsRepository, CitiesRepository
 
 
 class GoodsService:
@@ -32,6 +31,8 @@ class GoodsService:
         state: "GameState",
         prices: Dict[str, int],
         previous_prices: Dict[str, int],
+        goods_repository: "GoodsRepository",
+        cities_repository: "CitiesRepository",
         clock_service: Optional["ClockService"] = None,
         messenger: Optional["MessengerService"] = None,
         cargo_service: Optional["GoodsCargoService"] = None
@@ -39,6 +40,8 @@ class GoodsService:
         self.state = state
         self.prices = prices
         self.previous_prices = previous_prices
+        self.goods_repo = goods_repository
+        self.cities_repo = cities_repository
         self.clock = clock_service
         self.messenger = messenger
         self.cargo_service = cargo_service
@@ -49,8 +52,8 @@ class GoodsService:
         self.previous_prices.clear()
         self.previous_prices.update(self.prices)
 
-        city = CITIES[self.state.current_city]
-        for good in self.get_goods():
+        city = self.cities_repo.get_by_index(self.state.current_city)
+        for good in self.goods_repo.get_all():
             variance = random.uniform(1 - good.price_variance, 1 + good.price_variance)
             city_mult = city.price_multiplier.get(good.name, 1.0)
             base_price = good.base_price * city_mult * variance
@@ -100,7 +103,7 @@ class GoodsService:
         # Check cargo capacity (size-aware)
         if self.cargo_service:
             # Get product info to calculate required space
-            good = self.get_good(good_name)
+            good = self.goods_repo.get_by_name(good_name)
             product_size = getattr(good, "size", 1) if good else 1
             required_space = quantity * product_size
 
@@ -116,7 +119,7 @@ class GoodsService:
         self.state.inventory[good_name] = self.state.inventory.get(good_name, 0) + quantity
 
         # Record purchase lot
-        city_name = CITIES[self.state.current_city].name
+        city_name = self.cities_repo.get_by_index(self.state.current_city).name
         lot = PurchaseLot(
             good_name=good_name,
             quantity=quantity,
@@ -183,7 +186,7 @@ class GoodsService:
             del self.state.inventory[good_name]
 
         # Record transaction
-        city_name = CITIES[self.state.current_city].name
+        city_name = self.cities_repo.get_by_index(self.state.current_city).name
         transaction = Transaction(
             transaction_type="sell",
             good_name=good_name,
@@ -245,7 +248,7 @@ class GoodsService:
         self.state.cash += total_value
 
         # Record transaction
-        city_name = CITIES[self.state.current_city].name
+        city_name = self.cities_repo.get_by_index(self.state.current_city).name
         tx = Transaction(
             transaction_type="sell",
             good_name=good_name,
@@ -308,7 +311,7 @@ class GoodsService:
         self.state.cash += total_value
 
         # Record transaction
-        city_name = CITIES[self.state.current_city].name
+        city_name = self.cities_repo.get_by_index(self.state.current_city).name
         tx = Transaction(
             transaction_type="sell",
             good_name=good_name,
@@ -333,8 +336,7 @@ class GoodsService:
         """Record a 'loss' transaction for bookkeeping (one lot slice)."""
         try:
             from merchant_tycoon.domain.model.transaction import Transaction
-            from merchant_tycoon.domain.cities import CITIES
-            city_name = CITIES[self.state.current_city].name
+            city_name = self.cities_repo.get_by_index(self.state.current_city).name
             ts = (self.clock.now().isoformat(timespec="seconds") if self.clock else "")
             tx = Transaction(
                 transaction_type="loss",
@@ -486,33 +488,3 @@ class GoodsService:
                 break
         return int(quantity) - int(remaining)
 
-    # ---- Public helper functions (filtering and lookup) ----
-    def get_goods(self, *, type: Optional[str] = None, category: Optional[str] = None) -> List["Good"]:
-        """Return goods filtered by optional type and/or category.
-
-        Examples:
-          get_goods() -> all goods
-          get_goods(type="luxury") -> only luxury goods
-          get_goods(category="jewelry") -> only jewelry goods
-          get_goods(type="luxury", category="electronics") -> luxury electronics goods
-        """
-        items = GOODS
-        if type is not None:
-            t = str(type).lower()
-            items = [g for g in items if str(getattr(g, "type", "standard")).lower() == t]
-        if category is not None:
-            c = str(category).lower()
-            items = [g for g in items if str(getattr(g, "category", "")).lower() == c]
-        return list(items)
-
-    def get_good(self, name: str) -> Optional["Good"]:
-        """Return Good by exact name, or None if not found."""
-        for g in GOODS:
-            if g.name == name:
-                return g
-        return None
-
-    def is_luxury(self, name: str) -> bool:
-        """True if the named good has type == 'luxury'."""
-        g = self.get_good(name)
-        return str(getattr(g, "type", "")).lower() == "luxury" if g else False

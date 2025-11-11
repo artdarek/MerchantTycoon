@@ -3,8 +3,10 @@ from textual.containers import Container, Horizontal, Vertical
 from textual.widgets import Label, Button, Select
 from textual.screen import ModalScreen
 from textual.reactive import reactive
+from typing import TYPE_CHECKING
 
-from merchant_tycoon.domain.game_difficulty_levels import GAME_DIFFICULTY_LEVELS
+if TYPE_CHECKING:
+    from merchant_tycoon.repositories import DifficultyRepository
 
 
 class NewGameModal(ModalScreen):
@@ -16,14 +18,15 @@ class NewGameModal(ModalScreen):
 
     selected_difficulty = reactive("normal")
 
-    def __init__(self, on_confirm, on_cancel=None):
+    def __init__(self, difficulty_repository: "DifficultyRepository", on_confirm, on_cancel=None):
         super().__init__()
+        self.difficulty_repo = difficulty_repository
         self._on_confirm = on_confirm
         self._on_cancel = on_cancel
 
     def compose(self) -> ComposeResult:
-        # Build select options from GAME_DIFFICULTY_LEVELS
-        options = [(level.display_name, level.name) for level in GAME_DIFFICULTY_LEVELS]
+        # Build select options from difficulty repository
+        options = self.difficulty_repo.get_choices()
 
         with Container(id="new-game-modal"):
             yield Label("🆕 NEW GAME — SELECT DIFFICULTY", id="modal-title")
@@ -54,12 +57,8 @@ class NewGameModal(ModalScreen):
 
     def _update_difficulty_details(self, difficulty_name: str) -> None:
         """Update the difficulty details label."""
-        # Find the difficulty level
-        difficulty = None
-        for level in GAME_DIFFICULTY_LEVELS:
-            if level.name == difficulty_name:
-                difficulty = level
-                break
+        # Find the difficulty level using repository
+        difficulty = self.difficulty_repo.get_by_name(difficulty_name)
 
         if difficulty:
             details_text = f"{difficulty.description}\n"

@@ -56,7 +56,7 @@ class GoodsPricesPanel(Static):
         self._row_to_product = {}
 
         try:
-            goods = self.engine.goods_service.get_goods()
+            goods = self.engine.goods_repo.get_all()
         except Exception:
             goods = []
         for good in goods:
@@ -132,7 +132,7 @@ class GoodsPricesPanel(Static):
             available_space = int(self.engine.state.max_inventory - self.engine.state.get_inventory_count())
 
         # Get product size to calculate how many units fit
-        good = self.engine.goods_service.get_good(product)
+        good = self.engine.goods_repo.get_by_name(product)
         product_size = getattr(good, "size", 1) if good else 1
 
         max_affordable = (cash // price) if price > 0 else 0

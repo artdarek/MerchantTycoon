@@ -33,7 +33,7 @@ class InvestmentsLotsPanel(Static):
 
         # Build lookup for asset names/type by symbol
         try:
-            assets = self.engine.investments_service.get_assets()
+            assets = self.engine.assets_repo.get_all()
         except Exception:
             assets = []
         symbol_to_name = {a.symbol: a.name for a in assets}
@@ -65,7 +65,7 @@ class InvestmentsLotsPanel(Static):
 
             asset_name = symbol_to_name.get(symbol, symbol)
             try:
-                asset = self.engine.investments_service.get_asset(symbol)
+                asset = self.engine.assets_repo.get_by_symbol(symbol)
             except Exception:
                 asset = None
             asset_type = getattr(asset, "asset_type", "") if asset else ""

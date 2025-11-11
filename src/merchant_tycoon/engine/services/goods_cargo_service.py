@@ -9,14 +9,13 @@ This service is responsible for all cargo-related operations including:
 Separating cargo logic from goods trading logic improves modularity and
 prepares for future extensions like multiple cargo vehicles or dynamic capacity.
 """
-from typing import TYPE_CHECKING, List, Optional
+from typing import TYPE_CHECKING, Optional
 
 from merchant_tycoon.config import SETTINGS
-from merchant_tycoon.domain.goods import GOODS
 
 if TYPE_CHECKING:
     from merchant_tycoon.engine.game_state import GameState
-    from merchant_tycoon.domain.model.good import Good
+    from merchant_tycoon.repositories import GoodsRepository
 
 
 class GoodsCargoService:
@@ -34,10 +33,10 @@ class GoodsCargoService:
 
     Attributes:
         state: Reference to the game state for accessing inventory and capacity
-        goods_list: Product catalog used for size lookups
+        goods_repo: Repository for product lookups
 
     Examples:
-        >>> cargo_service = GoodsCargoService(game_state)
+        >>> cargo_service = GoodsCargoService(game_state, goods_repo)
         >>> used = cargo_service.get_used_slots()
         >>> free = cargo_service.get_free_slots()
         >>> if cargo_service.has_space_for_good("TV", 10):
@@ -46,15 +45,15 @@ class GoodsCargoService:
         >>> success, msg = cargo_service.extend_capacity()
     """
 
-    def __init__(self, state: "GameState", goods_list: Optional[List["Good"]] = None):
+    def __init__(self, state: "GameState", goods_repository: "GoodsRepository"):
         """Initialize cargo service with game state reference.
 
         Args:
             state: Game state containing inventory and capacity information
-            goods_list: Optional product catalog for size lookups (defaults to GOODS)
+            goods_repository: Repository for product lookups
         """
         self.state = state
-        self.goods_list = goods_list if goods_list is not None else GOODS
+        self.goods_repo = goods_repository
 
     def _get_product_size(self, good_name: str) -> int:
         """Get the cargo size of a product by name.
@@ -65,9 +64,9 @@ class GoodsCargoService:
         Returns:
             Size in cargo slots (defaults to 1 if product not found)
         """
-        for good in self.goods_list:
-            if good.name == good_name:
-                return getattr(good, "size", 1)
+        good = self.goods_repo.get_by_name(good_name)
+        if good:
+            return getattr(good, "size", 1)
         return 1  # Default size if product not found
 
     def get_used_slots(self) -> int:

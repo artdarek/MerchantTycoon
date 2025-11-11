@@ -43,7 +43,7 @@ class BuyModal(ModalScreen):
                 available_space = self.engine.state.max_inventory - self.engine.state.get_inventory_count()
 
             try:
-                goods = self.engine.goods_service.get_goods()
+                goods = self.engine.goods_repo.get_all()
             except Exception:
                 goods = []
             for good in goods:

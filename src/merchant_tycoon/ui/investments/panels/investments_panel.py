@@ -57,7 +57,7 @@ class InvestmentsPanel(Static):
             profit_pct = (profit / total_cost * 100) if total_cost > 0 else 0
 
             try:
-                asset = self.engine.investments_service.get_asset(symbol)
+                asset = self.engine.assets_repo.get_by_symbol(symbol)
             except Exception:
                 asset = None
             asset_name = asset.name if asset else symbol

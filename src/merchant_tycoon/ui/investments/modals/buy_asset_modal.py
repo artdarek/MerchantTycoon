@@ -35,7 +35,7 @@ class BuyAssetModal(ModalScreen):
             options = []
             all_assets = []
             try:
-                all_assets = self.engine.investments_service.get_assets()
+                all_assets = self.engine.assets_repo.get_all()
             except Exception:
                 pass
             for asset in all_assets:

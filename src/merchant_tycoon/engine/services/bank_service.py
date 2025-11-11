@@ -222,8 +222,12 @@ class BankService:
                 continue
             asset_type = ""
             try:
-                if inv is not None:
-                    a = inv.get_asset(symbol)
+                # Use assets_repo if available, fallback to investments_service
+                if hasattr(self, 'assets_repo') and self.assets_repo:
+                    a = self.assets_repo.get_by_symbol(symbol)
+                    asset_type = getattr(a, "asset_type", "") if a else ""
+                elif inv is not None:
+                    a = inv.get_asset(symbol) if hasattr(inv, 'get_asset') else None
                     asset_type = getattr(a, "asset_type", "") if a else ""
             except Exception:
                 asset_type = ""

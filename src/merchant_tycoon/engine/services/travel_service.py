@@ -1,6 +1,5 @@
 from typing import Optional, TYPE_CHECKING
 
-from merchant_tycoon.domain.cities import CITIES
 from merchant_tycoon.config import SETTINGS
 from datetime import date as _date, timedelta as _timedelta
 
@@ -11,6 +10,7 @@ if TYPE_CHECKING:
     from merchant_tycoon.engine.services.investments_service import InvestmentsService
     from merchant_tycoon.engine.services.travel_events_service import TravelEventsService
     from merchant_tycoon.engine.services.goods_cargo_service import GoodsCargoService
+    from merchant_tycoon.repositories import CitiesRepository
 
 
 class TravelService:
@@ -23,6 +23,7 @@ class TravelService:
         goods_service: "GoodsService",
         investments_service: "InvestmentsService",
         events_service: "TravelEventsService",
+        cities_repository: "CitiesRepository",
         cargo_service: Optional["GoodsCargoService"] = None,
     ):
         self.state = state
@@ -30,6 +31,7 @@ class TravelService:
         self.goods_service = goods_service
         self.investments_service = investments_service
         self.events_service = events_service
+        self.cities_repo = cities_repository
         self.cargo_service = cargo_service
         try:
             from merchant_tycoon.engine.services.messenger_service import MessengerService
@@ -44,8 +46,8 @@ class TravelService:
             return False, "Already in this city!", None
 
         # Calculate travel fee from settings (based on cargo space used)
-        origin_city = CITIES[self.state.current_city]
-        destination_city = CITIES[city_index]
+        origin_city = self.cities_repo.get_by_index(self.state.current_city)
+        destination_city = self.cities_repo.get_by_index(city_index)
         try:
             # Use size-aware cargo calculation if available
             if self.cargo_service:

@@ -4,7 +4,6 @@ from rich.text import Text
 
 from merchant_tycoon.engine import GameEngine
 from merchant_tycoon.config import SETTINGS
-from merchant_tycoon.domain.assets import ASSETS
 
 
 class ExchangePricesPanel(Static):
@@ -105,23 +104,23 @@ class ExchangePricesPanel(Static):
 
         # Show stocks
         try:
-            stocks = self.engine.investments_service.get_assets(type="stock")
+            stocks = self.engine.assets_repo.get_by_type("stock")
         except Exception:
-            stocks = [a for a in ASSETS if getattr(a, "asset_type", "") == "stock"]
+            stocks = []
         for stock in stocks:
             add_asset_row(stock.name, stock.symbol, stock.asset_type)
         # Show commodities
         try:
-            commodities = self.engine.investments_service.get_assets(type="commodity")
+            commodities = self.engine.assets_repo.get_by_type("commodity")
         except Exception:
-            commodities = [a for a in ASSETS if getattr(a, "asset_type", "") == "commodity"]
+            commodities = []
         for commodity in commodities:
             add_asset_row(commodity.name, commodity.symbol, commodity.asset_type)
         # Show crypto
         try:
-            cryptos = self.engine.investments_service.get_assets(type="crypto")
+            cryptos = self.engine.assets_repo.get_by_type("crypto")
         except Exception:
-            cryptos = [a for a in ASSETS if getattr(a, "asset_type", "") == "crypto"]
+            cryptos = []
         for crypto in cryptos:
             add_asset_row(crypto.name, crypto.symbol, crypto.asset_type)
 

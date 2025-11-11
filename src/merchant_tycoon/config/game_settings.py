@@ -9,4 +9,6 @@ class GameSettings:
     start_date: str = "2025-01-01"
     # Default difficulty level name
     default_difficulty: str = "normal"
+    # Show splash screen on app start
+    show_splash: bool = True
 

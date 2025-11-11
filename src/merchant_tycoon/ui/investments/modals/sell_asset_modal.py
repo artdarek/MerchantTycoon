@@ -42,7 +42,7 @@ class SellAssetModal(ModalScreen):
 
                 # Find asset info
                 try:
-                    asset = self.engine.investments_service.get_asset(symbol)
+                    asset = self.engine.assets_repo.get_by_symbol(symbol)
                 except Exception:
                     asset = None
 

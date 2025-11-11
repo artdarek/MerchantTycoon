@@ -1,10 +1,12 @@
 import random
-from typing import List, Optional
+from typing import TYPE_CHECKING, List, Optional
 
 from merchant_tycoon.domain.model.bank_transaction import BankTransaction
-from merchant_tycoon.domain.assets import ASSETS
 from merchant_tycoon.config import SETTINGS
 from datetime import datetime
+
+if TYPE_CHECKING:
+    from merchant_tycoon.repositories import AssetsRepository, GoodsRepository
 
 
 class TravelEventsService:
@@ -16,8 +18,18 @@ class TravelEventsService:
     Notes:
     - Only goods/cash/bank and one-day price modifiers are affected by events.
     - Investments are safe; a positive dividend may be credited to bank.
-    - This class is stateless; all state is taken from the provided engine instance.
+    - This class requires repository instances for event generation.
     """
+
+    def __init__(self, assets_repository: "AssetsRepository", goods_repository: "GoodsRepository"):
+        """Initialize TravelEventsService with required repositories.
+
+        Args:
+            assets_repository: Repository for asset lookups in dividend events.
+            goods_repository: Repository for goods lookups in event generation.
+        """
+        self.assets_repo = assets_repository
+        self.goods_repo = goods_repository
 
     def trigger(self, state, prices: dict, asset_prices: dict, bank_service=None, goods_service=None) -> Optional[tuple[str, bool]]:
         """Trigger at most one weighted random travel event.
@@ -34,10 +46,8 @@ class TravelEventsService:
         prices = prices or {}
 
         def _all_goods_names() -> list[str]:
-            if goods_service is None:
-                return []
             try:
-                return [g.name for g in goods_service.get_goods()]
+                return [g.name for g in self.goods_repo.get_all()]
             except Exception:
                 return []
 
@@ -258,7 +268,7 @@ class TravelEventsService:
         # GAIN EVENTS
         def evt_dividend() -> Optional[tuple[str, bool]]:
             # Pay dividend for a held stock (not commodity/crypto)
-            stock_symbols = {a.symbol for a in ASSETS if getattr(a, "asset_type", "") == "stock"}
+            stock_symbols = self.assets_repo.get_stock_symbols()
             held_stocks = [sym for sym, qty in (state.portfolio or {}).items() if qty > 0 and sym in stock_symbols]
             if not held_stocks:
                 return None
@@ -370,7 +380,7 @@ class TravelEventsService:
             return int(state.cash) > 0
 
         def holds_any_stock() -> bool:
-            stock_symbols = {a.symbol for a in ASSETS if getattr(a, "asset_type", "") == "stock"}
+            stock_symbols = self.assets_repo.get_stock_symbols()
             return any(qty > 0 and sym in stock_symbols for sym, qty in (state.portfolio or {}).items())
 
         def bank_has_balance() -> bool:

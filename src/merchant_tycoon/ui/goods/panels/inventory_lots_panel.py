@@ -106,7 +106,7 @@ class InventoryLotsPanel(Static):
                 date_only = ts[:10] if ts and len(ts) >= 10 else ""
 
                 try:
-                    good_obj = self.engine.goods_service.get_good(good_name)
+                    good_obj = self.engine.goods_repo.get_by_name(good_name)
                 except Exception:
                     good_obj = None
                 g_cat = getattr(good_obj, "category", "electronics") if good_obj else "electronics"

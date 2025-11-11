@@ -202,9 +202,9 @@ class MerchantTycoon(App):
         # Initialize current_tab to default
         self.current_tab = "goods-tab"
 
-        # Splash screen (skip via env MTY_DISABLE_SPLASH=1)
+        # Splash screen (configurable via SETTINGS.game.show_splash)
         try:
-            if os.getenv("MTY_DISABLE_SPLASH", "0") not in ("1", "true", "TRUE", "yes", "on"):
+            if SETTINGS.game.show_splash:
                 self.push_screen(SplashModal())
         except Exception:
             pass
@@ -663,7 +663,7 @@ class MerchantTycoon(App):
                 self.refresh_all()
 
             from merchant_tycoon.ui.general.modals import NewGameModal
-            modal = NewGameModal(on_confirm=_start_new_game)
+            modal = NewGameModal(self.engine.difficulty_repo, on_confirm=_start_new_game)
             self.push_screen(modal)
 
         confirm = ConfirmModal(

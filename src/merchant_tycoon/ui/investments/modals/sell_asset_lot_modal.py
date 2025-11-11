@@ -37,7 +37,7 @@ class SellAssetLotModal(ModalScreen):
             current_price = int(self.engine.asset_prices.get(self.symbol, 0))
             # Enrich display with asset name/type like in SellAssetModal
             try:
-                asset = self.engine.investments_service.get_asset(self.symbol)
+                asset = self.engine.assets_repo.get_by_symbol(self.symbol)
             except Exception:
                 asset = None
             asset_name = getattr(asset, "name", self.symbol)

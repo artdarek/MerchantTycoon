@@ -2,7 +2,6 @@ from typing import Dict, Optional
 
 from merchant_tycoon.engine.game_state import GameState
 from merchant_tycoon.config import SETTINGS
-from merchant_tycoon.domain.game_difficulty_levels import GAME_DIFFICULTY_LEVELS
 from merchant_tycoon.engine.services.bank_service import BankService
 from merchant_tycoon.engine.services.goods_service import GoodsService
 from merchant_tycoon.engine.services.goods_cargo_service import GoodsCargoService
@@ -12,12 +11,24 @@ from merchant_tycoon.engine.services.travel_events_service import TravelEventsSe
 from merchant_tycoon.engine.services.savegame_service import SavegameService
 from merchant_tycoon.engine.services.clock_service import ClockService
 from merchant_tycoon.engine.services.messenger_service import MessengerService
+from merchant_tycoon.repositories import (
+    GoodsRepository,
+    CitiesRepository,
+    AssetsRepository,
+    DifficultyRepository,
+)
 
 
 class GameEngine:
     """Core game logic - Facade over specialized services"""
 
     def __init__(self):
+        # Initialize repositories first (encapsulate domain constants)
+        self.goods_repo = GoodsRepository()
+        self.cities_repo = CitiesRepository()
+        self.assets_repo = AssetsRepository()
+        self.difficulty_repo = DifficultyRepository()
+
         # Initialize game state with default difficulty
         self.state = GameState()
         self._apply_difficulty(SETTINGS.game.default_difficulty)
@@ -40,24 +51,34 @@ class GameEngine:
         self.messenger = MessengerService(self.state, self.clock_service)
         self.bank_service = BankService(self.state, self.clock_service, self.messenger)
         # Initialize cargo service before goods service (goods service depends on it)
-        self.cargo_service = GoodsCargoService(self.state)
+        self.cargo_service = GoodsCargoService(self.state, self.goods_repo)
         self.goods_service = GoodsService(
             self.state,
             self.prices,
             self.previous_prices,
+            self.goods_repo,
+            self.cities_repo,
             self.clock_service,
             self.messenger,
             self.cargo_service
         )
-        self.investments_service = InvestmentsService(self.state, self.asset_prices, self.previous_asset_prices, self.clock_service, self.messenger)
+        self.investments_service = InvestmentsService(
+            self.state,
+            self.asset_prices,
+            self.previous_asset_prices,
+            self.assets_repo,
+            self.clock_service,
+            self.messenger
+        )
         # Event service for travel random encounters
-        self.travel_events_service = TravelEventsService()
+        self.travel_events_service = TravelEventsService(self.assets_repo, self.goods_repo)
         self.travel_service = TravelService(
             self.state,
             self.bank_service,
             self.goods_service,
             self.investments_service,
             self.travel_events_service,
+            self.cities_repo,
             self.cargo_service,
         )
         # Savegame service (persistence)
@@ -67,6 +88,7 @@ class GameEngine:
         try:
             self.bank_service.investments_service = self.investments_service
             self.bank_service.asset_prices = self.asset_prices
+            self.bank_service.assets_repo = self.assets_repo
         except Exception:
             pass
 
@@ -85,19 +107,12 @@ class GameEngine:
 
     def _apply_difficulty(self, difficulty_name: str) -> None:
         """Apply difficulty level settings to the current game state."""
-        # Find the difficulty level
-        difficulty = None
-        for level in GAME_DIFFICULTY_LEVELS:
-            if level.name == difficulty_name:
-                difficulty = level
-                break
+        # Find the difficulty level using repository
+        difficulty = self.difficulty_repo.get_by_name(difficulty_name)
 
         # If not found, use normal as fallback
         if not difficulty:
-            for level in GAME_DIFFICULTY_LEVELS:
-                if level.name == "normal":
-                    difficulty = level
-                    break
+            difficulty = self.difficulty_repo.get_default()
 
         # Apply difficulty settings
         if difficulty:

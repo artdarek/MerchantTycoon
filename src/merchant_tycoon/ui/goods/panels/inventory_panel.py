@@ -91,7 +91,7 @@ class InventoryPanel(Static):
                 pl_pct_cell = Text("0.0%", style="dim")
 
             try:
-                good_obj = self.engine.goods_service.get_good(good_name)
+                good_obj = self.engine.goods_repo.get_by_name(good_name)
             except Exception:
                 good_obj = None
             g_type = getattr(good_obj, "type", "standard") if good_obj else "standard"
