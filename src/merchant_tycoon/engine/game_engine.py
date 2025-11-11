@@ -2,7 +2,7 @@ from typing import Dict, Optional
 
 from merchant_tycoon.engine.game_state import GameState
 from merchant_tycoon.config import SETTINGS
-from merchant_tycoon.domain.constants import DIFFICULTY_LEVELS
+from merchant_tycoon.domain.game_difficulty_levels import GAME_DIFFICULTY_LEVELS
 from merchant_tycoon.engine.services.bank_service import BankService
 from merchant_tycoon.engine.services.goods_service import GoodsService
 from merchant_tycoon.engine.services.investments_service import InvestmentsService
@@ -77,14 +77,14 @@ class GameEngine:
         """Apply difficulty level settings to the current game state."""
         # Find the difficulty level
         difficulty = None
-        for level in DIFFICULTY_LEVELS:
+        for level in GAME_DIFFICULTY_LEVELS:
             if level.name == difficulty_name:
                 difficulty = level
                 break
 
         # If not found, use normal as fallback
         if not difficulty:
-            for level in DIFFICULTY_LEVELS:
+            for level in GAME_DIFFICULTY_LEVELS:
                 if level.name == "normal":
                     difficulty = level
                     break

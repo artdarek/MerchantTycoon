@@ -4,7 +4,7 @@ from textual.widgets import Label, Button, Select
 from textual.screen import ModalScreen
 from textual.reactive import reactive
 
-from merchant_tycoon.domain.constants import DIFFICULTY_LEVELS
+from merchant_tycoon.domain.game_difficulty_levels import GAME_DIFFICULTY_LEVELS
 
 
 class NewGameModal(ModalScreen):
@@ -22,8 +22,8 @@ class NewGameModal(ModalScreen):
         self._on_cancel = on_cancel
 
     def compose(self) -> ComposeResult:
-        # Build select options from DIFFICULTY_LEVELS
-        options = [(level.display_name, level.name) for level in DIFFICULTY_LEVELS]
+        # Build select options from GAME_DIFFICULTY_LEVELS
+        options = [(level.display_name, level.name) for level in GAME_DIFFICULTY_LEVELS]
 
         with Container(id="new-game-modal"):
             yield Label("🆕 NEW GAME — SELECT DIFFICULTY", id="modal-title")
@@ -56,7 +56,7 @@ class NewGameModal(ModalScreen):
         """Update the difficulty details label."""
         # Find the difficulty level
         difficulty = None
-        for level in DIFFICULTY_LEVELS:
+        for level in GAME_DIFFICULTY_LEVELS:
             if level.name == difficulty_name:
                 difficulty = level
                 break

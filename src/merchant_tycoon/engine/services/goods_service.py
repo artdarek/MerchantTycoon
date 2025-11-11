@@ -3,7 +3,8 @@ from typing import Dict, TYPE_CHECKING, Optional, List
 
 from merchant_tycoon.domain.model.purchase_lot import PurchaseLot
 from merchant_tycoon.domain.model.transaction import Transaction
-from merchant_tycoon.domain.constants import GOODS, CITIES
+from merchant_tycoon.domain.goods import GOODS
+from merchant_tycoon.domain.cities import CITIES
 from merchant_tycoon.config import SETTINGS
 
 if TYPE_CHECKING:
@@ -362,7 +363,7 @@ class GoodsService:
         """Record a 'loss' transaction for bookkeeping (one lot slice)."""
         try:
             from merchant_tycoon.domain.model.transaction import Transaction
-            from merchant_tycoon.domain.constants import CITIES
+            from merchant_tycoon.domain.cities import CITIES
             city_name = CITIES[self.state.current_city].name
             ts = (self.clock.now().isoformat(timespec="seconds") if self.clock else "")
             tx = Transaction(

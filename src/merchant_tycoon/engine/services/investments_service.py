@@ -3,7 +3,7 @@ from typing import Dict, TYPE_CHECKING, Optional
 import math
 
 from merchant_tycoon.domain.model.investment_lot import InvestmentLot
-from merchant_tycoon.domain.constants import ASSETS
+from merchant_tycoon.domain.assets import ASSETS
 from merchant_tycoon.config import SETTINGS
 
 if TYPE_CHECKING:

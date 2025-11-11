@@ -1,6 +1,6 @@
 from typing import Optional, TYPE_CHECKING
 
-from merchant_tycoon.domain.constants import CITIES
+from merchant_tycoon.domain.cities import CITIES
 from merchant_tycoon.config import SETTINGS
 from datetime import date as _date, timedelta as _timedelta
 

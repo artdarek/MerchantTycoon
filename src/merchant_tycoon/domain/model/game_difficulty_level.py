@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 
 @dataclass(frozen=True)
-class DifficultyLevel:
+class GameDifficultyLevel:
     """Defines a difficulty level preset for the game"""
     name: str
     display_name: str

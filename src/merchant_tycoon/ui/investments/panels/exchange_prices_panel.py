@@ -4,7 +4,7 @@ from rich.text import Text
 
 from merchant_tycoon.engine import GameEngine
 from merchant_tycoon.config import SETTINGS
-from merchant_tycoon.domain.constants import ASSETS
+from merchant_tycoon.domain.assets import ASSETS
 
 
 class ExchangePricesPanel(Static):

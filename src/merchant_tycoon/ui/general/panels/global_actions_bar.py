@@ -45,7 +45,7 @@ class GlobalActionsBar(Static):
             if not engine:
                 return
             state = engine.state
-            from merchant_tycoon.domain.constants import CITIES
+            from merchant_tycoon.domain.cities import CITIES
             city = CITIES[state.current_city]
             date_raw = getattr(state, "date", "")
             try:

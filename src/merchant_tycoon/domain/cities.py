@@ -1,77 +1,7 @@
 from __future__ import annotations
 from typing import List
 
-from merchant_tycoon.domain.model.good import Good
-from merchant_tycoon.domain.model.asset import Asset
 from merchant_tycoon.domain.model.city import City
-from merchant_tycoon.domain.model.difficulty_level import DifficultyLevel
-
-# Goods
-GOODS: List[Good] = [
-    Good("TV", 800, 0.3, "standard", "electronics"),
-    Good("Computer", 1200, 0.3, "standard", "electronics"),
-    Good("Printer", 300, 0.3, "standard", "electronics"),
-    Good("Phone", 600, 0.3, "standard", "electronics"),
-    Good("Camera", 400, 0.3, "standard", "electronics"),
-    Good("Laptop", 1500, 0.3, "standard", "electronics"),
-    Good("Tablet", 500, 0.3, "standard", "electronics"),
-    Good("Console", 450, 0.3, "standard", "electronics"),
-    Good("Headphones", 150, 0.3, "standard", "electronics"),
-    Good("Smartwatch", 400, 0.3, "standard", "electronics"),
-    Good("VR Headset", 700, 0.3, "standard", "electronics"),
-    Good("Coffee Machine", 450, 0.3, "standard", "electronics"),
-    # New low-priced electronics
-    Good("Powerbank", 40, 0.3, "standard", "electronics"),
-    Good("USB Charger", 25, 0.3, "standard", "electronics"),
-    Good("Pendrive", 15, 0.3, "standard", "electronics"),
-    # Luxury products (higher prices and volatility)
-    Good("Luxury Watch", 6000, 0.6, "luxury", "jewelry"),
-    Good("Diamond Necklace", 8000, 0.7, "luxury", "jewelry"),
-    Good("Gaming Laptop", 3000, 0.5, "luxury", "electronics"),
-    Good("High-end Drone", 2500, 0.5, "luxury", "electronics"),
-    Good("4K OLED TV", 2500, 0.4, "luxury", "electronics"),
-    # Cars
-    Good("Fiat", 20000, 0.3, "standard", "cars"),
-    Good("Opel Astra", 40000, 0.3, "standard", "cars"),
-    Good("Ford Focus", 50000, 0.3, "standard", "cars"),
-    Good("Ferrari", 100000, 0.5, "luxury", "cars"),
-    Good("Bentley", 200000, 0.5, "luxury", "cars"),
-    Good("Bugatti", 300000, 0.6, "luxury", "cars"),
-    # Contraband - Drugs (high risk, high reward)
-    Good("Weed", 500, 0.8, "contraband", "drugs"),
-    Good("Cocaine", 2000, 1.0, "contraband", "drugs"),
-    # Contraband - Weapons (high risk, high reward)
-    Good("Grenade", 100, 0.9, "contraband", "weapons"),
-    Good("Pistol", 500, 0.8, "contraband", "weapons"),
-    Good("Shotgun", 1000, 0.9, "contraband", "weapons"),
-]
-
-# Financial assets (unified list). Filter by asset_type: 'stock' | 'commodity' | 'crypto'.
-ASSETS: List[Asset] = [
-    # Stocks
-    Asset("Google", "GOOGL", 150, 0.6, "stock"),
-    Asset("Meta", "META", 80, 0.5, "stock"),
-    Asset("Apple", "AAPL", 120, 0.7, "stock"),
-    Asset("Microsoft", "MSFT", 200, 0.4, "stock"),
-    Asset("Amazon", "AMZN", 180, 0.6, "stock"),
-    Asset("Netflix", "NFLX", 90, 0.8, "stock"),
-    Asset("NVIDIA", "NVDA", 250, 0.9, "stock"),
-    Asset("Tesla", "TSLA", 160, 0.8, "stock"),
-    Asset("AMD", "AMD", 110, 0.7, "stock"),
-    Asset("Oracle", "ORCL", 95, 0.5, "stock"),
-    Asset("Adobe", "ADBE", 140, 0.6, "stock"),
-    Asset("Intel", "INTC", 85, 0.6, "stock"),
-    # Commodities
-    Asset("Gold", "GOLD", 1800, 0.3, "commodity"),
-    Asset("Oil", "OIL", 75, 0.8, "commodity"),
-    Asset("Silver", "SILV", 25, 0.4, "commodity"),
-    Asset("Copper", "COPP", 8, 0.5, "commodity"),
-    # Crypto
-    Asset("Bitcoin", "BTC", 35000, 0.7, "crypto"),
-    Asset("Ethereum", "ETH", 2000, 0.8, "crypto"),
-    Asset("Solana", "SOL", 80, 0.9, "crypto"),
-    Asset("Dogecoin", "DOGE", 5, 1.0, "crypto"),  # Price range $1-$10 (base 5, variance 1.0)
-]
 
 # Cities
 CITIES: List[City] = [
@@ -152,43 +82,4 @@ CITIES: List[City] = [
           "Luxury Watch": 1.25, "Diamond Necklace": 1.3, "Gaming Laptop": 1.2, "High-end Drone": 1.15, "4K OLED TV": 1.2,
           "Fiat": 1.05, "Opel Astra": 1.1, "Ford Focus": 1.1, "Ferrari": 1.3, "Bentley": 1.2, "Bugatti": 1.25,
           "Weed": 1.5, "Cocaine": 1.65, "Grenade": 1.6, "Pistol": 1.6, "Shotgun": 1.65}),
-]
-
-# Difficulty levels
-DIFFICULTY_LEVELS: List[DifficultyLevel] = [
-    DifficultyLevel(
-        name="playground",
-        display_name="Playground",
-        start_cash=1_000_000,
-        start_capacity=1000,
-        description="Unlimited funds for experimentation"
-    ),
-    DifficultyLevel(
-        name="easy",
-        display_name="Easy",
-        start_cash=100_000,
-        start_capacity=100,
-        description="Generous starting resources"
-    ),
-    DifficultyLevel(
-        name="normal",
-        display_name="Normal",
-        start_cash=50_000,
-        start_capacity=50,
-        description="Balanced challenge"
-    ),
-    DifficultyLevel(
-        name="hard",
-        display_name="Hard",
-        start_cash=10_000,
-        start_capacity=10,
-        description="Limited resources, strategic planning required"
-    ),
-    DifficultyLevel(
-        name="insane",
-        display_name="Insane",
-        start_cash=0,
-        start_capacity=1,
-        description="Start with nothing, maximum challenge"
-    ),
 ]

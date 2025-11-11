@@ -17,7 +17,7 @@ from textual.widgets import Footer, TabbedContent, TabPane, Static, Label, Butto
 from textual.binding import Binding
 from merchant_tycoon.engine import GameEngine, GameState
 from merchant_tycoon.config import SETTINGS
-from merchant_tycoon.domain.constants import CITIES
+from merchant_tycoon.domain.cities import CITIES
 from merchant_tycoon.ui.general.panels import StatsPanel, MessangerPanel, GlobalActionsBar
 from merchant_tycoon.ui.goods.panels import (
     GoodsPricesPanel,

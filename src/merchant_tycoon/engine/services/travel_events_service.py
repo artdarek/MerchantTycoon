@@ -2,7 +2,7 @@ import random
 from typing import List, Optional
 
 from merchant_tycoon.domain.model.bank_transaction import BankTransaction
-from merchant_tycoon.domain.constants import ASSETS
+from merchant_tycoon.domain.assets import ASSETS
 from merchant_tycoon.config import SETTINGS
 from datetime import datetime
 
