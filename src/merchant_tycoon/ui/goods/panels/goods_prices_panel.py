@@ -29,6 +29,7 @@ class GoodsPricesPanel(Static):
             table.add_columns(
                 "Product",
                 "Category",
+                "Size",
                 "Price",
                 "Prev",
                 "Change",
@@ -88,9 +89,14 @@ class GoodsPricesPanel(Static):
 
             prev_cell = f"${prev_price_val:,}" if prev_price_val is not None else "-"
 
+            # Get product size for display
+            product_size = getattr(good, "size", 1)
+            size_cell = f"{product_size}"
+
             row_key = table.add_row(
                 good.name,
                 getattr(good, "category", "electronics"),
+                size_cell,
                 f"${price:,}",
                 prev_cell,
                 change_cell,
@@ -117,9 +123,22 @@ class GoodsPricesPanel(Static):
         # Compute max quantity we can buy now (cash and cargo space constraints)
         price = int(self.engine.prices.get(product, 0))
         cash = int(self.engine.state.cash)
-        available_space = int(self.engine.state.max_inventory - self.engine.state.get_inventory_count())
+
+        # Get available cargo space (accounting for product sizes)
+        if hasattr(self.engine, 'cargo_service') and self.engine.cargo_service:
+            available_space = self.engine.cargo_service.get_free_slots()
+        else:
+            # Fallback to old method
+            available_space = int(self.engine.state.max_inventory - self.engine.state.get_inventory_count())
+
+        # Get product size to calculate how many units fit
+        good = self.engine.goods_service.get_good(product)
+        product_size = getattr(good, "size", 1) if good else 1
+
         max_affordable = (cash // price) if price > 0 else 0
-        max_buyable = min(max_affordable, available_space)
+        max_that_fits = (available_space // product_size) if product_size > 0 else available_space
+        max_buyable = min(max_affordable, max_that_fits)
+
         try:
             from merchant_tycoon.ui.goods.modals import BuyModal
             self.app.push_screen(BuyModal(self.engine, self.app._handle_buy, default_product=product, default_quantity=max_buyable))

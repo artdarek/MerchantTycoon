@@ -58,6 +58,7 @@ class GameEngine:
             self.goods_service,
             self.investments_service,
             self.travel_events_service,
+            self.cargo_service,
         )
         # Savegame service (persistence)
         self.savegame_service = SavegameService(self)

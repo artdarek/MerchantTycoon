@@ -21,7 +21,15 @@ class StatsPanel(Static):
 
     def update_stats(self):
         state = self.engine.state
-        inventory_count = state.get_inventory_count()
+
+        # Get cargo space used (accounting for product sizes)
+        if hasattr(self.engine, 'cargo_service') and self.engine.cargo_service:
+            cargo_used = self.engine.cargo_service.get_used_slots()
+            cargo_max = self.engine.cargo_service.get_max_slots()
+        else:
+            # Fallback to old method if cargo service not available
+            cargo_used = state.get_inventory_count()
+            cargo_max = state.max_inventory
 
         # Calculate total portfolio value
         portfolio_value = 0
@@ -38,7 +46,7 @@ class StatsPanel(Static):
             f"📈 Assets → ${portfolio_value:,}  •  "
             f"💳 Debt → ${state.debt:,}"
         )
-        right_text = f"📦 Cargo → {inventory_count}/{state.max_inventory}"
+        right_text = f"📦 Cargo → {cargo_used}/{cargo_max}"
 
         left_render = Text(left_text, no_wrap=True, overflow="ellipsis")
         right_render = Text(right_text, no_wrap=True, overflow="crop")

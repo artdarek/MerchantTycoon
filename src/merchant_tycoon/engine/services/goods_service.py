@@ -97,12 +97,18 @@ class GoodsService:
         if total_cost > self.state.cash:
             return False, f"Not enough cash! Need ${total_cost}, have ${self.state.cash}"
 
-        # Check cargo capacity
-        if self.cargo_service and not self.cargo_service.has_space_for(quantity):
-            available = self.cargo_service.get_free_slots()
-            return False, f"Not enough space! Only {available} slots available"
+        # Check cargo capacity (size-aware)
+        if self.cargo_service:
+            # Get product info to calculate required space
+            good = self.get_good(good_name)
+            product_size = getattr(good, "size", 1) if good else 1
+            required_space = quantity * product_size
+
+            if not self.cargo_service.has_space_for_good(good_name, quantity):
+                available = self.cargo_service.get_free_slots()
+                return False, f"Not enough cargo space! Need {required_space} slots ({quantity}x {good_name} @ {product_size} slots each), only {available} available"
         elif not self.state.can_carry(quantity):
-            # Fallback if cargo_service not available
+            # Fallback if cargo_service not available (legacy - uses simple counting)
             available = self.state.max_inventory - self.state.get_inventory_count()
             return False, f"Not enough space! Only {available} slots available"
 

@@ -1,7 +1,7 @@
 """Service for handling cargo capacity management and extensions.
 
 This service is responsible for all cargo-related operations including:
-- Tracking used/free cargo slots
+- Tracking used/free cargo slots (accounting for product sizes)
 - Validating cargo capacity before purchases
 - Extending cargo capacity (with configurable pricing strategies)
 - Calculating extension costs
@@ -9,58 +9,84 @@ This service is responsible for all cargo-related operations including:
 Separating cargo logic from goods trading logic improves modularity and
 prepares for future extensions like multiple cargo vehicles or dynamic capacity.
 """
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, List, Optional
 
 from merchant_tycoon.config import SETTINGS
+from merchant_tycoon.domain.goods import GOODS
 
 if TYPE_CHECKING:
     from merchant_tycoon.engine.game_state import GameState
+    from merchant_tycoon.domain.model.good import Good
 
 
 class GoodsCargoService:
     """Service for managing cargo capacity, usage, and extensions.
 
     This service handles all operations related to inventory space management,
-    including capacity calculations, extension purchases, and space validation.
+    including capacity calculations (accounting for product sizes), extension
+    purchases, and space validation.
 
     Responsibilities:
-        - Calculate used/free cargo slots
+        - Calculate used/free cargo slots based on product sizes
         - Validate space availability before purchases
         - Handle cargo capacity extensions with configurable pricing
         - Provide cargo-related state queries
 
     Attributes:
         state: Reference to the game state for accessing inventory and capacity
+        goods_list: Product catalog used for size lookups
 
     Examples:
         >>> cargo_service = GoodsCargoService(game_state)
         >>> used = cargo_service.get_used_slots()
         >>> free = cargo_service.get_free_slots()
-        >>> if cargo_service.has_space_for(10):
-        ...     # Purchase 10 items
+        >>> if cargo_service.has_space_for_good("TV", 10):
+        ...     # Purchase 10 TVs (30 slots)
         ...     pass
         >>> success, msg = cargo_service.extend_capacity()
     """
 
-    def __init__(self, state: "GameState"):
+    def __init__(self, state: "GameState", goods_list: Optional[List["Good"]] = None):
         """Initialize cargo service with game state reference.
 
         Args:
             state: Game state containing inventory and capacity information
+            goods_list: Optional product catalog for size lookups (defaults to GOODS)
         """
         self.state = state
+        self.goods_list = goods_list if goods_list is not None else GOODS
 
-    def get_used_slots(self) -> int:
-        """Get the number of cargo slots currently in use.
+    def _get_product_size(self, good_name: str) -> int:
+        """Get the cargo size of a product by name.
+
+        Args:
+            good_name: Name of the product to look up
 
         Returns:
-            Total number of items in inventory across all goods
+            Size in cargo slots (defaults to 1 if product not found)
+        """
+        for good in self.goods_list:
+            if good.name == good_name:
+                return getattr(good, "size", 1)
+        return 1  # Default size if product not found
+
+    def get_used_slots(self) -> int:
+        """Get the number of cargo slots currently in use (accounting for product sizes).
+
+        Calculates total space used by multiplying each product's quantity by its size.
+
+        Returns:
+            Total cargo slots occupied by all inventory items
 
         Examples:
             >>> cargo_service.get_used_slots()
-            25  # 25 slots occupied
+            45  # e.g., 10x TV (3 slots each) + 5x Phone (2 slots each) + 5x Pendrive (1 slot each) = 30 + 10 + 5 = 45
         """
-        return self.state.get_inventory_count()
+        total_space = 0
+        for good_name, quantity in self.state.inventory.items():
+            size = self._get_product_size(good_name)
+            total_space += quantity * size
+        return total_space
 
     def get_max_slots(self) -> int:
         """Get the maximum cargo capacity (total slots available).
@@ -86,22 +112,47 @@ class GoodsCargoService:
         """
         return self.get_max_slots() - self.get_used_slots()
 
-    def has_space_for(self, quantity: int) -> bool:
-        """Check if cargo has space for the specified quantity.
+    def has_space_for_good(self, good_name: str, quantity: int) -> bool:
+        """Check if cargo has space for the specified quantity of a product.
+
+        Accounts for the product's size when calculating required space.
 
         Args:
-            quantity: Number of items to check space for
+            good_name: Name of the product to check
+            quantity: Number of units to check space for
+
+        Returns:
+            True if there's enough free space, False otherwise
+
+        Examples:
+            >>> cargo_service.has_space_for_good("TV", 10)
+            True  # Can carry 10 TVs (30 slots total)
+            >>> cargo_service.has_space_for_good("Ferrari", 3)
+            False  # Cannot carry 3 Ferraris (75 slots needed, not enough space)
+        """
+        product_size = self._get_product_size(good_name)
+        required_space = quantity * product_size
+        return self.get_free_slots() >= required_space
+
+    def has_space_for(self, quantity: int) -> bool:
+        """Check if cargo has space for the specified number of slots.
+
+        Note: This method assumes each item takes 1 slot. For accurate
+        size-based checks, use has_space_for_good() instead.
+
+        Args:
+            quantity: Number of slots to check space for
 
         Returns:
             True if there's enough free space, False otherwise
 
         Examples:
             >>> cargo_service.has_space_for(10)
-            True  # Can carry 10 more items
+            True  # Can fit 10 more slots
             >>> cargo_service.has_space_for(50)
             False  # Not enough space
         """
-        return self.state.can_carry(quantity)
+        return self.get_free_slots() >= quantity
 
     def get_extend_cost(self) -> int:
         """Calculate the cost to extend cargo capacity by one bundle.

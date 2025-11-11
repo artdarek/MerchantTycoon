@@ -10,6 +10,7 @@ if TYPE_CHECKING:
     from merchant_tycoon.engine.services.goods_service import GoodsService
     from merchant_tycoon.engine.services.investments_service import InvestmentsService
     from merchant_tycoon.engine.services.travel_events_service import TravelEventsService
+    from merchant_tycoon.engine.services.goods_cargo_service import GoodsCargoService
 
 
 class TravelService:
@@ -22,12 +23,14 @@ class TravelService:
         goods_service: "GoodsService",
         investments_service: "InvestmentsService",
         events_service: "TravelEventsService",
+        cargo_service: Optional["GoodsCargoService"] = None,
     ):
         self.state = state
         self.bank_service = bank_service
         self.goods_service = goods_service
         self.investments_service = investments_service
         self.events_service = events_service
+        self.cargo_service = cargo_service
         try:
             from merchant_tycoon.engine.services.messenger_service import MessengerService
             # messenger available via bank_service if injected from engine
@@ -40,11 +43,16 @@ class TravelService:
         if city_index == self.state.current_city:
             return False, "Already in this city!", None
 
-        # Calculate travel fee from settings
+        # Calculate travel fee from settings (based on cargo space used)
         origin_city = CITIES[self.state.current_city]
         destination_city = CITIES[city_index]
         try:
-            cargo_units = int(self.state.get_inventory_count())
+            # Use size-aware cargo calculation if available
+            if self.cargo_service:
+                cargo_units = int(self.cargo_service.get_used_slots())
+            else:
+                # Fallback to simple count
+                cargo_units = int(self.state.get_inventory_count())
         except Exception:
             cargo_units = sum(self.state.inventory.values()) if isinstance(self.state.inventory, dict) else 0
         travel_fee = int(SETTINGS.travel.base_fee) + int(SETTINGS.travel.fee_per_cargo_unit) * cargo_units

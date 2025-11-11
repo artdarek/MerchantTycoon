@@ -34,7 +34,13 @@ class BuyModal(ModalScreen):
 
             # Create select options with prices and max quantity
             options = []
-            available_space = self.engine.state.max_inventory - self.engine.state.get_inventory_count()
+
+            # Get available cargo space (accounting for product sizes)
+            if hasattr(self.engine, 'cargo_service') and self.engine.cargo_service:
+                available_space = self.engine.cargo_service.get_free_slots()
+            else:
+                # Fallback to old method
+                available_space = self.engine.state.max_inventory - self.engine.state.get_inventory_count()
 
             try:
                 goods = self.engine.goods_service.get_goods()
@@ -44,8 +50,13 @@ class BuyModal(ModalScreen):
                 price = self.engine.prices[good.name]
                 # Calculate max affordable based on cash
                 max_affordable = self.engine.state.cash // price if price > 0 else 0
-                # Calculate actual max (limited by inventory space)
-                max_buyable = min(max_affordable, available_space)
+
+                # Calculate how many units fit based on product size
+                product_size = getattr(good, "size", 1)
+                max_that_fits = (available_space // product_size) if product_size > 0 else available_space
+
+                # Calculate actual max (limited by both cash and space)
+                max_buyable = min(max_affordable, max_that_fits)
 
                 # Store max quantity for this product
                 self.max_quantities[good.name] = max_buyable

@@ -29,11 +29,16 @@ class Good:
             - "cars": Vehicles from economy to luxury (Fiat to Bugatti)
             - "drugs": Contraband narcotics (weed, cocaine)
             - "weapons": Contraband armaments (grenades, pistols, shotguns)
+        size: Number of cargo slots occupied by one unit of this product.
+            Smaller items (jewelry, small electronics) use 1-2 slots.
+            Medium items (electronics) use 2-5 slots.
+            Large items (cars) use 15-30 slots.
+            Contraband typically uses 10-20 slots.
 
     Examples:
-        >>> tv = Good("TV", 800, 0.3, "standard", "electronics")
-        >>> ferrari = Good("Ferrari", 100000, 0.5, "luxury", "cars")
-        >>> cocaine = Good("Cocaine", 2000, 1.0, "contraband", "drugs")
+        >>> tv = Good("TV", 800, 0.3, "standard", "electronics", 3)
+        >>> ferrari = Good("Ferrari", 100000, 0.5, "luxury", "cars", 25)
+        >>> cocaine = Good("Cocaine", 2000, 1.0, "contraband", "drugs", 15)
     """
     name: str
     base_price: int
@@ -41,3 +46,4 @@ class Good:
     # Classification
     type: str = "standard"   # "standard" | "luxury" | "contraband"
     category: str = "electronics"  # "electronics" | "jewelry" | "cars" | "drugs" | "weapons"
+    size: int = 1  # Number of cargo slots occupied by one unit
