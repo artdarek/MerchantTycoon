@@ -10,4 +10,4 @@ class Good:
     price_variance: float = 0.3  # 30% variance
     # Classification
     type: str = "standard"   # "standard" | "luxury"
-    category: str = "hardware"  # e.g., "hardware" | "jewelry"
+    category: str = "electronics"  # e.g., "electronics" | "jewelry"

@@ -95,7 +95,7 @@ class InventoryPanel(Static):
             except Exception:
                 good_obj = None
             g_type = getattr(good_obj, "type", "standard") if good_obj else "standard"
-            g_cat = getattr(good_obj, "category", "hardware") if good_obj else "hardware"
+            g_cat = getattr(good_obj, "category", "electronics") if good_obj else "electronics"
 
             row_key = table.add_row(
                 good_name,

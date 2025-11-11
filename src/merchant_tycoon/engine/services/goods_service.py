@@ -523,7 +523,7 @@ class GoodsService:
           get_goods() -> all goods
           get_goods(type="luxury") -> only luxury goods
           get_goods(category="jewelry") -> only jewelry goods
-          get_goods(type="luxury", category="hardware") -> luxury hardware goods
+          get_goods(type="luxury", category="electronics") -> luxury electronics goods
         """
         items = GOODS
         if type is not None:

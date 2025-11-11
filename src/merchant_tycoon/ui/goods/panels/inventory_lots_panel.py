@@ -109,7 +109,7 @@ class InventoryLotsPanel(Static):
                     good_obj = self.engine.goods_service.get_good(good_name)
                 except Exception:
                     good_obj = None
-                g_cat = getattr(good_obj, "category", "hardware") if good_obj else "hardware"
+                g_cat = getattr(good_obj, "category", "electronics") if good_obj else "electronics"
 
                 # Lost per lot
                 try:

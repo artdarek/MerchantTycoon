@@ -90,7 +90,7 @@ class GoodsPricesPanel(Static):
 
             row_key = table.add_row(
                 good.name,
-                getattr(good, "category", "hardware"),
+                getattr(good, "category", "electronics"),
                 f"${price:,}",
                 prev_cell,
                 change_cell,

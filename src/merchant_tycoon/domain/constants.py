@@ -7,28 +7,28 @@ from merchant_tycoon.domain.model.city import City
 
 # Goods
 GOODS: List[Good] = [
-    Good("TV", 800),
-    Good("Computer", 1200),
-    Good("Printer", 300),
-    Good("Phone", 600),
-    Good("Camera", 400),
-    Good("Laptop", 1500),
-    Good("Tablet", 500),
-    Good("Console", 450),
-    Good("Headphones", 150),
-    Good("Smartwatch", 400),
-    Good("VR Headset", 700),
-    Good("Coffee Machine", 450),
+    Good("TV", 800, 0.3, "standard", "electronics"),
+    Good("Computer", 1200, 0.3, "standard", "electronics"),
+    Good("Printer", 300, 0.3, "standard", "electronics"),
+    Good("Phone", 600, 0.3, "standard", "electronics"),
+    Good("Camera", 400, 0.3, "standard", "electronics"),
+    Good("Laptop", 1500, 0.3, "standard", "electronics"),
+    Good("Tablet", 500, 0.3, "standard", "electronics"),
+    Good("Console", 450, 0.3, "standard", "electronics"),
+    Good("Headphones", 150, 0.3, "standard", "electronics"),
+    Good("Smartwatch", 400, 0.3, "standard", "electronics"),
+    Good("VR Headset", 700, 0.3, "standard", "electronics"),
+    Good("Coffee Machine", 450, 0.3, "standard", "electronics"),
     # New low-priced electronics
-    Good("Powerbank", 40),
-    Good("USB Charger", 25),
-    Good("Pendrive", 15),
+    Good("Powerbank", 40, 0.3, "standard", "electronics"),
+    Good("USB Charger", 25, 0.3, "standard", "electronics"),
+    Good("Pendrive", 15, 0.3, "standard", "electronics"),
     # Luxury products (higher prices and volatility)
     Good("Luxury Watch", 6000, 0.6, "luxury", "jewelry"),
     Good("Diamond Necklace", 8000, 0.7, "luxury", "jewelry"),
-    Good("Gaming Laptop", 3000, 0.5, "luxury", "hardware"),
-    Good("High-end Drone", 2500, 0.5, "luxury", "hardware"),
-    Good("4K OLED TV", 2500, 0.4, "luxury", "hardware"),
+    Good("Gaming Laptop", 3000, 0.5, "luxury", "electronics"),
+    Good("High-end Drone", 2500, 0.5, "luxury", "electronics"),
+    Good("4K OLED TV", 2500, 0.4, "luxury", "electronics"),
 ]
 
 # Financial assets (unified list). Filter by asset_type: 'stock' | 'commodity' | 'crypto'.
