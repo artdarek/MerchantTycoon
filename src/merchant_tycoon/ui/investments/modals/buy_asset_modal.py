@@ -175,7 +175,7 @@ class BuyAssetModal(ModalScreen):
                 try:
                     quantity = int(quantity_str)
                     if quantity >= 1:
-                        success, msg = self.engine.buy_asset(symbol, quantity)
+                        success, msg = self.engine.investments_service.buy_asset(symbol, quantity)
                         # Service logs; no callback needed for logging
                         self.callback(msg)
                 except ValueError:

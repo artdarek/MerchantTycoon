@@ -326,7 +326,7 @@ class MerchantTycoon(App):
             self.engine.messenger.warn("Quantity must be positive!", tag="goods")
             return
 
-        success, msg = self.engine.buy(product, quantity)
+        success, msg = self.engine.goods_service.buy(product, quantity)
         if not success:
             self.engine.messenger.warn(msg, tag="goods")
         self.refresh_all()
@@ -365,7 +365,7 @@ class MerchantTycoon(App):
             self.engine.messenger.warn("Quantity must be positive!", tag="goods")
             return
 
-        success, msg = self.engine.sell(product, quantity)
+        success, msg = self.engine.goods_service.sell(product, quantity)
         if not success:
             self.engine.messenger.warn(msg, tag="goods")
         self.refresh_all()
@@ -402,7 +402,7 @@ class MerchantTycoon(App):
         Returns True to close the modal on success, False to keep it open on failure.
         """
         try:
-            result = self.engine.extend_cargo()
+            result = self.engine.cargo_service.extend_capacity()
         except Exception as e:
             self.engine.messenger.error(f"Error: {e}", tag="system")
             return False
@@ -428,7 +428,7 @@ class MerchantTycoon(App):
 
     def _handle_travel(self, city_index: int):
         """Handle travel to new city"""
-        success, msg, event_data = self.engine.travel(city_index)
+        success, msg, event_data = self.engine.travel_service.travel(city_index)
         if success:
             # TravelService logs travel/event
             if event_data:
@@ -483,7 +483,7 @@ class MerchantTycoon(App):
             self.engine.messenger.warn("Invalid amount!", tag="bank")
             return
 
-        success, msg = self.engine.take_loan(amount)
+        success, msg = self.engine.bank_service.take_loan(amount)
         if not success:
             self.engine.messenger.warn(msg, tag="bank")
         self.refresh_all()
@@ -506,7 +506,7 @@ class MerchantTycoon(App):
         except Exception:
             self.engine.messenger.warn("Invalid amount!", tag="bank")
             return
-        ok, msg = self.engine.repay_loan_for(int(loan_id), amt)
+        ok, msg = self.engine.bank_service.repay_loan_for(int(loan_id), amt)
         if not ok:
             self.engine.messenger.warn(msg, tag="bank")
         self.refresh_all()
@@ -536,7 +536,7 @@ class MerchantTycoon(App):
         except ValueError:
             self.engine.messenger.warn("Invalid amount!", tag="bank")
             return
-        ok, msg = self.engine.deposit_to_bank(amount)
+        ok, msg = self.engine.bank_service.deposit_to_bank(amount)
         if not ok:
             self.engine.messenger.warn(msg, tag="bank")
         self.refresh_all()
@@ -563,7 +563,7 @@ class MerchantTycoon(App):
         except ValueError:
             self.engine.messenger.warn("Invalid amount!", tag="bank")
             return
-        ok, msg = self.engine.withdraw_from_bank(amount)
+        ok, msg = self.engine.bank_service.withdraw_from_bank(amount)
         if not ok:
             self.engine.messenger.warn(msg, tag="bank")
         self.refresh_all()
@@ -650,13 +650,13 @@ class MerchantTycoon(App):
                 # Reset engine state safely via engine helper with selected difficulty
                 try:
                     self.engine.reset_state(difficulty_name)
-                    self.engine.generate_prices()
-                    self.engine.generate_asset_prices()
+                    self.engine.goods_service.generate_prices()
+                    self.engine.investments_service.generate_asset_prices()
                 except Exception:
                     # Fallback to legacy behavior if helper not present
                     self.engine.state = GameState()
-                    self.engine.generate_prices()
-                    self.engine.generate_asset_prices()
+                    self.engine.goods_service.generate_prices()
+                    self.engine.investments_service.generate_asset_prices()
                 # Reset messages
                 self.engine.messenger.clear()
                 self.engine.messenger.debug(f"New game started with {difficulty_name} difficulty.", tag="system")
