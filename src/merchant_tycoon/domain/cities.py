@@ -1,9 +1,51 @@
+"""Domain constant: All trading cities in the game world.
+
+This module defines the 11 European cities where trading occurs. Each city has unique
+price multipliers for every good, creating arbitrage opportunities for players who
+travel and exploit price differences between locations.
+
+Constants:
+    CITIES: List of all 11 trading cities with their price multipliers for each good.
+        Used by GoodsService to calculate city-specific prices and by TravelService
+        for navigation.
+
+Cities Included:
+    - Warsaw, Poland (base prices, central Europe)
+    - Berlin, Germany (tech hub, high electronics demand)
+    - Prague, Czech Republic (low contraband prices)
+    - Vienna, Austria (wealthy city, high luxury prices)
+    - Budapest, Hungary (economy city, low prices)
+    - Paris, France (luxury capital, premium goods expensive)
+    - London, United Kingdom (financial center, highest contraband prices)
+    - Rome, Italy (mixed market, Ferrari discount)
+    - Amsterdam, Netherlands (lowest contraband prices)
+    - Barcelona, Spain (Mediterranean market)
+    - Stockholm, Sweden (wealthy, highest overall prices)
+
+Price Multipliers:
+    Each city has a dictionary mapping good names to multipliers:
+    - < 1.0: Good is cheaper (e.g., 0.5 = 50% discount)
+    - = 1.0: Good is at base price
+    - > 1.0: Good is more expensive (e.g., 1.5 = 50% markup)
+
+Examples:
+    >>> from merchant_tycoon.domain.cities import CITIES
+    >>> warsaw = CITIES[0]  # First city
+    >>> london = [c for c in CITIES if c.name == "London"][0]
+    >>> # Find cheapest city for a product
+    >>> cheapest = min(CITIES, key=lambda c: c.price_multiplier.get("TV", 1.0))
+
+See Also:
+    - City: Domain model representing a single city
+    - TravelService: Business logic for traveling between cities
+    - GoodsService: Uses city multipliers for price calculation
+"""
 from __future__ import annotations
 from typing import List
 
 from merchant_tycoon.domain.model.city import City
 
-# Cities
+# All trading cities in the game (11 European cities)
 CITIES: List[City] = [
     City("Warsaw", "Poland", {"TV": 1.0, "Computer": 1.0, "Printer": 1.0, "Phone": 1.0,
           "Camera": 1.0, "Laptop": 1.0, "Tablet": 1.0, "Console": 1.0,

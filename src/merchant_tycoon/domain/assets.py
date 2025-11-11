@@ -1,9 +1,52 @@
+"""Domain constant: All investable financial assets in the game.
+
+This module defines the complete catalog of stocks, commodities, and cryptocurrencies
+available for investment. Unlike goods, assets are protected from random events and
+provide long-term wealth building through market volatility.
+
+Constants:
+    ASSETS: List of all 20 investable financial assets with base prices and volatility.
+        Filter by asset_type ('stock' | 'commodity' | 'crypto') for specific asset classes.
+        Used by InvestmentsService for price generation and portfolio management.
+
+Asset Types:
+    - stocks: 12 company equities (GOOGL, AAPL, NVDA, TSLA, etc.)
+        Volatility: ±40-90%, medium to high risk
+        Price range: $80-$250 per share
+    - commodities: 4 physical resources (Gold, Oil, Silver, Copper)
+        Volatility: ±30-80%, medium risk
+        Price range: $8-$1800 per unit
+    - crypto: 4 cryptocurrencies (BTC, ETH, SOL, DOGE)
+        Volatility: ±70-100%, extreme risk/reward
+        Price range: $5-$35,000 per coin
+
+Investment Benefits:
+    - Immune to random events (fire, theft, robbery)
+    - Daily price changes with market volatility
+    - FIFO accounting for profit/loss tracking
+    - Buy/sell commission fees apply
+
+Examples:
+    >>> from merchant_tycoon.domain.assets import ASSETS
+    >>> stocks = [a for a in ASSETS if a.asset_type == "stock"]
+    >>> crypto = [a for a in ASSETS if a.asset_type == "crypto"]
+    >>> # Find most volatile asset
+    >>> risky = max(ASSETS, key=lambda a: a.price_variance)
+    >>> # Find asset by symbol
+    >>> btc = [a for a in ASSETS if a.symbol == "BTC"][0]
+
+See Also:
+    - Asset: Domain model representing a single financial asset
+    - InvestmentsService: Business logic for buying/selling and price management
+    - InvestmentLot: Tracks individual asset purchase batches
+"""
 from __future__ import annotations
 from typing import List
 
 from merchant_tycoon.domain.model.asset import Asset
 
-# Financial assets (unified list). Filter by asset_type: 'stock' | 'commodity' | 'crypto'.
+# All investable financial assets (20 total: 12 stocks, 4 commodities, 4 crypto)
+# Filter by asset_type: 'stock' | 'commodity' | 'crypto'
 ASSETS: List[Asset] = [
     # Stocks
     Asset("Google", "GOOGL", 150, 0.6, "stock"),

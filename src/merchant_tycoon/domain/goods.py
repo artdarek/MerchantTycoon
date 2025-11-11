@@ -1,9 +1,41 @@
+"""Domain constant: All tradable goods in the game economy.
+
+This module defines the complete catalog of products that players can buy and sell
+across cities. Goods are organized into categories (electronics, jewelry, cars, drugs, weapons)
+and types (standard, luxury, contraband) with varying price volatility and risk profiles.
+
+Constants:
+    GOODS: List of all 31 tradable products with their base prices, volatility,
+        and classification. Used by GoodsService for price generation and trading.
+
+Categories:
+    - electronics: Tech products (TVs, laptops, phones, etc.) - 18 products
+    - jewelry: Luxury accessories (watches, necklaces) - 2 products
+    - cars: Vehicles from economy to luxury (Fiat to Bugatti) - 6 products
+    - drugs: Contraband narcotics (weed, cocaine) - 2 products
+    - weapons: Contraband armaments (grenades, pistols, shotguns) - 3 products
+
+Product Types:
+    - standard: ±30% volatility, stable profits, lower risk
+    - luxury: ±40-70% volatility, premium city margins, medium risk
+    - contraband: ±80-100% volatility, extreme profits, high event risk
+
+Examples:
+    >>> from merchant_tycoon.domain.goods import GOODS
+    >>> standard_goods = [g for g in GOODS if g.type == "standard"]
+    >>> contraband = [g for g in GOODS if g.type == "contraband"]
+    >>> cars = [g for g in GOODS if g.category == "cars"]
+
+See Also:
+    - Good: Domain model representing a single product
+    - GoodsService: Business logic for pricing and trading
+"""
 from __future__ import annotations
 from typing import List
 
 from merchant_tycoon.domain.model.good import Good
 
-# Goods
+# All tradable goods in the game (31 products total)
 GOODS: List[Good] = [
     Good("TV", 800, 0.3, "standard", "electronics"),
     Good("Computer", 1200, 0.3, "standard", "electronics"),
