@@ -30,7 +30,7 @@ class CargoExtendModal(ModalScreen):
 
     def compose(self) -> ComposeResult:
         cash = self.engine.state.cash
-        cost = self.engine.goods_service.extend_cargo_current_cost()
+        cost = self.engine.cargo_service.get_extend_cost()
         prompt = self._prepare_content(cash, cost)
         with Container(id="input-modal"):
             t = "📦 Extend Cargo"
@@ -66,8 +66,8 @@ class CargoExtendModal(ModalScreen):
         """Re-render the modal prompt to reflect latest state."""
         try:
             cash = self.engine.state.cash
-            cost = self.engine.goods_service.extend_cargo_current_cost()
-            self._prepare_content(cash, cost)
+            cost = self.engine.cargo_service.get_extend_cost()
+            prompt = self._prepare_content(cash, cost)
 
             # disable button until we have enough cash
             self.query_one("#modal-prompt", Label).update(prompt)

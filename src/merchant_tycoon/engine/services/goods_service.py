@@ -10,79 +10,38 @@ from merchant_tycoon.config import SETTINGS
 if TYPE_CHECKING:
     from merchant_tycoon.engine.game_state import GameState
     from merchant_tycoon.engine.services.clock_service import ClockService
+    from merchant_tycoon.engine.services.goods_cargo_service import GoodsCargoService
     from merchant_tycoon.domain.model.good import Good
 
 
 class GoodsService:
-    """Service for handling goods trading operations"""
+    """Service for handling goods trading operations.
 
-    def __init__(self, state: "GameState", prices: Dict[str, int], previous_prices: Dict[str, int], clock_service: Optional["ClockService"] = None, messenger: Optional["MessengerService"] = None):
+    This service is responsible for:
+    - Price generation and management
+    - Buying and selling goods
+    - Transaction recording
+    - Lot management (FIFO accounting)
+    - Loss recording from random events
+
+    Note: Cargo capacity management is handled by GoodsCargoService.
+    """
+
+    def __init__(
+        self,
+        state: "GameState",
+        prices: Dict[str, int],
+        previous_prices: Dict[str, int],
+        clock_service: Optional["ClockService"] = None,
+        messenger: Optional["MessengerService"] = None,
+        cargo_service: Optional["GoodsCargoService"] = None
+    ):
         self.state = state
         self.prices = prices
         self.previous_prices = previous_prices
         self.clock = clock_service
         self.messenger = messenger
-
-    # Cargo extension utility
-    def extend_cargo(self) -> tuple:
-        """Attempt to extend cargo capacity by a configurable step.
-        Pricing is exponential per bundle: base_cost * (factor ** bundles_purchased),
-        where a bundle = `SETTINGS.cargo.extend_step` slots beyond base capacity.
-        Returns one of the following tuples:
-          - (False, message, current_cost) when insufficient cash.
-          - (True, message, new_capacity, next_cost) on success.
-        """
-        # Determine how many slots purchased beyond the base capacity
-        try:
-            current_capacity = int(getattr(self.state, "max_inventory", SETTINGS.cargo.base_capacity))
-        except Exception:
-            current_capacity = SETTINGS.cargo.base_capacity
-        step = max(1, int(SETTINGS.cargo.extend_step))
-        over_base = max(0, current_capacity - SETTINGS.cargo.base_capacity)
-        bundles_purchased = over_base // step
-        # Pricing strategy
-        mode = str(getattr(SETTINGS.cargo, "extend_pricing_mode", "linear")).lower()
-        current_cost = self.extend_cargo_current_cost()
-
-        # Validate cash
-        if self.state.cash < current_cost:
-            return False, f"Not enough cash! Need ${current_cost:,}, have ${self.state.cash:,}", current_cost
-
-        # Deduct and extend capacity
-        self.state.cash -= current_cost
-        self.state.max_inventory = current_capacity + step
-
-        # Compute next cost after purchase
-        if mode == "exponential":
-            factor = float(getattr(SETTINGS.cargo, "extend_cost_factor", 2.0))
-            next_cost = int(int(SETTINGS.cargo.extend_base_cost) * (factor ** (bundles_purchased + 1)))
-        else:
-            base = int(SETTINGS.cargo.extend_base_cost)
-            factor = float(getattr(SETTINGS.cargo, "extend_cost_factor", 1.0))
-            increment = base * factor
-            next_cost = int(base + increment * (bundles_purchased + 1))
-        return True, (
-            f"Cargo extended by +{step} slots to {self.state.max_inventory} (-${current_cost:,})"
-        ), self.state.max_inventory, next_cost
-
-    def extend_cargo_current_cost(self) -> int:
-        """Mirror GoodsService pricing with selected strategy."""
-        try:
-            cap = int(getattr(self.state, "max_inventory", SETTINGS.cargo.base_capacity))
-        except Exception:
-            cap = SETTINGS.cargo.base_capacity
-        step = max(1, int(SETTINGS.cargo.extend_step))
-        over_base = max(0, cap - SETTINGS.cargo.base_capacity)
-        bundles = over_base // step
-        mode = str(getattr(SETTINGS.cargo, "extend_pricing_mode", "linear")).lower()
-        if mode == "exponential":
-            factor = float(getattr(SETTINGS.cargo, "extend_cost_factor", 2.0))
-            return int(int(SETTINGS.cargo.extend_base_cost) * (factor ** bundles))
-        else:
-            base = int(SETTINGS.cargo.extend_base_cost)
-            factor = float(getattr(SETTINGS.cargo, "extend_cost_factor", 1.0))
-            increment = base * factor
-            return int(base + increment * bundles)
+        self.cargo_service = cargo_service
 
     def generate_prices(self) -> None:
         """Generate random prices for current city"""
@@ -138,7 +97,12 @@ class GoodsService:
         if total_cost > self.state.cash:
             return False, f"Not enough cash! Need ${total_cost}, have ${self.state.cash}"
 
-        if not self.state.can_carry(quantity):
+        # Check cargo capacity
+        if self.cargo_service and not self.cargo_service.has_space_for(quantity):
+            available = self.cargo_service.get_free_slots()
+            return False, f"Not enough space! Only {available} slots available"
+        elif not self.state.can_carry(quantity):
+            # Fallback if cargo_service not available
             available = self.state.max_inventory - self.state.get_inventory_count()
             return False, f"Not enough space! Only {available} slots available"
 

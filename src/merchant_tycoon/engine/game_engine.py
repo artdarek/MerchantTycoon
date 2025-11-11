@@ -5,6 +5,7 @@ from merchant_tycoon.config import SETTINGS
 from merchant_tycoon.domain.game_difficulty_levels import GAME_DIFFICULTY_LEVELS
 from merchant_tycoon.engine.services.bank_service import BankService
 from merchant_tycoon.engine.services.goods_service import GoodsService
+from merchant_tycoon.engine.services.goods_cargo_service import GoodsCargoService
 from merchant_tycoon.engine.services.investments_service import InvestmentsService
 from merchant_tycoon.engine.services.travel_service import TravelService
 from merchant_tycoon.engine.services.travel_events_service import TravelEventsService
@@ -38,7 +39,16 @@ class GameEngine:
         self.clock_service = ClockService(self.state)
         self.messenger = MessengerService(self.state, self.clock_service)
         self.bank_service = BankService(self.state, self.clock_service, self.messenger)
-        self.goods_service = GoodsService(self.state, self.prices, self.previous_prices, self.clock_service, self.messenger)
+        # Initialize cargo service before goods service (goods service depends on it)
+        self.cargo_service = GoodsCargoService(self.state)
+        self.goods_service = GoodsService(
+            self.state,
+            self.prices,
+            self.previous_prices,
+            self.clock_service,
+            self.messenger,
+            self.cargo_service
+        )
         self.investments_service = InvestmentsService(self.state, self.asset_prices, self.previous_asset_prices, self.clock_service, self.messenger)
         # Event service for travel random encounters
         self.travel_events_service = TravelEventsService()
@@ -120,6 +130,10 @@ class GameEngine:
         # Rebind service state references
         try:
             self.bank_service.state = self.state
+        except Exception:
+            pass
+        try:
+            self.cargo_service.state = self.state
         except Exception:
             pass
         try:
@@ -227,13 +241,14 @@ class GameEngine:
         """Sell goods using FIFO"""
         return self.goods_service.sell(good_name, quantity)
 
-    # Cargo operations - delegate to GoodsService
+    # Cargo operations - delegate to GoodsCargoService
     def extend_cargo(self) -> tuple:
-        """Attempt to extend cargo capacity by 1 slot.
-        Delegates to GoodsService.extend_cargo().
-        Returns tuple as defined by the service.
+        """Extend cargo capacity - delegates to cargo service.
+
+        Returns:
+            Tuple: (success, message, ...) from cargo_service.extend_capacity()
         """
-        return self.goods_service.extend_cargo()
+        return self.cargo_service.extend_capacity()
 
     # ---------- Investment operation ----------
 

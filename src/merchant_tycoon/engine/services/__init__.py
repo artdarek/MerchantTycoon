@@ -10,6 +10,7 @@ context, but this keeps the convenient facade for common cases.
 
 from .bank_service import BankService
 from .goods_service import GoodsService
+from .goods_cargo_service import GoodsCargoService
 from .investments_service import InvestmentsService
 from .travel_service import TravelService
 from .travel_events_service import TravelEventsService
@@ -20,6 +21,7 @@ from .clock_service import ClockService
 __all__ = [
     "BankService",
     "GoodsService",
+    "GoodsCargoService",
     "InvestmentsService",
     "TravelService",
     "TravelEventsService",
