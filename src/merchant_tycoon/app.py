@@ -637,30 +637,39 @@ class MerchantTycoon(App):
         self.push_screen(confirm)
 
     def action_new_game(self):
-        """Ask for confirmation, then delete save and reset state."""
-        def _confirm_new():
-            try:
-                # Delete save file if exists
-                self.engine.savegame_service.delete_save()
-            except Exception:
-                pass
-            # Reset engine state safely via engine helper (rebinding services & prices)
-            try:
-                self.engine.new_game()
-            except Exception:
-                # Fallback to legacy behavior if helper not present
-                self.engine.state = GameState()
-                self.engine.generate_prices()
-                self.engine.generate_asset_prices()
-            # Reset messages
-            self.engine.messenger.clear()
-            self.engine.messenger.debug("New game started.", tag="system")
-            self.refresh_all()
+        """Ask for confirmation, then show difficulty selection, then start new game."""
+        def _show_difficulty_modal():
+            """Show difficulty selection modal after confirmation."""
+            def _start_new_game(difficulty_name: str):
+                """Start new game with selected difficulty."""
+                try:
+                    # Delete save file if exists
+                    self.engine.savegame_service.delete_save()
+                except Exception:
+                    pass
+                # Reset engine state safely via engine helper with selected difficulty
+                try:
+                    self.engine.reset_state(difficulty_name)
+                    self.engine.generate_prices()
+                    self.engine.generate_asset_prices()
+                except Exception:
+                    # Fallback to legacy behavior if helper not present
+                    self.engine.state = GameState()
+                    self.engine.generate_prices()
+                    self.engine.generate_asset_prices()
+                # Reset messages
+                self.engine.messenger.clear()
+                self.engine.messenger.debug(f"New game started with {difficulty_name} difficulty.", tag="system")
+                self.refresh_all()
+
+            from merchant_tycoon.ui.general.modals import NewGameModal
+            modal = NewGameModal(on_confirm=_start_new_game)
+            self.push_screen(modal)
 
         confirm = ConfirmModal(
             "Start New Game",
             "Start a new game? This will delete the current save.",
-            on_confirm=_confirm_new,
+            on_confirm=_show_difficulty_modal,
         )
         self.push_screen(confirm)
 

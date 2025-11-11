@@ -2,6 +2,7 @@ from typing import Dict, Optional
 
 from merchant_tycoon.engine.game_state import GameState
 from merchant_tycoon.config import SETTINGS
+from merchant_tycoon.domain.constants import DIFFICULTY_LEVELS
 from merchant_tycoon.engine.services.bank_service import BankService
 from merchant_tycoon.engine.services.goods_service import GoodsService
 from merchant_tycoon.engine.services.investments_service import InvestmentsService
@@ -16,12 +17,9 @@ class GameEngine:
     """Core game logic - Facade over specialized services"""
 
     def __init__(self):
-        # Initialize game state
+        # Initialize game state with default difficulty
         self.state = GameState()
-        try:
-            self.state.cash = int(SETTINGS.game.start_cash)
-        except Exception:
-            pass
+        self._apply_difficulty(SETTINGS.game.default_difficulty)
         # Initialize in-game calendar date
         try:
             if not getattr(self.state, "date", ""):
@@ -75,22 +73,43 @@ class GameEngine:
 
     # ---------- Lifecycle helpers ----------
 
-    def reset_state(self) -> None:
+    def _apply_difficulty(self, difficulty_name: str) -> None:
+        """Apply difficulty level settings to the current game state."""
+        # Find the difficulty level
+        difficulty = None
+        for level in DIFFICULTY_LEVELS:
+            if level.name == difficulty_name:
+                difficulty = level
+                break
+
+        # If not found, use normal as fallback
+        if not difficulty:
+            for level in DIFFICULTY_LEVELS:
+                if level.name == "normal":
+                    difficulty = level
+                    break
+
+        # Apply difficulty settings
+        if difficulty:
+            self.state.cash = difficulty.start_cash
+            self.state.max_inventory = difficulty.start_capacity
+
+    def reset_state(self, difficulty_name: Optional[str] = None) -> None:
         """Reset the engine to a fresh GameState and rebind all services.
         Keeps the same engine instance so UI references remain valid.
+
+        Args:
+            difficulty_name: Name of difficulty level to use. If None, uses default from settings.
         """
         # Replace state object
         self.state = GameState()
-        try:
-            self.state.cash = int(SETTINGS.game.start_cash)
-        except Exception:
-            pass
-        try:
-            if not getattr(self.state, "date", ""):
-                start_date = getattr(SETTINGS.game, "start_date", "") or "2025-01-01"
-                self.state.date = str(start_date)
-        except Exception:
-            pass
+
+        # Apply difficulty level
+        if difficulty_name is None:
+            difficulty_name = SETTINGS.game.default_difficulty
+        self._apply_difficulty(difficulty_name)
+
+        # Initialize in-game calendar date
         try:
             if not getattr(self.state, "date", ""):
                 start_date = getattr(SETTINGS.game, "start_date", "") or "2025-01-01"

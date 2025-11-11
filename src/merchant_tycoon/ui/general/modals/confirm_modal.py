@@ -51,18 +51,19 @@ class ConfirmModal(ModalScreen):
             self.action_confirm()
         elif event.button.id == "no-btn":
             # Clicking the explicit NO/EXIT button invokes cancel callback
-            try:
-                if callable(self._on_cancel):
-                    self._on_cancel()
-            finally:
-                self.dismiss()
+            # Dismiss first, then call callback to allow opening other modals
+            callback = self._on_cancel
+            self.dismiss()
+            if callable(callback):
+                callback()
 
     def action_confirm(self) -> None:
-        try:
-            if callable(self._on_confirm):
-                self._on_confirm()
-        finally:
-            self.dismiss()
+        # Dismiss first, then call callback
+        # This allows callback to open another modal without stack conflicts
+        callback = self._on_confirm
+        self.dismiss()
+        if callable(callback):
+            callback()
 
     def action_cancel(self) -> None:  # kept for backward compatibility
         self.dismiss()

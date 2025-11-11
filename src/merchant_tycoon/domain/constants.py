@@ -4,6 +4,7 @@ from typing import List
 from merchant_tycoon.domain.model.good import Good
 from merchant_tycoon.domain.model.asset import Asset
 from merchant_tycoon.domain.model.city import City
+from merchant_tycoon.domain.model.difficulty_level import DifficultyLevel
 
 # Goods
 GOODS: List[Good] = [
@@ -151,4 +152,43 @@ CITIES: List[City] = [
           "Luxury Watch": 1.25, "Diamond Necklace": 1.3, "Gaming Laptop": 1.2, "High-end Drone": 1.15, "4K OLED TV": 1.2,
           "Fiat": 1.05, "Opel Astra": 1.1, "Ford Focus": 1.1, "Ferrari": 1.3, "Bentley": 1.2, "Bugatti": 1.25,
           "Weed": 1.5, "Cocaine": 1.65, "Grenade": 1.6, "Pistol": 1.6, "Shotgun": 1.65}),
+]
+
+# Difficulty levels
+DIFFICULTY_LEVELS: List[DifficultyLevel] = [
+    DifficultyLevel(
+        name="playground",
+        display_name="Playground",
+        start_cash=1_000_000,
+        start_capacity=1000,
+        description="Unlimited funds for experimentation"
+    ),
+    DifficultyLevel(
+        name="easy",
+        display_name="Easy",
+        start_cash=100_000,
+        start_capacity=100,
+        description="Generous starting resources"
+    ),
+    DifficultyLevel(
+        name="normal",
+        display_name="Normal",
+        start_cash=50_000,
+        start_capacity=50,
+        description="Balanced challenge"
+    ),
+    DifficultyLevel(
+        name="hard",
+        display_name="Hard",
+        start_cash=10_000,
+        start_capacity=10,
+        description="Limited resources, strategic planning required"
+    ),
+    DifficultyLevel(
+        name="insane",
+        display_name="Insane",
+        start_cash=0,
+        start_capacity=1,
+        description="Start with nothing, maximum challenge"
+    ),
 ]

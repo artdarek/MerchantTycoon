@@ -277,7 +277,7 @@ MessangerPanel {
 /* Message text coloring handled in code to keep timestamp white */
 
 /* Modal styles (non-splash) */
-#input-modal, #city-modal, #buy-modal, #sell-modal, #confirm-modal, #repay-modal, #about-modal {
+#input-modal, #city-modal, #buy-modal, #sell-modal, #confirm-modal, #repay-modal, #about-modal, #new-game-modal {
     width: 48;              /* smaller panels */
     max-width: 60%;
     height: auto;
@@ -290,7 +290,7 @@ MessangerPanel {
    so underlying app remains visible around the dialog. */
 InputModal, TravelModal, BuyModal, SellModal, SellLotModal,
 BuyAssetModal, SellAssetModal, SellAssetLotModal, LoanRepayModal, HelpModal,
-ConfirmModal, AboutModal, CargoExtendModal {
+ConfirmModal, AboutModal, CargoExtendModal, NewGameModal {
     align: center middle;
     background: transparent;
 }
@@ -336,6 +336,28 @@ ConfirmModal, AboutModal, CargoExtendModal {
     color: #ffffff; /* white, match panel title vibe */
     text-align: center;
     margin-bottom: 1;
+}
+
+/* New Game Modal specific styles */
+.modal-subtitle {
+    text-align: center;
+    color: #9aa3b2;
+    margin-bottom: 1;
+}
+
+#difficulty-selector {
+    height: auto;
+    margin: 1 0;
+}
+
+#difficulty-select {
+    margin-bottom: 1;
+}
+
+.difficulty-info {
+    color: #cdd3df;
+    text-align: center;
+    margin: 1 0;
 }
 
 #modal-buttons {
