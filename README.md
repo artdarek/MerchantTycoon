@@ -46,9 +46,9 @@ The game combines:
 - **Difficulty Selection**: Choose from 5 difficulty levels (Playground to Insane)
 - **City Trading**: Buy and sell goods across 11 European cities with varying prices
 - **Diverse Product Categories**: Trade in electronics, luxury goods, cars, and contraband (31 products total)
-- **Stock Market**: Invest in 12 real company stocks (Tech giants like Google, Apple, NVIDIA, Tesla, and more)
-- **Commodities**: Trade in Gold, Oil, Silver, and Copper
-- **Cryptocurrency**: Invest in Bitcoin, Ethereum, Solana, and Dogecoin
+- **Stock Market**: Invest in 16 real company stocks (Tech giants like Google, Apple, NVIDIA, Tesla, and gaming companies like CD Projekt Red, Nintendo, Ubisoft, Electronic Arts)
+- **Commodities**: Trade in 8 commodities including precious metals (Gold, Silver, Platinum, Copper) and agricultural products (Cocoa, Sugar, Coffee) plus Oil
+- **Cryptocurrency**: Invest in 8 cryptocurrencies including major coins (Bitcoin, Ethereum, Solana, Dogecoin) and altcoins (Avalanche, Polkadot, Decentraland, 1inch)
 - **Cargo Upgrades**: Extend inventory capacity; each added slot doubles in price (starts at 50)
 - **Banking System**: Deposit cash to earn interest (1-3% APR, compounded daily), manage your savings
 - **Loan System**: Take multiple loans to grow faster with variable APR (1-20%, compounded daily)
@@ -229,9 +229,15 @@ The game features **31 unique products** across 4 main categories:
 - **Strategy**: Mix standard goods (stable income) with high-risk/high-reward contraband
 
 #### 💼 Stock Exchange & Investments
-- **Stocks** (12 companies): Google (GOOGL), Meta (META), Apple (AAPL), Microsoft (MSFT), Amazon (AMZN), Netflix (NFLX), NVIDIA (NVDA), Tesla (TSLA), AMD, Oracle (ORCL), Adobe (ADBE), Intel (INTC)
-- **Commodities** (4 types): Gold, Oil, Silver, Copper
-- **Cryptocurrency** (4 coins): Bitcoin (BTC), Ethereum (ETH), Solana (SOL), Dogecoin (DOGE)
+- **Stocks** (16 companies):
+  - **Tech Giants**: Google (GOOGL), Meta (META), Apple (AAPL), Microsoft (MSFT), Amazon (AMZN), Netflix (NFLX), NVIDIA (NVDA), Tesla (TSLA), AMD, Oracle (ORCL), Adobe (ADBE), Intel (INTC)
+  - **Gaming Companies**: CD Projekt Red (CDR), Nintendo (NTD), Ubisoft (UBI), Electronic Arts (EAA)
+- **Commodities** (8 types):
+  - **Precious Metals**: Gold (GOLD), Silver (SILV), Platinum (PLT), Copper (COPP)
+  - **Energy & Agriculture**: Oil (OIL), Cocoa (COC), Sugar (SGR), Coffee (CFE)
+- **Cryptocurrency** (8 coins):
+  - **Major Coins**: Bitcoin (BTC), Ethereum (ETH), Solana (SOL), Dogecoin (DOGE)
+  - **Altcoins**: Avalanche (AVAX), Polkadot (DOT), Decentraland (MANA), 1inch (1INCH)
 - **Price Trends**: Watch for ▲ (up), ▼ (down), or ─ (stable) indicators
 - **Price Volatility**: Stocks ±50%, Commodities ±30-80%, Crypto ±70-90%
 - **Safety**: Investments are protected from random events!
@@ -342,9 +348,9 @@ The game uses a **tabbed interface** with three main tabs:
 - **Multi-Loan System**: Take multiple loans with individual APR (1-20%), daily compounding
 - **Banking System**: Deposit/withdraw with interest accrual (1-3% APR, daily compounding)
 - **Realistic Interest Model**: APR converted to daily rates (APR÷365), fractional cents tracked
-- **Cryptocurrency Trading**: High-risk, high-reward crypto investments (BTC, ETH, SOL, DOGE)
-- **Stock Market**: 12 real company stocks with realistic volatility
-- **Commodities**: Gold, Oil, Silver, Copper
+- **Cryptocurrency Trading**: High-risk, high-reward crypto investments (8 coins including BTC, ETH, SOL, DOGE, AVAX, DOT, MANA, 1INCH)
+- **Stock Market**: 16 real company stocks with realistic volatility (12 tech giants + 4 gaming companies)
+- **Commodities**: 8 types including precious metals and agricultural products (Gold, Silver, Platinum, Copper, Oil, Cocoa, Sugar, Coffee)
 - **11 European Cities**: Each with unique price multipliers
 - **Auto-save/Load**: Persistent game state across sessions
 - **Responsive Terminal UI**: Colorful, styled interface using Textual framework
@@ -356,7 +362,7 @@ The game follows a clean, modular architecture with separated concerns:
 **Domain Layer** (`src/merchant_tycoon/domain/`)
 - **`goods.py`**: 31 tradable products (GOODS constant)
 - **`cities.py`**: 11 European cities with price multipliers (CITIES constant)
-- **`assets.py`**: 20 financial assets - stocks, commodities, crypto (ASSETS constant)
+- **`assets.py`**: 32 financial assets - 16 stocks, 8 commodities, 8 crypto (ASSETS constant)
 - **`game_difficulty_levels.py`**: 5 difficulty presets (GAME_DIFFICULTY_LEVELS constant)
 - **`model/`**: Domain models (Good, City, Asset, GameDifficultyLevel, etc.)
 

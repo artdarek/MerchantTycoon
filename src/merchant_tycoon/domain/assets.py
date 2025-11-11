@@ -5,20 +5,20 @@ available for investment. Unlike goods, assets are protected from random events 
 provide long-term wealth building through market volatility.
 
 Constants:
-    ASSETS: List of all 20 investable financial assets with base prices and volatility.
+    ASSETS: List of all 32 investable financial assets with base prices and volatility.
         Filter by asset_type ('stock' | 'commodity' | 'crypto') for specific asset classes.
         Used by InvestmentsService for price generation and portfolio management.
 
 Asset Types:
-    - stocks: 12 company equities (GOOGL, AAPL, NVDA, TSLA, etc.)
+    - stocks: 16 company equities (GOOGL, AAPL, NVDA, TSLA, CDR, NTD, etc.)
         Volatility: ±40-90%, medium to high risk
         Price range: $80-$250 per share
-    - commodities: 4 physical resources (Gold, Oil, Silver, Copper)
+    - commodities: 8 physical resources (Gold, Oil, Silver, Copper, Platinum, etc.)
         Volatility: ±30-80%, medium risk
-        Price range: $8-$1800 per unit
-    - crypto: 4 cryptocurrencies (BTC, ETH, SOL, DOGE)
+        Price range: $8-$2500 per unit
+    - crypto: 8 cryptocurrencies (BTC, ETH, SOL, DOGE, AVAX, DOT, etc.)
         Volatility: ±70-100%, extreme risk/reward
-        Price range: $5-$35,000 per coin
+        Price range: $1-$35,000 per coin
 
 Investment Benefits:
     - Immune to random events (fire, theft, robbery)
@@ -45,10 +45,10 @@ from typing import List
 
 from merchant_tycoon.domain.model.asset import Asset
 
-# All investable financial assets (20 total: 12 stocks, 4 commodities, 4 crypto)
+# All investable financial assets (32 total: 16 stocks, 8 commodities, 8 crypto)
 # Filter by asset_type: 'stock' | 'commodity' | 'crypto'
 ASSETS: List[Asset] = [
-    # Stocks
+    # Stocks - Tech Giants
     Asset("Google", "GOOGL", 150, 0.6, "stock"),
     Asset("Meta", "META", 80, 0.5, "stock"),
     Asset("Apple", "AAPL", 120, 0.7, "stock"),
@@ -61,14 +61,29 @@ ASSETS: List[Asset] = [
     Asset("Oracle", "ORCL", 95, 0.5, "stock"),
     Asset("Adobe", "ADBE", 140, 0.6, "stock"),
     Asset("Intel", "INTC", 85, 0.6, "stock"),
-    # Commodities
+    # Stocks - Gaming Companies
+    Asset("CD Projekt Red", "CDR", 100, 0.7, "stock"),
+    Asset("Nintendo", "NTD", 130, 0.6, "stock"),
+    Asset("Ubisoft", "UBI", 85, 0.7, "stock"),
+    Asset("Electronic Arts", "EAA", 125, 0.6, "stock"),
+    # Commodities - Precious Metals
     Asset("Gold", "GOLD", 1800, 0.3, "commodity"),
-    Asset("Oil", "OIL", 75, 0.8, "commodity"),
     Asset("Silver", "SILV", 25, 0.4, "commodity"),
+    Asset("Platinum", "PLT", 950, 0.35, "commodity"),
     Asset("Copper", "COPP", 8, 0.5, "commodity"),
-    # Crypto
+    # Commodities - Energy & Agriculture
+    Asset("Oil", "OIL", 75, 0.8, "commodity"),
+    Asset("Cocoa", "COC", 2500, 0.5, "commodity"),
+    Asset("Sugar", "SGR", 400, 0.6, "commodity"),
+    Asset("Coffee", "CFE", 150, 0.7, "commodity"),
+    # Crypto - Major Coins
     Asset("Bitcoin", "BTC", 35000, 0.7, "crypto"),
     Asset("Ethereum", "ETH", 2000, 0.8, "crypto"),
     Asset("Solana", "SOL", 80, 0.9, "crypto"),
-    Asset("Dogecoin", "DOGE", 5, 1.0, "crypto"),  # Price range $1-$10 (base 5, variance 1.0)
+    Asset("Dogecoin", "DOGE", 5, 1.0, "crypto"),
+    # Crypto - Altcoins
+    Asset("Avalanche", "AVAX", 35, 0.85, "crypto"),
+    Asset("Polkadot", "DOT", 7, 0.9, "crypto"),
+    Asset("Decentraland", "MANA", 2, 0.95, "crypto"),
+    Asset("1inch", "1INCH", 3, 1.0, "crypto"),
 ]
