@@ -26,10 +26,26 @@ A terminal-based trading game where you buy low, sell high, travel between citie
 
 ## 📖 About The Game
 
-**Merchant Tycoon** is a terminal-based economic simulation game inspired by classic trading games. Your goal is simple: start with $5,000 and become a wealthy merchant tycoon through strategic trading and smart investments.
+**Merchant Tycoon** is a terminal-based economic simulation game inspired by classic trading games. Choose your difficulty level and become a wealthy merchant tycoon through strategic trading and smart investments.
+
+### 🎚️ Game Difficulty Levels
+
+Choose your starting challenge when creating a new game (F1):
+
+| Difficulty | Starting Cash | Cargo Slots | Description |
+|-----------|---------------|-------------|-------------|
+| **Playground** | $1,000,000 | 1000 | Unlimited funds for experimentation |
+| **Easy** | $100,000 | 100 | Generous starting resources |
+| **Normal** | $50,000 | 50 | Balanced challenge (default) |
+| **Hard** | $10,000 | 10 | Limited resources, strategic planning required |
+| **Insane** | $0 | 1 | Start with nothing, maximum challenge |
+
+Press **F1** to start a new game and select your difficulty. Each level offers a unique experience from sandbox mode to extreme survival!
 
 The game combines:
+- **Difficulty Selection**: Choose from 5 difficulty levels (Playground to Insane)
 - **City Trading**: Buy and sell goods across 11 European cities with varying prices
+- **Diverse Product Categories**: Trade in electronics, luxury goods, cars, and contraband (31 products total)
 - **Stock Market**: Invest in 12 real company stocks (Tech giants like Google, Apple, NVIDIA, Tesla, and more)
 - **Commodities**: Trade in Gold, Oil, Silver, and Copper
 - **Cryptocurrency**: Invest in Bitcoin, Ethereum, Solana, and Dogecoin
@@ -173,11 +189,44 @@ The game has **3 tabs** (Goods, Investments, Bank) with context-sensitive contro
 - Look for arbitrage opportunities between cities
 - Travel between cities to exploit price differences
 
+#### 📦 Goods & Product Categories
+
+The game features **31 unique products** across 4 main categories:
+
+**🖥️ Electronics** (Standard & Luxury)
+- **Standard Electronics**: TV ($800), Computer ($1,200), Printer ($300), Phone ($600), Camera ($400), Laptop ($1,500), Tablet ($500), Console ($450), Headphones ($150), Smartwatch ($400), VR Headset ($700), Coffee Machine ($450), Powerbank ($40), USB Charger ($25), Pendrive ($15)
+- **Luxury Electronics**: Gaming Laptop ($3,000), High-end Drone ($2,500), 4K OLED TV ($2,500)
+- Price volatility: ±30%
+
+**💎 Jewelry** (Luxury)
+- Luxury Watch ($6,000), Diamond Necklace ($8,000)
+- Price volatility: ±60-70%
+- High profit margins in wealthy cities (Paris, London, Stockholm)
+
+**🚗 Cars** (Standard & Luxury)
+- **Standard Cars**: Fiat ($20,000), Opel Astra ($40,000), Ford Focus ($50,000)
+- **Luxury Cars**: Ferrari ($100,000), Bentley ($200,000), Bugatti ($300,000)
+- Price volatility: ±30-60%
+- Best arbitrage opportunities between cities
+
+**⚠️ Contraband** (High Risk, High Reward)
+- **Drugs**: Weed ($500), Cocaine ($2,000) - volatility ±80-100%
+- **Weapons**: Grenade ($100), Pistol ($500), Shotgun ($1,000) - volatility ±80-90%
+- Significant price differences between cities (e.g., Amsterdam vs. Stockholm)
+- Higher risk from random events but massive profit potential
+
+**Product Types:**
+- **Standard**: Stable prices, lower volatility, consistent profits
+- **Luxury**: Higher prices, more volatility, better margins in premium cities
+- **Contraband**: Highest volatility, extreme price variations, maximum risk/reward
+
 #### 📦 Inventory Management
-- **Capacity**: Starts at 50; press C to extend by +1 slot (each added slot doubles in price)
+- **Capacity**: Starts based on difficulty level (Insane: 1, Normal: 50, Playground: 1000)
+- **Upgrades**: Press C to extend by +1 slot (pricing mode configurable: linear or exponential)
 - **FIFO System**: Goods are sold in First In, First Out order
 - **Purchase Lots**: Track each purchase separately to calculate profit/loss accurately
-- **Random Events**: Can affect your inventory (theft, damage, etc.)
+- **Random Events**: Can affect your inventory (theft, damage, confiscation, etc.)
+- **Strategy**: Mix standard goods (stable income) with high-risk/high-reward contraband
 
 #### 💼 Stock Exchange & Investments
 - **Stocks** (12 companies): Google (GOOGL), Meta (META), Apple (AAPL), Microsoft (MSFT), Amazon (AMZN), Netflix (NFLX), NVIDIA (NVDA), Tesla (TSLA), AMD, Oracle (ORCL), Adobe (ADBE), Intel (INTC)
@@ -281,6 +330,9 @@ The game uses a **tabbed interface** with three main tabs:
 - **Textual Framework**: Modern TUI (Text User Interface) framework
 
 ### Features
+- **5 Difficulty Levels**: From Playground ($1M, 1000 slots) to Insane ($0, 1 slot)
+- **31 Tradable Products**: Electronics, luxury goods, cars, and contraband
+- **4 Product Categories**: Standard, luxury, cars, and high-risk contraband
 - **Tabbed Interface**: 3 main tabs (Goods, Investments, Bank) with context-sensitive controls
 - **Real-time price updates**: All prices fluctuate dynamically
 - **FIFO Accounting**: First In, First Out inventory and investment tracking
@@ -290,10 +342,36 @@ The game uses a **tabbed interface** with three main tabs:
 - **Multi-Loan System**: Take multiple loans with individual APR (1-20%), daily compounding
 - **Banking System**: Deposit/withdraw with interest accrual (1-3% APR, daily compounding)
 - **Realistic Interest Model**: APR converted to daily rates (APR÷365), fractional cents tracked
-- **Cryptocurrency Trading**: High-risk, high-reward crypto investments
+- **Cryptocurrency Trading**: High-risk, high-reward crypto investments (BTC, ETH, SOL, DOGE)
+- **Stock Market**: 12 real company stocks with realistic volatility
+- **Commodities**: Gold, Oil, Silver, Copper
 - **11 European Cities**: Each with unique price multipliers
 - **Auto-save/Load**: Persistent game state across sessions
 - **Responsive Terminal UI**: Colorful, styled interface using Textual framework
+
+### Domain Architecture
+
+The game follows a clean, modular architecture with separated concerns:
+
+**Domain Layer** (`src/merchant_tycoon/domain/`)
+- **`goods.py`**: 31 tradable products (GOODS constant)
+- **`cities.py`**: 11 European cities with price multipliers (CITIES constant)
+- **`assets.py`**: 20 financial assets - stocks, commodities, crypto (ASSETS constant)
+- **`game_difficulty_levels.py`**: 5 difficulty presets (GAME_DIFFICULTY_LEVELS constant)
+- **`model/`**: Domain models (Good, City, Asset, GameDifficultyLevel, etc.)
+
+**Engine Layer** (`src/merchant_tycoon/engine/`)
+- **GameEngine**: Main game orchestration
+- **GameState**: Game state management
+- **Services**: Business logic (GoodsService, InvestmentsService, BankService, TravelService, etc.)
+
+**UI Layer** (`src/merchant_tycoon/ui/`)
+- **Textual-based TUI**: Modular panels and screens
+- **Context-sensitive controls**: Different keybindings per tab
+
+**Configuration** (`src/merchant_tycoon/config.py`)
+- Centralized settings using Pydantic BaseSettings
+- All game parameters configurable (pricing, fees, rates, events, etc.)
 
 ## 🤖 Created Entirely with AI Agents on board
 
