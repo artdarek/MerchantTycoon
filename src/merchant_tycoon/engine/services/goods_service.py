@@ -52,6 +52,15 @@ class GoodsService:
         self.previous_prices.clear()
         self.previous_prices.update(self.prices)
 
+        # Clear old modifiers from PREVIOUS generation (not current)
+        # This way modifiers set by events will persist for one full price cycle
+        try:
+            old_modifiers = getattr(self.state, '_old_price_modifiers', {})
+            for good_name in old_modifiers:
+                self.state.price_modifiers.pop(good_name, None)
+        except Exception:
+            pass
+
         city = self.cities_repo.get_by_index(self.state.current_city)
         for good in self.goods_repo.get_all():
             variance = random.uniform(1 - good.price_variance, 1 + good.price_variance)
@@ -64,11 +73,12 @@ class GoodsService:
                 modifier = 1.0
             price = int(max(SETTINGS.pricing.min_unit_price, base_price * modifier))
             self.prices[good.name] = price
-        # Clear one-day modifiers after they take effect
+
+        # Mark current modifiers as "old" for next cycle
         try:
-            self.state.price_modifiers.clear()
+            self.state._old_price_modifiers = dict(self.state.price_modifiers)
         except Exception:
-            self.state.price_modifiers = {}
+            pass
 
         # Update rolling price history (keep last 10 per good)
         try:

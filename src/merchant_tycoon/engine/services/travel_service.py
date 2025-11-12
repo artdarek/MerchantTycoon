@@ -93,7 +93,12 @@ class TravelService:
         # Accrue bank interest for the day advance (daily compounding)
         self.bank_service.accrue_bank_interest()
 
-        # Random events (only affect goods, not investments!)
+        # Generate new prices for goods and assets FIRST
+        # (so events can show accurate before/after prices)
+        self.goods_service.generate_prices()
+        self.investments_service.generate_asset_prices()
+
+        # Random events (can set price modifiers and show current prices)
         try:
             events_list = self.events_service.trigger(
                 self.state,
@@ -102,13 +107,14 @@ class TravelService:
                 city=destination_city,
                 bank_service=self.bank_service,
                 goods_service=self.goods_service,
+                investments_service=self.investments_service,
             )
         except Exception:
             events_list = []
 
-        # Generate new prices for goods and assets
-        self.goods_service.generate_prices()
-        self.investments_service.generate_asset_prices()
+        # If events set price modifiers, regenerate prices with those modifiers applied
+        if self.state.price_modifiers:
+            self.goods_service.generate_prices()
 
         city = destination_city
         msg = (
@@ -118,14 +124,7 @@ class TravelService:
         try:
             if self.messenger:
                 self.messenger.info(msg, tag="travel")
-            # Log all events to messenger
-            if events_list and self.messenger:
-                for event_msg, is_positive in events_list:
-                    if is_positive:
-                        # Log gains as warnings per UI color scheme request
-                        self.messenger.warn(event_msg, tag="events")
-                    else:
-                        self.messenger.error(event_msg, tag="events")
+            # Note: Event logging moved to app.py to show messages before modals
         except Exception:
             pass
         return True, msg, events_list

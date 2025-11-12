@@ -235,3 +235,33 @@ class InvestmentsService:
                 hi = mid - 1
         return lo
 
+    # Helper functions for investment events
+    def get_asset_types(self) -> list[str]:
+        """Get all unique asset types (stock, commodity, crypto)."""
+        types = set()
+        for asset in self.assets_repo.get_all():
+            types.add(asset.asset_type)
+        return list(types)
+
+    def get_assets_by_type(self, asset_type: str) -> list["Asset"]:
+        """Get all assets of a specific type."""
+        return [a for a in self.assets_repo.get_all() if a.asset_type == asset_type]
+
+    def get_player_asset_types(self) -> list[str]:
+        """Get asset types currently in player's portfolio."""
+        types = set()
+        for symbol in self.state.portfolio.keys():
+            asset = self.assets_repo.get_by_symbol(symbol)
+            if asset:
+                types.add(asset.asset_type)
+        return list(types)
+
+    def get_player_assets_by_type(self, asset_type: str) -> list[str]:
+        """Get symbols of player's held assets of a specific type."""
+        held = []
+        for symbol in self.state.portfolio.keys():
+            asset = self.assets_repo.get_by_symbol(symbol)
+            if asset and asset.asset_type == asset_type:
+                held.append(symbol)
+        return held
+

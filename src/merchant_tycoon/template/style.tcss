@@ -394,7 +394,8 @@ ConfirmModal, AboutModal, CargoExtendModal, NewGameModal {
 #help-modal Button,
 #about-modal Button,
 #alert-modal-positive Button,
-#alert-modal-negative Button {
+#alert-modal-negative Button,
+#alert-modal-neutral Button {
     height: 3;
     padding: 0 2;
 }
@@ -436,6 +437,14 @@ AlertModal, EventModal {
     width: 50;
     height: auto;
     border: thick #4ea59a;   /* teal */
+    background: #2b3140;
+    padding: 1 2;
+}
+
+#alert-modal-neutral {
+    width: 50;
+    height: auto;
+    border: thick #808080;   /* gray */
     background: #2b3140;
     padding: 1 2;
 }

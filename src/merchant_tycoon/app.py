@@ -431,10 +431,21 @@ class MerchantTycoon(App):
         """Handle travel to new city"""
         success, msg, events_list = self.engine.travel_service.travel(city_index)
         if success:
-            # TravelService logs travel/events
+            # Log events to messenger BEFORE showing modals
             if events_list:
+                for event_msg, event_type in events_list:
+                    if event_type == "gain":
+                        self.engine.messenger.warn(event_msg, tag="events")
+                    elif event_type == "loss":
+                        self.engine.messenger.error(event_msg, tag="events")
+                    else:  # neutral
+                        self.engine.messenger.info(event_msg, tag="events")
+
+                # Refresh messenger panel to show events immediately
+                self.refresh_all()
+
                 # Show events sequentially (blocking modals)
-                # refresh_all() will be called by _show_travel_events after all events are shown
+                # refresh_all() will be called again after all events are shown
                 self._show_travel_events(events_list)
             else:
                 # No events, refresh immediately
@@ -464,12 +475,19 @@ class MerchantTycoon(App):
             self.refresh_all()
             return
 
-        # Get next event
-        event_msg, is_positive = self._pending_events.pop(0)
-        title = "✨ Good News!" if is_positive else "⚠️ Bad News!"
+        # Get next event (now with event_type instead of is_positive)
+        event_msg, event_type = self._pending_events.pop(0)
+
+        # Map event type to title
+        if event_type == "gain":
+            title = "✨ Good News!"
+        elif event_type == "loss":
+            title = "⚠️ Bad News!"
+        else:  # neutral
+            title = "ℹ️ Market Update"
 
         # Create modal with callback to show next event
-        modal = EventModal(title, event_msg, is_positive, self._show_next_event)
+        modal = EventModal(title, event_msg, event_type, self._show_next_event)
         self.push_screen(modal)
 
     def action_loan(self):
