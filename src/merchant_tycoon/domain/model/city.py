@@ -8,11 +8,13 @@ class TravelEventsConfig:
     """Configuration for travel events in a city.
 
     Attributes:
+        probability: Probability that any event occurs when traveling to this city (0-1, required)
         loss_min: Minimum number of loss events (default: 0)
         loss_max: Maximum number of loss events (default: 2)
         gain_min: Minimum number of gain events (default: 0)
         gain_max: Maximum number of gain events (default: 2)
     """
+    probability: float
     loss_min: int = 0
     loss_max: int = 2
     gain_min: int = 0

@@ -46,8 +46,14 @@ class TravelEventsService:
         Returns:
             List of event tuples (message, is_positive). Empty list if no events occur.
         """
+        # Get probability from city config (required)
+        if not city or not hasattr(city, 'travel_events'):
+            raise ValueError("City with travel_events config is required for trigger()")
+
+        probability = float(city.travel_events.probability)
+
         # Overall chance that any event occurs this travel
-        if random.random() >= float(SETTINGS.events.base_probability):
+        if random.random() >= probability:
             return []
         prices = prices or {}
 

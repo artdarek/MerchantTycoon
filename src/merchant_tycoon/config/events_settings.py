@@ -3,8 +3,6 @@ from dataclasses import dataclass
 
 @dataclass(frozen=True)
 class EventsSettings:
-    # Probability that any event occurs on travel (0–1)
-    base_probability: float = 0.25
     # Event probability weights by key (filled in __post_init__)
     weights: dict[str, float] = None
     # Ranges / parameters
