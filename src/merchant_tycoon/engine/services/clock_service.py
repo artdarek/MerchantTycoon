@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime, date as _date, time as _time
+from datetime import datetime, date as _date, time as _time, timedelta as _timedelta
 from typing import TYPE_CHECKING
 
 from merchant_tycoon.config import SETTINGS
@@ -10,7 +10,7 @@ if TYPE_CHECKING:
 
 
 class ClockService:
-    """Provides game-consistent timestamps.
+    """Provides game-consistent timestamps and day advancement.
 
     - Date comes from the in-game calendar (state.date)
     - Time comes from the system clock at the moment of the call
@@ -33,4 +33,17 @@ class ClockService:
 
     def time_str(self) -> str:
         return self.now().strftime("%H:%M:%S")
+
+    def advance_day(self) -> None:
+        """Advance the game day counter and calendar date by one day."""
+        self.state.day += 1
+
+        # Advance calendar date
+        try:
+            current = getattr(self.state, "date", "") or getattr(SETTINGS.game, "start_date", "2025-01-01")
+            d = _date.fromisoformat(str(current)) + _timedelta(days=1)
+            self.state.date = d.isoformat()
+        except Exception:
+            # Keep going even if date parsing fails
+            pass
 

@@ -80,6 +80,8 @@ class GameEngine:
             self.investments_service,
             self.travel_events_service,
             self.cities_repo,
+            self.clock_service,
+            self.messenger,
             self.cargo_service,
         )
         # Savegame service (persistence)

@@ -8,6 +8,7 @@ from merchant_tycoon.config import SETTINGS
 if TYPE_CHECKING:
     from merchant_tycoon.engine.game_state import GameState
     from merchant_tycoon.engine.services.clock_service import ClockService
+    from merchant_tycoon.engine.services.messenger_service import MessengerService
     from merchant_tycoon.engine.services.goods_cargo_service import GoodsCargoService
     from merchant_tycoon.domain.model.good import Good
     from merchant_tycoon.repositories import GoodsRepository, CitiesRepository
@@ -33,9 +34,9 @@ class GoodsService:
         previous_prices: Dict[str, int],
         goods_repository: "GoodsRepository",
         cities_repository: "CitiesRepository",
-        clock_service: Optional["ClockService"] = None,
-        messenger: Optional["MessengerService"] = None,
-        cargo_service: Optional["GoodsCargoService"] = None
+        clock_service: "ClockService",
+        messenger: "MessengerService",
+        cargo_service: "GoodsCargoService"
     ):
         self.state = state
         self.prices = prices

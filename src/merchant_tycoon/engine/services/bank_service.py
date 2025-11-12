@@ -15,10 +15,10 @@ if TYPE_CHECKING:
 class BankService:
     """Service for handling banking operations and loans"""
 
-    def __init__(self, state: "GameState", clock_service: Optional["ClockService"] = None, messenger: Optional["MessengerService"] = None):
+    def __init__(self, state: "GameState", clock_service: "ClockService", messenger: "MessengerService"):
         self.state = state
-        self.clock: Optional["ClockService"] = clock_service
-        self.messenger: Optional["MessengerService"] = messenger
+        self.clock = clock_service
+        self.messenger = messenger
         # Loan interest (offer of the day) — APR for new loans
         self.loan_apr_today = float(SETTINGS.bank.loan_default_apr)
 
@@ -58,7 +58,7 @@ class BankService:
         self.state.cash -= amount
         bank = self.state.bank
         bank.balance += amount
-        ts = (self.clock.now().isoformat(timespec="seconds") if self.clock else f"{getattr(self.state,'date','')}T{datetime.now().strftime('%H:%M:%S')}")
+        ts = self.clock.now().isoformat(timespec="seconds")
         bank.transactions.append(
             BankTransaction(
                 tx_type="deposit",
@@ -69,11 +69,7 @@ class BankService:
                 ts=ts,
             )
         )
-        try:
-            if self.messenger:
-                self.messenger.info(f"Deposited ${amount:,} to bank", tag="bank")
-        except Exception:
-            pass
+        self.messenger.info(f"Deposited ${amount:,} to bank", tag="bank")
         return True, f"Deposited ${amount:,} to bank"
 
     def withdraw_from_bank(self, amount: int) -> tuple[bool, str]:
@@ -85,7 +81,7 @@ class BankService:
             return False, f"Not enough bank balance! Have ${bank.balance:,}"
         bank.balance -= amount
         self.state.cash += amount
-        ts = (self.clock.now().isoformat(timespec="seconds") if self.clock else f"{getattr(self.state,'date','')}T{datetime.now().strftime('%H:%M:%S')}")
+        ts = self.clock.now().isoformat(timespec="seconds")
         bank.transactions.append(
             BankTransaction(
                 tx_type="withdraw",
@@ -96,11 +92,7 @@ class BankService:
                 ts=ts,
             )
         )
-        try:
-            if self.messenger:
-                self.messenger.info(f"Withdrew ${amount:,} from bank", tag="bank")
-        except Exception:
-            pass
+        self.messenger.info(f"Withdrew ${amount:,} from bank", tag="bank")
         return True, f"Withdrew ${amount:,} from bank"
 
     def accrue_bank_interest(self) -> None:
@@ -129,14 +121,11 @@ class BankService:
                         balance_after=bank.balance,
                         day=bank.last_interest_day + i + 1,
                         title="Daily interest",
-                        ts=(self.clock.now().isoformat(timespec="seconds") if self.clock else f"{getattr(self.state,'date','')}T{datetime.now().strftime('%H:%M:%S')}")
+                        ts=self.clock.now().isoformat(timespec="seconds")
                 )
             )
-        try:
-            if self.messenger and credit > 0:
-                self.messenger.info(f"Daily interest credited: ${credit:,}", tag="bank")
-        except Exception:
-            pass
+        if credit > 0:
+            self.messenger.info(f"Daily interest credited: ${credit:,}", tag="bank")
         bank.last_interest_day = current_day
 
     def take_loan(self, amount: int) -> tuple[bool, str]:
@@ -182,21 +171,17 @@ class BankService:
             day_taken=self.state.day,
             rate_annual=apr,
             accrued_interest=0.0,
-            ts=(self.clock.now().isoformat(timespec="seconds") if self.clock else ""),
+            ts=self.clock.now().isoformat(timespec="seconds"),
         )
         self.state.loans.append(loan)
 
         # Apply funds to cash and sync aggregate debt
         self.state.cash += amount
         self._sync_total_debt()
-        try:
-            if self.messenger:
-                self.messenger.info(
-                    f"Loan approved: ${amount:,} (fee ${fee:,}, total repay ${total_to_repay:,}, APR {apr*100:.2f}%)",
-                    tag="bank",
-                )
-        except Exception:
-            pass
+        self.messenger.info(
+            f"Loan approved: ${amount:,} (fee ${fee:,}, total repay ${total_to_repay:,}, APR {apr*100:.2f}%)",
+            tag="bank",
+        )
         return True, (
             f"Loan approved! Received ${amount:,}. "
             f"Commission: ${fee:,} ({fee_rate*100:.0f}%). "
@@ -311,14 +296,10 @@ class BankService:
         # Sync aggregate debt
         self._sync_total_debt()
         msg_suffix = " (fully repaid)" if loan.remaining == 0 else ""
-        try:
-            if self.messenger:
-                self.messenger.info(
-                    f"Paid ${pay:,} towards Loan #{loan.loan_id}. Remaining: ${loan.remaining:,}",
-                    tag="bank",
-                )
-        except Exception:
-            pass
+        self.messenger.info(
+            f"Paid ${pay:,} towards Loan #{loan.loan_id}. Remaining: ${loan.remaining:,}",
+            tag="bank",
+        )
         return True, f"Paid ${pay:,} towards Loan #{loan.loan_id}. Remaining: ${loan.remaining:,}{msg_suffix}"
 
     def repay_loan(self, amount: int) -> tuple[bool, str]:
@@ -409,6 +390,6 @@ class BankService:
                 balance_after=bank.balance,
                 day=self.state.day,
                 title=title or ("Interest" if tx_type == "interest" else "Dividend" if tx_type == "dividend" else ""),
-                ts=(self.clock.now().isoformat(timespec="seconds") if self.clock else f"{getattr(self.state,'date','')}T{datetime.now().strftime('%H:%M:%S')}")
+                ts=self.clock.now().isoformat(timespec="seconds")
             )
         )

@@ -8,6 +8,7 @@ from merchant_tycoon.config import SETTINGS
 if TYPE_CHECKING:
     from merchant_tycoon.engine.game_state import GameState
     from merchant_tycoon.engine.services.clock_service import ClockService
+    from merchant_tycoon.engine.services.messenger_service import MessengerService
     from merchant_tycoon.engine.services.bank_service import BankService
     from merchant_tycoon.domain.model.asset import Asset
     from merchant_tycoon.repositories import AssetsRepository
@@ -22,9 +23,9 @@ class InvestmentsService:
         asset_prices: Dict[str, int],
         previous_asset_prices: Dict[str, int],
         assets_repository: "AssetsRepository",
-        clock_service: Optional["ClockService"] = None,
-        messenger: Optional["MessengerService"] = None,
-        bank_service: Optional["BankService"] = None
+        clock_service: "ClockService",
+        messenger: "MessengerService",
+        bank_service: "BankService"
     ):
         self.state = state
         self.asset_prices = asset_prices
@@ -94,18 +95,14 @@ class InvestmentsService:
             quantity=quantity,
             purchase_price=price,
             day=self.state.day,
-            ts=(self.clock.now().isoformat(timespec="seconds") if getattr(self, 'clock', None) else ""),
+            ts=self.clock.now().isoformat(timespec="seconds"),
         )
         self.state.investment_lots.append(lot)
 
-        try:
-            if self.messenger:
-                self.messenger.info(
-                    f"Bought {quantity}x {symbol} for ${base_cost:,} (fee ${fee:,}, total ${total_cost:,})",
-                    tag="investments",
-                )
-        except Exception:
-            pass
+        self.messenger.info(
+            f"Bought {quantity}x {symbol} for ${base_cost:,} (fee ${fee:,}, total ${total_cost:,})",
+            tag="investments",
+        )
         return True, f"Bought {quantity}x {symbol} for ${total_cost:,}"
 
     def sell_asset(self, symbol: str, quantity: int) -> tuple[bool, str]:
@@ -147,14 +144,10 @@ class InvestmentsService:
         if self.state.portfolio[symbol] == 0:
             del self.state.portfolio[symbol]
 
-        try:
-            if self.messenger:
-                self.messenger.info(
-                    f"Sold {quantity}x {symbol} for ${total_value:,} (fee ${fee:,}, received ${proceeds:,})",
-                    tag="investments",
-                )
-        except Exception:
-            pass
+        self.messenger.info(
+            f"Sold {quantity}x {symbol} for ${total_value:,} (fee ${fee:,}, received ${proceeds:,})",
+            tag="investments",
+        )
         return True, f"Sold {quantity}x {symbol} for ${proceeds:,} (after fee)"
 
     def sell_asset_from_lot(self, symbol: str, lot_ts: str, quantity: int) -> tuple[bool, str]:
@@ -204,14 +197,10 @@ class InvestmentsService:
             del self.state.portfolio[symbol]
         self.state.cash += proceeds
 
-        try:
-            if self.messenger:
-                self.messenger.info(
-                    f"Sold {quantity}x {symbol} (selected lot) for ${total_value:,} (fee ${fee:,}, received ${proceeds:,})",
-                    tag="investments",
-                )
-        except Exception:
-            pass
+        self.messenger.info(
+            f"Sold {quantity}x {symbol} (selected lot) for ${total_value:,} (fee ${fee:,}, received ${proceeds:,})",
+            tag="investments",
+        )
         return True, f"Sold {quantity}x {symbol} for ${proceeds:,} (after fee)"
 
     # Utility to compute max affordable quantity including buy commission
@@ -335,28 +324,22 @@ class InvestmentsService:
 
         # No dividends to pay
         if total_payout == 0:
-            return False, "", 0
+            return None
 
         # Pay dividends to bank account - separate transfer for each asset
-        try:
-            # Use BankService to credit account with separate transaction for each asset
-            if self.bank_service and hasattr(self.state, 'bank') and self.state.bank:
-                for symbol, qty, payout in dividend_details:
-                    self.bank_service.credit(
-                        amount=payout,
-                        tx_type="dividend",
-                        title=f"Dividend payout for {symbol}"
-                    )
-            else:
-                # Fallback: add to cash if no bank service or account
-                self.state.cash += total_payout
-        except Exception:
-            # Fallback: add to cash
-            self.state.cash += total_payout
+        for symbol, qty, payout in dividend_details:
+            self.bank_service.credit(
+                amount=payout,
+                tx_type="dividend",
+                title=f"Dividend payout for {symbol}"
+            )
 
-        # Build short message for messenger (will be logged in app.py)
+        # Log to messenger immediately
         symbols_list = ", ".join([symbol for symbol, _, _ in dividend_details])
-        short_message = f"💰 Dividend payout ${total_payout:,} for {symbols_list}"
+        self.messenger.info(
+            f"💰 Dividend payout ${total_payout:,} for {symbols_list}",
+            tag="investments"
+        )
 
         # Build detailed summary for modal
         summary_lines = []
@@ -365,6 +348,6 @@ class InvestmentsService:
         summary = "\n".join(summary_lines)
         modal_message = f"💰 Dividend Payout!\n\nYou received ${total_payout:,} in dividends:\n{summary}"
 
-        # Return: (has_dividends, short_message, modal_message, total_payout, details)
-        return True, short_message, modal_message, total_payout, dividend_details
+        # Return: (has_dividends, modal_message)
+        return True, modal_message
 

@@ -1,7 +1,6 @@
 from typing import Optional, TYPE_CHECKING
 
 from merchant_tycoon.config import SETTINGS
-from datetime import date as _date, timedelta as _timedelta
 
 if TYPE_CHECKING:
     from merchant_tycoon.engine.game_state import GameState
@@ -10,6 +9,8 @@ if TYPE_CHECKING:
     from merchant_tycoon.engine.services.investments_service import InvestmentsService
     from merchant_tycoon.engine.services.travel_events_service import TravelEventsService
     from merchant_tycoon.engine.services.goods_cargo_service import GoodsCargoService
+    from merchant_tycoon.engine.services.clock_service import ClockService
+    from merchant_tycoon.engine.services.messenger_service import MessengerService
     from merchant_tycoon.repositories import CitiesRepository
 
 
@@ -24,7 +25,9 @@ class TravelService:
         investments_service: "InvestmentsService",
         events_service: "TravelEventsService",
         cities_repository: "CitiesRepository",
-        cargo_service: Optional["GoodsCargoService"] = None,
+        clock_service: "ClockService",
+        messenger_service: "MessengerService",
+        cargo_service: "GoodsCargoService",
     ):
         self.state = state
         self.bank_service = bank_service
@@ -32,54 +35,45 @@ class TravelService:
         self.investments_service = investments_service
         self.events_service = events_service
         self.cities_repo = cities_repository
+        self.clock_service = clock_service
+        self.messenger = messenger_service
         self.cargo_service = cargo_service
-        try:
-            from merchant_tycoon.engine.services.messenger_service import MessengerService
-            # messenger available via bank_service if injected from engine
-            self.messenger = getattr(self.bank_service, 'messenger', None)
-        except Exception:
-            self.messenger = None
 
-    def travel(self, city_index: int) -> tuple[bool, str, Optional[tuple[str, bool]]]:
-        """Travel to a new city. Returns (success, message, event_data) where event_data is (event_msg, is_positive)"""
+    def _calculate_travel_fee(self) -> int:
+        """Calculate travel fee based on cargo space used."""
+        cargo_units = self.cargo_service.get_used_slots()
+        return int(SETTINGS.travel.base_fee) + int(SETTINGS.travel.fee_per_cargo_unit) * cargo_units
+
+    def travel(self, city_index: int) -> tuple[bool, str, list, Optional[str]]:
+        """Travel to a new city.
+
+        Returns:
+            tuple: (success, message, events_list, dividend_modal)
+            - success: bool - whether travel succeeded
+            - message: str - status message
+            - events_list: list of (event_msg, event_type) tuples
+            - dividend_modal: Optional[str] - dividend modal message if any
+        """
         if city_index == self.state.current_city:
-            return False, "Already in this city!", None
+            return False, "Already in this city!", [], None
 
-        # Calculate travel fee from settings (based on cargo space used)
         origin_city = self.cities_repo.get_by_index(self.state.current_city)
         destination_city = self.cities_repo.get_by_index(city_index)
-        try:
-            # Use size-aware cargo calculation if available
-            if self.cargo_service:
-                cargo_units = int(self.cargo_service.get_used_slots())
-            else:
-                # Fallback to simple count
-                cargo_units = int(self.state.get_inventory_count())
-        except Exception:
-            cargo_units = sum(self.state.inventory.values()) if isinstance(self.state.inventory, dict) else 0
-        travel_fee = int(SETTINGS.travel.base_fee) + int(SETTINGS.travel.fee_per_cargo_unit) * cargo_units
 
-        # Ensure player can afford the travel fee
+        # Calculate and validate travel fee
+        travel_fee = self._calculate_travel_fee()
         if self.state.cash < travel_fee:
             return False, (
                 f"Not enough cash to travel! Travel fee from {origin_city.name} to {destination_city.name} is ${travel_fee}. "
                 f"You have ${self.state.cash}."
-            ), None
+            ), [], None
 
         # Deduct travel fee
         self.state.cash -= travel_fee
 
-        # Proceed with travel: advance day and change city
+        # Proceed with travel: change city and advance day
         self.state.current_city = city_index
-        self.state.day += 1
-        try:
-            # Advance calendar date by one day
-            cur = getattr(self.state, "date", "") or getattr(SETTINGS.game, "start_date", "2025-01-01")
-            d = _date.fromisoformat(str(cur)) + _timedelta(days=1)
-            self.state.date = d.isoformat()
-        except Exception:
-            # Keep going even if date parsing fails
-            pass
+        self.clock_service.advance_day()
 
         # Randomize daily interest rates for this new day (1%–20%)
         try:
@@ -123,16 +117,14 @@ class TravelService:
             self.goods_service.generate_prices()
 
         # Check for dividend payouts (happens after price generation)
-        dividend_short_msg = None
-        dividend_modal_msg = None
+        # Returns None if no dividends, or (has_dividend, modal_message) if paid
+        # Messenger logging happens inside calculate_and_pay_dividends
+        dividend_modal = None
         try:
             result = self.investments_service.calculate_and_pay_dividends()
-            if result[0]:  # has_dividend
-                # Unpack: (has_dividends, short_msg, modal_msg, total, details)
-                has_dividend, short_msg, modal_msg, total, details = result
-                # Store both messages - short for messenger, modal for modal
-                dividend_short_msg = short_msg
-                dividend_modal_msg = modal_msg
+            if result:  # Has dividend
+                has_dividend, modal_msg = result
+                dividend_modal = modal_msg
         except Exception:
             pass
 
@@ -141,10 +133,8 @@ class TravelService:
             f"Traveled to {city.name}, {city.country}. "
             f"Travel fee charged: ${travel_fee} for route {origin_city.name} → {destination_city.name}"
         )
-        try:
-            if self.messenger:
-                self.messenger.info(msg, tag="travel")
-            # Note: Event logging moved to app.py to show messages before modals
-        except Exception:
-            pass
-        return True, msg, events_list, dividend_short_msg, dividend_modal_msg
+        self.messenger.info(msg, tag="travel")
+
+        # Return travel result with optional dividend modal
+        # dividend_modal is None if no dividend, or modal message string if dividend paid
+        return True, msg, events_list, dividend_modal
