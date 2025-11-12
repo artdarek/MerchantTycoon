@@ -10,6 +10,7 @@ if TYPE_CHECKING:
     from merchant_tycoon.engine.services.clock_service import ClockService
     from merchant_tycoon.engine.services.messenger_service import MessengerService
     from merchant_tycoon.engine.services.goods_cargo_service import GoodsCargoService
+    from merchant_tycoon.engine.services.wallet_service import WalletService
     from merchant_tycoon.domain.model.good import Good
     from merchant_tycoon.repositories import GoodsRepository, CitiesRepository
 
@@ -36,7 +37,8 @@ class GoodsService:
         cities_repository: "CitiesRepository",
         clock_service: "ClockService",
         messenger: "MessengerService",
-        cargo_service: "GoodsCargoService"
+        cargo_service: "GoodsCargoService",
+        wallet_service: "WalletService"
     ):
         self.state = state
         self.prices = prices
@@ -46,6 +48,7 @@ class GoodsService:
         self.clock = clock_service
         self.messenger = messenger
         self.cargo_service = cargo_service
+        self.wallet = wallet_service
 
     def generate_prices(self) -> None:
         """Generate random prices for current city"""
@@ -108,8 +111,9 @@ class GoodsService:
         price = self.prices[good_name]
         total_cost = price * quantity
 
-        if total_cost > self.state.cash:
-            return False, f"Not enough cash! Need ${total_cost}, have ${self.state.cash}"
+        # Check if player can afford
+        if not self.wallet.can_afford(total_cost):
+            return False, f"Not enough cash! Need ${total_cost:,}, have ${self.wallet.get_balance():,}"
 
         # Check cargo capacity (size-aware)
         if self.cargo_service:
@@ -126,7 +130,9 @@ class GoodsService:
             available = self.state.max_inventory - self.state.get_inventory_count()
             return False, f"Not enough space! Only {available} slots available"
 
-        self.state.cash -= total_cost
+        # Spend cash for purchase
+        if not self.wallet.spend(total_cost):
+            return False, "Payment failed"
         self.state.inventory[good_name] = self.state.inventory.get(good_name, 0) + quantity
 
         # Record purchase lot
@@ -191,7 +197,8 @@ class GoodsService:
         for i in reversed(lots_to_remove):
             self.state.purchase_lots.pop(i)
 
-        self.state.cash += total_value
+        # Earn cash from sale
+        self.wallet.earn(total_value)
         self.state.inventory[good_name] -= quantity
         if self.state.inventory[good_name] == 0:
             del self.state.inventory[good_name]
@@ -256,7 +263,8 @@ class GoodsService:
         if self.state.inventory[good_name] <= 0:
             del self.state.inventory[good_name]
 
-        self.state.cash += total_value
+        # Earn cash from sale
+        self.wallet.earn(total_value)
 
         # Record transaction
         city_name = self.cities_repo.get_by_index(self.state.current_city).name
@@ -315,11 +323,13 @@ class GoodsService:
         else:
             target.quantity -= quantity
 
-        # Update inventory and cash
+        # Update inventory
         self.state.inventory[good_name] = have - quantity
         if self.state.inventory[good_name] <= 0:
             del self.state.inventory[good_name]
-        self.state.cash += total_value
+
+        # Earn salvage value
+        self.wallet.earn(total_value)
 
         # Record transaction
         city_name = self.cities_repo.get_by_index(self.state.current_city).name

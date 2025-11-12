@@ -49,7 +49,12 @@ class GameEngine:
         # Initialize services
         self.clock_service = ClockService(self.state)
         self.messenger = MessengerService(self.state, self.clock_service)
-        self.bank_service = BankService(self.state, self.clock_service, self.messenger)
+
+        # Wallet service for centralized cash operations
+        from merchant_tycoon.engine.services.wallet_service import WalletService
+        self.wallet_service = WalletService(self.state, self.clock_service)
+
+        self.bank_service = BankService(self.state, self.clock_service, self.messenger, self.wallet_service)
         # Initialize cargo service before goods service (goods service depends on it)
         self.cargo_service = GoodsCargoService(self.state, self.goods_repo)
         self.goods_service = GoodsService(
@@ -60,7 +65,8 @@ class GameEngine:
             self.cities_repo,
             self.clock_service,
             self.messenger,
-            self.cargo_service
+            self.cargo_service,
+            self.wallet_service
         )
         self.investments_service = InvestmentsService(
             self.state,
@@ -69,7 +75,8 @@ class GameEngine:
             self.assets_repo,
             self.clock_service,
             self.messenger,
-            self.bank_service
+            self.bank_service,
+            self.wallet_service
         )
         # Event service for travel random encounters
         self.travel_events_service = TravelEventsService(self.assets_repo, self.goods_repo)
@@ -83,6 +90,7 @@ class GameEngine:
             self.clock_service,
             self.messenger,
             self.cargo_service,
+            self.wallet_service,
         )
         # Savegame service (persistence)
         self.savegame_service = SavegameService(self)

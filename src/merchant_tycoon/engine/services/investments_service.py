@@ -10,6 +10,7 @@ if TYPE_CHECKING:
     from merchant_tycoon.engine.services.clock_service import ClockService
     from merchant_tycoon.engine.services.messenger_service import MessengerService
     from merchant_tycoon.engine.services.bank_service import BankService
+    from merchant_tycoon.engine.services.wallet_service import WalletService
     from merchant_tycoon.domain.model.asset import Asset
     from merchant_tycoon.repositories import AssetsRepository
 
@@ -25,7 +26,8 @@ class InvestmentsService:
         assets_repository: "AssetsRepository",
         clock_service: "ClockService",
         messenger: "MessengerService",
-        bank_service: "BankService"
+        bank_service: "BankService",
+        wallet_service: "WalletService"
     ):
         self.state = state
         self.asset_prices = asset_prices
@@ -34,6 +36,7 @@ class InvestmentsService:
         self.clock = clock_service
         self.messenger = messenger
         self.bank_service = bank_service
+        self.wallet = wallet_service
 
     def generate_asset_prices(self) -> None:
         """Generate random prices for stocks and commodities"""
@@ -83,10 +86,11 @@ class InvestmentsService:
         fee = max(min_fee, int(math.ceil(base_cost * rate)))
         total_cost = base_cost + fee
 
-        if total_cost > self.state.cash:
-            return False, f"Not enough cash! Need ${total_cost:,} (incl. fee ${fee:,}), have ${self.state.cash:,}"
+        if not self.wallet.can_afford(total_cost):
+            return False, f"Not enough cash! Need ${total_cost:,} (incl. fee ${fee:,}), have ${self.wallet.get_balance():,}"
 
-        self.state.cash -= total_cost
+        if not self.wallet.spend(total_cost):
+            return False, "Payment failed"
         self.state.portfolio[symbol] = self.state.portfolio.get(symbol, 0) + quantity
 
         # Record investment lot
@@ -139,7 +143,7 @@ class InvestmentsService:
         for i in reversed(lots_to_remove):
             self.state.investment_lots.pop(i)
 
-        self.state.cash += proceeds
+        self.wallet.earn(proceeds)
         self.state.portfolio[symbol] -= quantity
         if self.state.portfolio[symbol] == 0:
             del self.state.portfolio[symbol]
@@ -195,7 +199,7 @@ class InvestmentsService:
         self.state.portfolio[symbol] = have - quantity
         if self.state.portfolio[symbol] <= 0:
             del self.state.portfolio[symbol]
-        self.state.cash += proceeds
+        self.wallet.earn(proceeds)
 
         self.messenger.info(
             f"Sold {quantity}x {symbol} (selected lot) for ${total_value:,} (fee ${fee:,}, received ${proceeds:,})",

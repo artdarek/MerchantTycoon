@@ -10,15 +10,17 @@ if TYPE_CHECKING:
     from merchant_tycoon.engine.game_state import GameState
     from merchant_tycoon.engine.services.clock_service import ClockService
     from merchant_tycoon.engine.services.messenger_service import MessengerService
+    from merchant_tycoon.engine.services.wallet_service import WalletService
 
 
 class BankService:
     """Service for handling banking operations and loans"""
 
-    def __init__(self, state: "GameState", clock_service: "ClockService", messenger: "MessengerService"):
+    def __init__(self, state: "GameState", clock_service: "ClockService", messenger: "MessengerService", wallet_service: "WalletService"):
         self.state = state
         self.clock = clock_service
         self.messenger = messenger
+        self.wallet = wallet_service
         # Loan interest (offer of the day) — APR for new loans
         self.loan_apr_today = float(SETTINGS.bank.loan_default_apr)
 
@@ -53,9 +55,10 @@ class BankService:
         """Deposit cash to bank account."""
         if amount <= 0:
             return False, "Amount must be positive"
-        if amount > self.state.cash:
-            return False, f"Not enough cash! Have ${self.state.cash:,}"
-        self.state.cash -= amount
+        if not self.wallet.can_afford(amount):
+            return False, f"Not enough cash! Have ${self.wallet.get_balance():,}"
+        if not self.wallet.spend(amount):
+            return False, "Payment failed"
         bank = self.state.bank
         bank.balance += amount
         ts = self.clock.now().isoformat(timespec="seconds")
@@ -80,7 +83,7 @@ class BankService:
         if amount > bank.balance:
             return False, f"Not enough bank balance! Have ${bank.balance:,}"
         bank.balance -= amount
-        self.state.cash += amount
+        self.wallet.earn(amount)
         ts = self.clock.now().isoformat(timespec="seconds")
         bank.transactions.append(
             BankTransaction(
@@ -176,7 +179,7 @@ class BankService:
         self.state.loans.append(loan)
 
         # Apply funds to cash and sync aggregate debt
-        self.state.cash += amount
+        self.wallet.earn(amount)
         self._sync_total_debt()
         self.messenger.info(
             f"Loan approved: ${amount:,} (fee ${fee:,}, total repay ${total_to_repay:,}, APR {apr*100:.2f}%)",
@@ -277,8 +280,8 @@ class BankService:
         # Basic validations
         if amount <= 0:
             return False, "Invalid amount"
-        if amount > self.state.cash:
-            return False, f"Not enough cash! Have ${self.state.cash:,}"
+        if not self.wallet.can_afford(amount):
+            return False, f"Not enough cash! Have ${self.wallet.get_balance():,}"
         # Find loan
         loan = next((ln for ln in self.state.loans if ln.loan_id == loan_id), None)
         if loan is None:
@@ -290,7 +293,8 @@ class BankService:
         if pay <= 0:
             return False, "Nothing to repay"
         # Apply repayment
-        self.state.cash -= pay
+        if not self.wallet.spend(pay):
+            return False, "Payment failed"
         loan.remaining -= pay
         loan.repaid += pay
         # Sync aggregate debt
@@ -308,8 +312,8 @@ class BankService:
         """
         if amount <= 0:
             return False, "Invalid amount"
-        if amount > self.state.cash:
-            return False, f"Not enough cash! Have ${self.state.cash:,}"
+        if not self.wallet.can_afford(amount):
+            return False, f"Not enough cash! Have ${self.wallet.get_balance():,}"
         if self.state.debt <= 0:
             return False, "No debt to repay"
         # Pick oldest active loan

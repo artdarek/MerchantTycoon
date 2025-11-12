@@ -11,6 +11,7 @@ if TYPE_CHECKING:
     from merchant_tycoon.engine.services.goods_cargo_service import GoodsCargoService
     from merchant_tycoon.engine.services.clock_service import ClockService
     from merchant_tycoon.engine.services.messenger_service import MessengerService
+    from merchant_tycoon.engine.services.wallet_service import WalletService
     from merchant_tycoon.repositories import CitiesRepository
 
 
@@ -28,6 +29,7 @@ class TravelService:
         clock_service: "ClockService",
         messenger_service: "MessengerService",
         cargo_service: "GoodsCargoService",
+        wallet_service: "WalletService",
     ):
         self.state = state
         self.bank_service = bank_service
@@ -38,6 +40,7 @@ class TravelService:
         self.clock_service = clock_service
         self.messenger = messenger_service
         self.cargo_service = cargo_service
+        self.wallet = wallet_service
 
     def _calculate_travel_fee(self) -> int:
         """Calculate travel fee based on cargo space used."""
@@ -62,14 +65,15 @@ class TravelService:
 
         # Calculate and validate travel fee
         travel_fee = self._calculate_travel_fee()
-        if self.state.cash < travel_fee:
+        if not self.wallet.can_afford(travel_fee):
             return False, (
-                f"Not enough cash to travel! Travel fee from {origin_city.name} to {destination_city.name} is ${travel_fee}. "
-                f"You have ${self.state.cash}."
+                f"Not enough cash to travel! Travel fee from {origin_city.name} to {destination_city.name} is ${travel_fee:,}. "
+                f"You have ${self.wallet.get_balance():,}."
             ), [], None
 
         # Deduct travel fee
-        self.state.cash -= travel_fee
+        if not self.wallet.spend(travel_fee):
+            return False, "Payment failed", [], None
 
         # Proceed with travel: change city and advance day
         self.state.current_city = city_index
