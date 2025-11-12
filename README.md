@@ -285,34 +285,53 @@ The game features **31 unique products** across 4 main categories:
 - Lower risk, lower reward compared to goods trading or investments
 
 #### 🎲 Random Events System
-Travel between cities triggers random events that can affect your journey. Each city has unique event probability and risk profile:
+Travel between cities triggers random events that can affect your journey. Each city has unique event probability and risk profile.
 
-**Event Types:**
-- **Loss Events** (7 types): Robbery, Fire, Flood, Defective Batch, Customs Duty, Stolen Goods, Accidents
-- **Gain Events** (7 types): Dividend, Lottery, Bank Correction, Promotion, Oversupply, Shortage, Loyal Discount
+**Event Categories:**
+Events are now categorized into three types based on their impact:
+
+1. **Loss Events** (8 types) - Red modals (⚠️ Bad News!):
+   - **Inventory/Cash Loss**: Robbery, Fire, Flood, Defective Batch, Customs Duty, Stolen Goods, Accidents
+   - **Portfolio Events**: Portfolio Crash (your held assets of one type crash 30-70%)
+
+2. **Gain Events** (4 types) - Green modals (✨ Good News!):
+   - **Direct Gains**: Dividend, Lottery, Bank Correction
+   - **Portfolio Events**: Portfolio Boom (your held assets of one type surge 150-300%)
+
+3. **Neutral Events** (6 types) - Gray modals (ℹ️ Market Update):
+   - **Goods Price Events**: Promotion, Oversupply, Shortage, Loyal Discount
+   - **Market Events**: Market Boom (all assets of random type surge 150-300%), Market Crash (all assets of random type drop 30-70%)
 
 **Multiple Events Per Journey:**
-- Cities can trigger 0-3 loss events and 0-3 gain events per journey
+- Cities can trigger 0-3 loss events, 0-3 gain events, and 0-2 neutral events per journey
 - Events are displayed sequentially in blocking modals (press Enter to continue)
 - No duplicate events in a single journey
 - Event selection is weighted based on your current game state
 
 **City-Specific Event Configuration:**
 Each city has unique event probability and risk/reward balance:
-- **Safe Cities** (Stockholm, Vienna): 15-18% event chance, 0-1 loss events, 1-3 gain events
-- **Balanced Cities** (Warsaw, Rome, Berlin): 22-25% event chance, 0-2 loss/gain events
-- **Risky Cities** (Prague, Amsterdam): 30-32% event chance, 1-3 loss events, 1-3 gain events
+- **Safe Cities** (Stockholm, Vienna): 15-18% event chance, 0-1 loss events, 1-3 gain events, 1-2 neutral events
+- **Balanced Cities** (Warsaw, Rome, Berlin): 22-25% event chance, 0-2 loss/gain events, 0-1 neutral events
+- **Risky Cities** (Prague, Amsterdam): 30-32% event chance, 1-3 loss events, 1-3 gain events, 1-2 neutral events
+
+**Investment Market Events (NEW!):**
+- **Market Boom/Crash**: Affects ALL assets of a random type (stocks, commodities, or crypto)
+  - Example: "📈 MARKET BOOM! STOCK market surges +180%! GOOGL: $150 → $420, META: $80 → $224, ..."
+- **Portfolio Boom/Crash**: Affects only YOUR held assets of a random type
+  - Example: "💰 PORTFOLIO BOOM! Your stocks surge +220%! Paper gain: $45,000. NVDA: $250 → $800, ..."
+- These events create dramatic market movements and trading opportunities
 
 **Price Events with Details:**
 When events affect prices (Promotion, Oversupply, Shortage, Loyal Discount), you'll see exact price changes:
-- **Example:** "PROMOTION! TV price drops from $1,200 to $600 (-50%)"
+- **Example:** "🏷️ PROMOTION! TV price drops from $1,200 to $600 (−50%)"
 - Plan your purchases around these temporary price modifiers
 
 **Protection Strategy:**
-- Investments (stocks, commodities, crypto) are **immune to all events**
 - Bank deposits are **protected from loss events**
-- Only inventory and cash are vulnerable
-- Strategy: Move wealth to investments/bank before risky city travel
+- Only inventory and cash are vulnerable to loss events
+- Investments can fluctuate with Market Boom/Crash events (neutral impact on all players)
+- Your portfolio specifically can be affected by Portfolio Boom/Crash events
+- Strategy: Diversify across multiple asset types to reduce Portfolio Crash risk
 
 ## 📊 Game Interface
 
@@ -400,9 +419,11 @@ The game uses a **tabbed interface** with three main tabs:
 - **FIFO Accounting**: First In, First Out inventory and investment tracking
 - **Profit/Loss Tracking**: Detailed transaction history with real-time P/L calculations
 - **Advanced Random Event System**:
-  - Multiple events per journey (0-3 loss, 0-3 gain events)
+  - **Three event categories**: Loss (red modals), Gain (green modals), Neutral (gray modals)
+  - Multiple events per journey (0-3 loss, 0-3 gain, 0-2 neutral events)
   - City-specific event probabilities (15-32%)
   - Sequential modal display with detailed information
+  - **Investment Market Events**: Market Boom/Crash (affects all assets of one type), Portfolio Boom/Crash (affects player's holdings)
   - Price events show exact before/after prices
 - **Price Trend Indicators**: Visual ▲▼─ indicators for all assets
 - **Multi-Loan System**: Take multiple loans with individual APR (1-20%), daily compounding

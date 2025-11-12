@@ -13,12 +13,16 @@ class TravelEventsConfig:
         loss_max: Maximum number of loss events (default: 2)
         gain_min: Minimum number of gain events (default: 0)
         gain_max: Maximum number of gain events (default: 2)
+        neutral_min: Minimum number of neutral events (default: 0)
+        neutral_max: Maximum number of neutral events (default: 2)
     """
     probability: float
     loss_min: int = 0
     loss_max: int = 2
     gain_min: int = 0
     gain_max: int = 2
+    neutral_min: int = 0
+    neutral_max: int = 2
 
 
 @dataclass

@@ -1,5 +1,5 @@
 import random
-from typing import TYPE_CHECKING, List, Optional, Callable, Tuple
+from typing import TYPE_CHECKING, List, Optional, Callable, Tuple, Literal
 
 from merchant_tycoon.domain.model.bank_transaction import BankTransaction
 from merchant_tycoon.domain.model.city import City
@@ -8,6 +8,9 @@ from datetime import datetime
 
 if TYPE_CHECKING:
     from merchant_tycoon.repositories import AssetsRepository, GoodsRepository
+
+# Event type literals
+EventType = Literal["loss", "gain", "neutral"]
 
 
 class TravelEventsService:
@@ -32,7 +35,7 @@ class TravelEventsService:
         self.assets_repo = assets_repository
         self.goods_repo = goods_repository
 
-    def trigger(self, state, prices: dict, asset_prices: dict, city: Optional[City] = None, bank_service=None, goods_service=None) -> List[Tuple[str, bool]]:
+    def trigger(self, state, prices: dict, asset_prices: dict, city: Optional[City] = None, bank_service=None, goods_service=None, investments_service=None) -> List[Tuple[str, EventType]]:
         """Trigger multiple weighted random travel events based on city configuration.
 
         Parameters:
@@ -42,9 +45,11 @@ class TravelEventsService:
             city: Optional City object with travel_events config (defaults to 0-2 for both)
             bank_service: optional bank service to credit amounts into bank history
             goods_service: optional goods service for loss accounting
+            investments_service: optional investments service for portfolio events
 
         Returns:
-            List of event tuples (message, is_positive). Empty list if no events occur.
+            List of event tuples (message, event_type). Empty list if no events occur.
+            event_type can be: "loss", "gain", or "neutral"
         """
         # Get probability from city config (required)
         if not city or not hasattr(city, 'travel_events'):
@@ -108,9 +113,9 @@ class TravelEventsService:
             except Exception:
                 state.cash += int(amount)
 
-        # Event handlers (side-effecting), each returns (message, is_positive) or None if not applicable
-        # LOSS EVENTS
-        def evt_robbery() -> Optional[tuple[str, bool]]:
+        # Event handlers (side-effecting), each returns (message, event_type) or None if not applicable
+        # LOSS EVENTS (event_type = "loss")
+        def evt_robbery() -> Optional[tuple[str, EventType]]:
             if not state.inventory:
                 return None
             good = random.choice(list(state.inventory.keys()))
@@ -131,9 +136,9 @@ class TravelEventsService:
                 state.inventory[good] = max(0, qty - lost)
             if state.inventory.get(good, 0) <= 0:
                 state.inventory.pop(good, None)
-            return (f"🚨 ROBBERY! Lost {lost}x {good}.", False)
+            return (f"🚨 ROBBERY! Lost {lost}x {good}.", "loss")
 
-        def evt_fire() -> Optional[tuple[str, bool]]:
+        def evt_fire() -> Optional[tuple[str, EventType]]:
             if not state.inventory:
                 return None
             # Destroy a portion of total inventory, spread across goods
@@ -164,9 +169,9 @@ class TravelEventsService:
                     state.inventory.pop(g, None)
             if not destroyed:
                 return None
-            return ("🔥 WAREHOUSE FIRE! Destroyed " + ", ".join(destroyed) + ".", False)
+            return ("🔥 WAREHOUSE FIRE! Destroyed " + ", ".join(destroyed) + ".", "loss")
 
-        def evt_flood() -> Optional[tuple[str, bool]]:
+        def evt_flood() -> Optional[tuple[str, EventType]]:
             if not state.inventory:
                 return None
             # Heavier than fire
@@ -197,9 +202,9 @@ class TravelEventsService:
                     state.inventory.pop(g, None)
             if not destroyed:
                 return None
-            return ("🌊 FLOOD! Destroyed " + ", ".join(destroyed) + ".", False)
+            return ("🌊 FLOOD! Destroyed " + ", ".join(destroyed) + ".", "loss")
 
-        def evt_defective_batch() -> Optional[tuple[str, bool]]:
+        def evt_defective_batch() -> Optional[tuple[str, EventType]]:
             # Remove last purchased lot of a random good that you still hold
             lots = state.purchase_lots
             if not lots:
@@ -224,10 +229,10 @@ class TravelEventsService:
                         state.inventory[g] = max(0, qty - remove)
                     if state.inventory.get(g, 0) <= 0:
                         state.inventory.pop(g, None)
-                    return (f"🛠️ DEFECTIVE BATCH! Supplier bankrupt. Lost {remove}x {g} (last lot).", False)
+                    return (f"🛠️ DEFECTIVE BATCH! Supplier bankrupt. Lost {remove}x {g} (last lot).", "loss")
             return None
 
-        def evt_customs_duty() -> Optional[tuple[str, bool]]:
+        def evt_customs_duty() -> Optional[tuple[str, EventType]]:
             if not state.inventory:
                 return None
             value = inv_total_value()
@@ -237,9 +242,9 @@ class TravelEventsService:
             rate = random.uniform(lo, hi)
             fee = max(1, int(value * rate))
             state.cash -= fee
-            return (f"🧾 CUSTOMS DUTY! Paid ${fee:,} ({int(rate*100)}%) on your goods.", False)
+            return (f"🧾 CUSTOMS DUTY! Paid ${fee:,} ({int(rate*100)}%) on your goods.", "loss")
 
-        def evt_stolen_last_buy() -> Optional[tuple[str, bool]]:
+        def evt_stolen_last_buy() -> Optional[tuple[str, EventType]]:
             # Confiscate last purchase if exists and still held
             txs = state.transaction_history
             if not txs:
@@ -265,9 +270,9 @@ class TravelEventsService:
                 state.inventory[g] = max(0, have - remove)
             if state.inventory.get(g, 0) <= 0:
                 state.inventory.pop(g, None)
-            return (f"🚔 STOLEN GOODS! Your last purchase was confiscated: lost {remove}x {g}.", False)
+            return (f"🚔 STOLEN GOODS! Your last purchase was confiscated: lost {remove}x {g}.", "loss")
 
-        def evt_cash_damage() -> Optional[tuple[str, bool]]:
+        def evt_cash_damage() -> Optional[tuple[str, EventType]]:
             # Generic accident costing cash, scaled by current cash
             lo, hi = SETTINGS.events.cash_damage_pct
             base = int(state.cash * random.uniform(lo, hi))
@@ -275,10 +280,10 @@ class TravelEventsService:
             if damage <= 0:
                 return None
             state.cash -= damage
-            return (f"💥 ACCIDENT! Paid ${damage:,} in damages.", False)
+            return (f"💥 ACCIDENT! Paid ${damage:,} in damages.", "loss")
 
-        # GAIN EVENTS
-        def evt_dividend() -> Optional[tuple[str, bool]]:
+        # GAIN EVENTS (event_type = "gain")
+        def evt_dividend() -> Optional[tuple[str, EventType]]:
             # Pay dividend for a held stock (not commodity/crypto)
             stock_symbols = self.assets_repo.get_stock_symbols()
             held_stocks = [sym for sym, qty in (state.portfolio or {}).items() if qty > 0 and sym in stock_symbols]
@@ -295,17 +300,17 @@ class TravelEventsService:
             payout = max(1, int(qty * price * pct))
             # Prefer bank credit if bank exists
             bank_credit(payout, tx_type="interest", title=f"Dividend for {sym}")
-            return (f"💸 DIVIDEND! {sym} paid you ${payout:,} (≈{pct*100:.1f}% of position) credited to bank.", True)
+            return (f"💸 DIVIDEND! {sym} paid you ${payout:,} (≈{pct*100:.1f}% of position) credited to bank.", "gain")
 
-        def evt_lottery() -> Optional[tuple[str, bool]]:
+        def evt_lottery() -> Optional[tuple[str, EventType]]:
             # Simulate 3/4/5/6 hits
             tier = random.choices(SETTINGS.events.lottery_tiers, weights=SETTINGS.events.lottery_weights, k=1)[0]
             low, high = SETTINGS.events.lottery_reward_ranges.get(tier, (200, 600))
             win = random.randint(low, high)
             state.cash += win
-            return (f"🎟️ LOTTERY! You matched {tier} numbers and won ${win:,}!", True)
+            return (f"🎟️ LOTTERY! You matched {tier} numbers and won ${win:,}!", "gain")
 
-        def evt_bank_correction() -> Optional[tuple[str, bool]]:
+        def evt_bank_correction() -> Optional[tuple[str, EventType]]:
             # Bank miscalculated interest; credit if account exists
             try:
                 bal = int(getattr(state.bank, 'balance', 0))
@@ -317,9 +322,10 @@ class TravelEventsService:
             pct = random.uniform(lo, hi)
             amount = max(SETTINGS.events.bank_correction_min, int(bal * pct))
             bank_credit(amount, tx_type="interest", title="Interest correction from bank")
-            return (f"🏦 BANK CORRECTION! Extra interest ${amount:,} credited to your account.", True)
+            return (f"🏦 BANK CORRECTION! Extra interest ${amount:,} credited to your account.", "gain")
 
-        def evt_promo_good() -> Optional[tuple[str, bool]]:
+        # NEUTRAL EVENTS (event_type = "neutral" - price changes only)
+        def evt_promo_good() -> Optional[tuple[str, EventType]]:
             # Promotion - price down 30%–60% for a random good (next prices)
             goods = _all_goods_names()
             if not goods:
@@ -335,11 +341,11 @@ class TravelEventsService:
             discount_pct = int((1 - mult) * 100)
 
             if old_price > 0 and new_price > 0:
-                return (f"🏷️ PROMOTION! {good} price drops from ${old_price:,} to ${new_price:,} (−{discount_pct}%).", True)
+                return (f"🏷️ PROMOTION! {good} price drops from ${old_price:,} to ${new_price:,} (−{discount_pct}%).", "neutral")
             else:
-                return (f"🏷️ PROMOTION! {good} will be cheaper today (−{discount_pct}%).", True)
+                return (f"🏷️ PROMOTION! {good} will be cheaper today (−{discount_pct}%).", "neutral")
 
-        def evt_oversupply() -> Optional[tuple[str, bool]]:
+        def evt_oversupply() -> Optional[tuple[str, EventType]]:
             # Very low price for random good
             goods = _all_goods_names()
             if not goods:
@@ -355,11 +361,11 @@ class TravelEventsService:
             discount_pct = int((1 - mult) * 100)
 
             if old_price > 0 and new_price > 0:
-                return (f"📉 OVERSUPPLY! {good} price crashes from ${old_price:,} to ${new_price:,} (−{discount_pct}%).", True)
+                return (f"📉 OVERSUPPLY! {good} price crashes from ${old_price:,} to ${new_price:,} (−{discount_pct}%).", "neutral")
             else:
-                return (f"📉 OVERSUPPLY! {good} prices plunge (−{discount_pct}%).", True)
+                return (f"📉 OVERSUPPLY! {good} prices plunge (−{discount_pct}%).", "neutral")
 
-        def evt_shortage() -> Optional[tuple[str, bool]]:
+        def evt_shortage() -> Optional[tuple[str, EventType]]:
             goods = _all_goods_names()
             if not goods:
                 return None
@@ -373,11 +379,11 @@ class TravelEventsService:
             new_price = int(old_price * mult) if old_price > 0 else 0
 
             if old_price > 0 and new_price > 0:
-                return (f"📈 SHORTAGE! {good} price surges from ${old_price:,} to ${new_price:,} (≈×{mult:.1f}).", True)
+                return (f"📈 SHORTAGE! {good} price surges from ${old_price:,} to ${new_price:,} (≈×{mult:.1f}).", "neutral")
             else:
-                return (f"📈 SHORTAGE! {good} prices soar (≈×{mult:.1f}).", True)
+                return (f"📈 SHORTAGE! {good} prices soar (≈×{mult:.1f}).", "neutral")
 
-        def evt_loyal_discount() -> Optional[tuple[str, bool]]:
+        def evt_loyal_discount() -> Optional[tuple[str, EventType]]:
             # Loyal customer special: 95% discount on a random good for today
             goods = _all_goods_names()
             if not goods:
@@ -391,9 +397,138 @@ class TravelEventsService:
             new_price = int(old_price * mult) if old_price > 0 else 0
 
             if old_price > 0 and new_price > 0:
-                return (f"🤝 LOYAL CUSTOMER! 95% discount on {good}: ${old_price:,} → ${new_price:,} (today only)!", True)
+                return (f"🤝 LOYAL CUSTOMER! 95% discount on {good}: ${old_price:,} → ${new_price:,} (today only)!", "neutral")
             else:
-                return (f"🤝 LOYAL CUSTOMER! As a valued customer you get 95% discount on {good} (today only)!", True)
+                return (f"🤝 LOYAL CUSTOMER! As a valued customer you get 95% discount on {good} (today only)!", "neutral")
+
+        # INVESTMENT EVENTS (neutral/gain/loss - affecting asset prices and portfolios)
+        def evt_market_boom() -> Optional[tuple[str, EventType]]:
+            # Market Boom: Random asset type, all assets of that type boom (150-300% max price)
+            if not investments_service:
+                return None
+            asset_types = investments_service.get_asset_types()
+            if not asset_types:
+                return None
+            chosen_type = random.choice(asset_types)
+            assets = investments_service.get_assets_by_type(chosen_type)
+            if not assets:
+                return None
+
+            # Set price multiplier for all assets of this type (150-300% of current price)
+            mult = random.uniform(1.5, 3.0)
+            affected = []
+            for asset in assets:
+                old_price = asset_prices.get(asset.symbol, 0)
+                if old_price > 0:
+                    new_price = int(old_price * mult)
+                    asset_prices[asset.symbol] = new_price
+                    affected.append(f"{asset.symbol}: ${old_price:,} → ${new_price:,}")
+
+            if affected:
+                pct_change = int((mult - 1) * 100)
+                sample = ', '.join(affected[:3])  # Show first 3
+                more = f" (+{len(affected) - 3} more)" if len(affected) > 3 else ""
+                return (f"📈 MARKET BOOM! {chosen_type.upper()} market surges +{pct_change}%! {sample}{more}", "neutral")
+            else:
+                return None
+
+        def evt_market_crash() -> Optional[tuple[str, EventType]]:
+            # Market Crash: Random asset type, all assets of that type crash (30-70% of current price)
+            if not investments_service:
+                return None
+            asset_types = investments_service.get_asset_types()
+            if not asset_types:
+                return None
+            chosen_type = random.choice(asset_types)
+            assets = investments_service.get_assets_by_type(chosen_type)
+            if not assets:
+                return None
+
+            # Set price multiplier for all assets of this type (30-70% of current price)
+            mult = random.uniform(0.3, 0.7)
+            affected = []
+            for asset in assets:
+                old_price = asset_prices.get(asset.symbol, 0)
+                if old_price > 0:
+                    new_price = int(old_price * mult)
+                    asset_prices[asset.symbol] = new_price
+                    affected.append(f"{asset.symbol}: ${old_price:,} → ${new_price:,}")
+
+            if affected:
+                pct_change = int((1 - mult) * 100)
+                sample = ', '.join(affected[:3])  # Show first 3
+                more = f" (+{len(affected) - 3} more)" if len(affected) > 3 else ""
+                return (f"📉 MARKET CRASH! {chosen_type.upper()} market plunges −{pct_change}%! {sample}{more}", "neutral")
+            else:
+                return None
+
+        def evt_portfolio_boom() -> Optional[tuple[str, EventType]]:
+            # Portfolio Boom: Player's held asset group booms (150-300% max price)
+            if not investments_service:
+                return None
+            player_types = investments_service.get_player_asset_types()
+            if not player_types:
+                return None
+            chosen_type = random.choice(player_types)
+            player_symbols = investments_service.get_player_assets_by_type(chosen_type)
+            if not player_symbols:
+                return None
+
+            # Set price multiplier for player's held assets
+            mult = random.uniform(1.5, 3.0)
+            affected = []
+            total_gain = 0
+            for symbol in player_symbols:
+                qty = state.portfolio.get(symbol, 0)
+                old_price = asset_prices.get(symbol, 0)
+                if old_price > 0 and qty > 0:
+                    new_price = int(old_price * mult)
+                    asset_prices[symbol] = new_price
+                    gain = (new_price - old_price) * qty
+                    total_gain += gain
+                    affected.append(f"{symbol}: ${old_price:,} → ${new_price:,}")
+
+            if affected and total_gain > 0:
+                pct_change = int((mult - 1) * 100)
+                sample = ', '.join(affected[:3])
+                more = f" (+{len(affected) - 3} more)" if len(affected) > 3 else ""
+                return (f"💰 PORTFOLIO BOOM! Your {chosen_type}s surge +{pct_change}%! Paper gain: ${total_gain:,}. {sample}{more}", "gain")
+            else:
+                return None
+
+        def evt_portfolio_crash() -> Optional[tuple[str, EventType]]:
+            # Portfolio Crash: Player's held asset group crashes (30-70% of current price)
+            if not investments_service:
+                return None
+            player_types = investments_service.get_player_asset_types()
+            if not player_types:
+                return None
+            chosen_type = random.choice(player_types)
+            player_symbols = investments_service.get_player_assets_by_type(chosen_type)
+            if not player_symbols:
+                return None
+
+            # Set price multiplier for player's held assets
+            mult = random.uniform(0.3, 0.7)
+            affected = []
+            total_loss = 0
+            for symbol in player_symbols:
+                qty = state.portfolio.get(symbol, 0)
+                old_price = asset_prices.get(symbol, 0)
+                if old_price > 0 and qty > 0:
+                    new_price = int(old_price * mult)
+                    asset_prices[symbol] = new_price
+                    loss = (old_price - new_price) * qty
+                    total_loss += loss
+                    affected.append(f"{symbol}: ${old_price:,} → ${new_price:,}")
+
+            if affected and total_loss > 0:
+                pct_change = int((1 - mult) * 100)
+                sample = ', '.join(affected[:3])
+                more = f" (+{len(affected) - 3} more)" if len(affected) > 3 else ""
+                return (f"💸 PORTFOLIO CRASH! Your {chosen_type}s plunge −{pct_change}%! Paper loss: ${total_loss:,}. {sample}{more}", "loss")
+            else:
+                return None
 
         # Build event table with explicit can/apply and weights (no side effects during can)
         class _Evt:
@@ -435,9 +570,12 @@ class TravelEventsService:
             except Exception:
                 return False
 
+        def has_portfolio() -> bool:
+            return bool(state.portfolio) and any(qty > 0 for qty in state.portfolio.values())
+
         w = SETTINGS.events.weights
 
-        # Separate events into loss and gain categories
+        # Separate events into loss, gain, and neutral categories
         loss_events: List[_Evt] = [
             _Evt(has_inventory, evt_robbery, w.get("robbery", 8)),
             _Evt(has_inventory, evt_fire, w.get("fire", 5)),
@@ -446,29 +584,39 @@ class TravelEventsService:
             _Evt(inv_value_positive, evt_customs_duty, w.get("customs_duty", 6)),
             _Evt(has_last_buy_with_inventory, evt_stolen_last_buy, w.get("stolen_last_buy", 5)),
             _Evt(has_cash, evt_cash_damage, w.get("cash_damage", 4)),
+            _Evt(has_portfolio, evt_portfolio_crash, w.get("portfolio_crash", 3)),
         ]
 
         gain_events: List[_Evt] = [
             _Evt(holds_any_stock, evt_dividend, w.get("dividend", 6)),
             _Evt(lambda: True, evt_lottery, w.get("lottery", 3)),
             _Evt(bank_has_balance, evt_bank_correction, w.get("bank_correction", 4)),
+            _Evt(has_portfolio, evt_portfolio_boom, w.get("portfolio_boom", 3)),
+        ]
+
+        neutral_events: List[_Evt] = [
             _Evt(lambda: True, evt_promo_good, w.get("promo", 5)),
             _Evt(lambda: True, evt_oversupply, w.get("oversupply", 4)),
             _Evt(lambda: True, evt_shortage, w.get("shortage", 4)),
             _Evt(lambda: True, evt_loyal_discount, w.get("loyal_discount", 1)),
+            _Evt(lambda: True, evt_market_boom, w.get("market_boom", 2)),
+            _Evt(lambda: True, evt_market_crash, w.get("market_crash", 2)),
         ]
 
-        # Get city config (default to 0-2 for both if city not provided)
+        # Get city config (default to 0-2 for all if city not provided)
         if city and hasattr(city, 'travel_events'):
             cfg = city.travel_events
             loss_min, loss_max = cfg.loss_min, cfg.loss_max
             gain_min, gain_max = cfg.gain_min, cfg.gain_max
+            neutral_min = getattr(cfg, 'neutral_min', 0)
+            neutral_max = getattr(cfg, 'neutral_max', 2)
         else:
             loss_min, loss_max = 0, 2
             gain_min, gain_max = 0, 2
+            neutral_min, neutral_max = 0, 2
 
         # Helper to select weighted event without replacement
-        def select_event(event_pool: List[_Evt], used_events: set) -> Optional[Tuple[str, bool]]:
+        def select_event(event_pool: List[_Evt], used_events: set) -> Optional[Tuple[str, EventType]]:
             eligible = [e for e in event_pool if e.w > 0 and e.can() and e.apply not in used_events]
             if not eligible:
                 return None
@@ -489,7 +637,7 @@ class TravelEventsService:
             return result
 
         # Generate multiple events
-        selected_events: List[Tuple[str, bool]] = []
+        selected_events: List[Tuple[str, EventType]] = []
         used_events: set = set()
 
         # Select loss events
@@ -503,6 +651,13 @@ class TravelEventsService:
         gain_count = random.randint(gain_min, gain_max)
         for _ in range(gain_count):
             result = select_event(gain_events, used_events)
+            if result:
+                selected_events.append(result)
+
+        # Select neutral events
+        neutral_count = random.randint(neutral_min, neutral_max)
+        for _ in range(neutral_count):
+            result = select_event(neutral_events, used_events)
             if result:
                 selected_events.append(result)
 
