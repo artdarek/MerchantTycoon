@@ -1,4 +1,4 @@
-.PHONY: help venv install install-dev sync upgrade run clean test lint format bin bin-clean
+.PHONY: help venv install install-dev sync upgrade run clean test lint format build build-macos build-clean
 
 help:  ## Show this help message
 	@echo "Available commands:"
@@ -54,8 +54,8 @@ venv:  ## Create a virtual environment using uv (create if missing; show how to 
 install:  ## Install the game in production mode
 	uv pip install .
 
-install-dev:  ## Install the game in development mode (editable)
-	uv pip install -e .
+install-dev:  ## Install the game in development mode with dev dependencies (editable)
+	uv pip install -e '.[dev]'
 
 sync:  ## Sync dependencies from pyproject.toml (creates/updates uv.lock)
 	uv sync
@@ -87,3 +87,56 @@ lint:  ## Run code linting (placeholder)
 format:  ## Format code (placeholder)
 	@echo "Formatting not configured yet"
 	@echo "Consider adding: ruff format src/"
+
+build:  ## Interactive build menu (choose platform or clean)
+	@echo "Build Options:"
+	@echo "  [m] Build for macOS"
+	@echo "  [x] Delete old build"
+	@echo "  [q] Quit (default)"
+	@printf "Enter choice: "; read ans; \
+	case "$$ans" in \
+		[Mm]) \
+			$(MAKE) build-macos; \
+			;; \
+		[Xx]) \
+			$(MAKE) build-clean; \
+			;; \
+		[Qq]) \
+			echo "Quit."; \
+			;; \
+		*) \
+			echo "Quit."; \
+			;; \
+	esac
+
+build-macos:  ## Build standalone macOS executable and .app bundle
+	@echo "Building macOS application..."
+	@echo ""
+	@echo "Step 1/3: Checking PyInstaller..."
+	@command -v pyinstaller >/dev/null 2>&1 || { echo "PyInstaller not found. Install dev dependencies with: uv pip install -e .[dev]"; exit 1; }
+	@echo "Step 2/3: Building executable with PyInstaller..."
+	python3 -m PyInstaller \
+		--name="Merchant Tycoon" \
+		--onefile \
+		--collect-all textual \
+		--collect-all rich \
+		--add-data="src/merchant_tycoon/template/style.tcss:merchant_tycoon/template" \
+		src/merchant_tycoon/__main__.py
+	@echo ""
+	@echo "Step 3/3: Creating .app bundle wrapper..."
+	./scripts/build/create_app_bundle.sh
+	@echo ""
+	@echo "✅ Build complete!"
+	@echo "   Terminal executable: dist/Merchant Tycoon"
+	@echo "   App bundle: dist/Merchant Tycoon.app"
+	@echo ""
+	@echo "To run:"
+	@echo "  open \"dist/Merchant Tycoon.app\""
+	@echo ""
+	@echo "To install:"
+	@echo "  cp -r \"dist/Merchant Tycoon.app\" /Applications/"
+
+build-clean:  ## Clean build artifacts (build, dist, *.spec)
+	@echo "Cleaning build artifacts..."
+	rm -rf build/ dist/ *.spec
+	@echo "✅ Build artifacts cleaned"

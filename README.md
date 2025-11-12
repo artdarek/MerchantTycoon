@@ -2,7 +2,7 @@
 
 A terminal-based trading game where you buy low, sell high, travel between cities, and build your fortune through smart trading and investing!
 
-![Python](https://img.shields.io/badge/python-3.8+-blue.svg)
+![Python](https://img.shields.io/badge/python-3.13+-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Made with Claude Code](https://img.shields.io/badge/Made%20with-Claude%20Code-purple.svg)
 
@@ -438,6 +438,59 @@ The game follows a clean, modular architecture with separated concerns:
 **Configuration** (`src/merchant_tycoon/config.py`)
 - Centralized settings using Pydantic BaseSettings
 - All game parameters configurable (pricing, fees, rates, events, etc.)
+
+## 🛠️ Development & Building
+
+### Development Setup
+
+To contribute or develop the game, install with dev dependencies:
+
+```bash
+# Clone the repository
+git clone https://github.com/artdarek/MerchantTycoon.git
+cd MerchantTycoon
+
+# Create virtual environment
+make venv
+source .venv/bin/activate
+
+# Install with dev dependencies (includes PyInstaller for building)
+uv pip install -e .[dev]
+
+# Run the game
+make run
+```
+
+### Building macOS Application
+
+Build a standalone macOS .app bundle:
+
+```bash
+# Build both executable and .app bundle
+make build-macos
+
+# Clean build artifacts
+make build-clean
+```
+
+This creates:
+- `dist/Merchant Tycoon` - Terminal executable (~13.5 MB)
+- `dist/Merchant Tycoon.app` - Double-clickable macOS app
+
+For detailed build instructions, see [BUILD.md](docs/BUILD.md).
+
+### Available Make Commands
+
+```bash
+make help          # Show all available commands
+make venv          # Create/manage virtual environment
+make sync          # Install dependencies from uv.lock
+make install-dev   # Install in development mode
+make run           # Run the game
+make clean         # Clean all build artifacts
+make build-macos   # Build macOS application
+make build-clean   # Clean build artifacts only
+```
 
 ## 🤖 Created Entirely with AI Agents on board
 
