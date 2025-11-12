@@ -26,6 +26,9 @@ class InvestmentLot:
         days_held: Number of days this lot has been held. Incremented daily.
             Used to determine dividend eligibility based on minimum holding period.
             Starts at 0 when lot is created.
+        dividend_paid: Total cumulative dividends paid for this lot in dollars.
+            Updated each time a dividend is paid. Used to track passive income per lot.
+            Starts at 0 when lot is created.
 
     Examples:
         >>> google_lot = InvestmentLot(
@@ -55,3 +58,4 @@ class InvestmentLot:
     day: int
     ts: str = ""  # ISO datetime when lot was created
     days_held: int = 0  # Days held, incremented daily for dividend eligibility
+    dividend_paid: int = 0  # Total cumulative dividends paid for this lot

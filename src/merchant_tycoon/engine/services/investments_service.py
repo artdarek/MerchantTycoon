@@ -322,6 +322,9 @@ class InvestmentsService:
 
             total_payout += lot_payout
 
+            # Update cumulative dividend paid for this lot
+            lot.dividend_paid = getattr(lot, 'dividend_paid', 0) + lot_payout
+
             # Track for summary message
             existing = next((d for d in dividend_details if d[0] == lot.asset_symbol), None)
             if existing:
