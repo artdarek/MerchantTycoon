@@ -8,6 +8,7 @@ from merchant_tycoon.config import SETTINGS
 if TYPE_CHECKING:
     from merchant_tycoon.engine.game_state import GameState
     from merchant_tycoon.engine.services.clock_service import ClockService
+    from merchant_tycoon.engine.services.bank_service import BankService
     from merchant_tycoon.domain.model.asset import Asset
     from merchant_tycoon.repositories import AssetsRepository
 
@@ -22,7 +23,8 @@ class InvestmentsService:
         previous_asset_prices: Dict[str, int],
         assets_repository: "AssetsRepository",
         clock_service: Optional["ClockService"] = None,
-        messenger: Optional["MessengerService"] = None
+        messenger: Optional["MessengerService"] = None,
+        bank_service: Optional["BankService"] = None
     ):
         self.state = state
         self.asset_prices = asset_prices
@@ -30,6 +32,7 @@ class InvestmentsService:
         self.assets_repo = assets_repository
         self.clock = clock_service
         self.messenger = messenger
+        self.bank_service = bank_service
 
     def generate_asset_prices(self) -> None:
         """Generate random prices for stocks and commodities"""
@@ -264,4 +267,101 @@ class InvestmentsService:
             if asset and asset.asset_type == asset_type:
                 held.append(symbol)
         return held
+
+    # Dividend system methods
+    def increment_lot_holding_days(self) -> None:
+        """Increment days_held for all investment lots. Called daily during travel."""
+        for lot in self.state.investment_lots:
+            lot.days_held = getattr(lot, 'days_held', 0) + 1
+
+    def calculate_and_pay_dividends(self) -> tuple[bool, str, int]:
+        """Calculate and pay dividends for eligible lots.
+
+        Returns:
+            tuple[bool, str, int]: (has_dividends, message, total_payout)
+        """
+        interval = int(SETTINGS.investments.dividend_interval_days)
+        min_holding = int(SETTINGS.investments.dividend_min_holding_days)
+
+        # Check if dividends are enabled
+        if interval <= 0:
+            return False, "", 0
+
+        # Check if it's dividend payout day
+        if self.state.day % interval != 0:
+            return False, "", 0
+
+        total_payout = 0
+        dividend_details = []  # List of (symbol, quantity, payout) tuples
+
+        # Process each lot
+        for lot in self.state.investment_lots:
+            # Check if lot meets minimum holding period
+            days_held = getattr(lot, 'days_held', 0)
+            if days_held < min_holding:
+                continue
+
+            # Get asset and check for dividend rate
+            asset = self.assets_repo.get_by_symbol(lot.asset_symbol)
+            if not asset or asset.dividend_rate <= 0:
+                continue
+
+            # Calculate dividend for this lot
+            current_price = self.asset_prices.get(lot.asset_symbol, 0)
+            if current_price <= 0:
+                continue
+
+            # Payout = (current_price * dividend_rate) per share * quantity
+            # Example: 100 shares of CDR at $200, dividend_rate=0.001
+            # Per share dividend: $200 * 0.001 = $0.20
+            # Total payout: $0.20 * 100 = $20
+            per_share_dividend = current_price * asset.dividend_rate
+            lot_payout = per_share_dividend * lot.quantity
+            # Round up to at least $1 if payout > 0
+            lot_payout = max(1, int(math.ceil(lot_payout)))
+
+            total_payout += lot_payout
+
+            # Track for summary message
+            existing = next((d for d in dividend_details if d[0] == lot.asset_symbol), None)
+            if existing:
+                idx = dividend_details.index(existing)
+                dividend_details[idx] = (existing[0], existing[1] + lot.quantity, existing[2] + lot_payout)
+            else:
+                dividend_details.append((lot.asset_symbol, lot.quantity, lot_payout))
+
+        # No dividends to pay
+        if total_payout == 0:
+            return False, "", 0
+
+        # Pay dividends to bank account - separate transfer for each asset
+        try:
+            # Use BankService to credit account with separate transaction for each asset
+            if self.bank_service and hasattr(self.state, 'bank') and self.state.bank:
+                for symbol, qty, payout in dividend_details:
+                    self.bank_service.credit(
+                        amount=payout,
+                        tx_type="dividend",
+                        title=f"Dividend payout for {symbol}"
+                    )
+            else:
+                # Fallback: add to cash if no bank service or account
+                self.state.cash += total_payout
+        except Exception:
+            # Fallback: add to cash
+            self.state.cash += total_payout
+
+        # Build single-line message for messenger/event log
+        symbols_list = ", ".join([symbol for symbol, _, _ in dividend_details])
+        short_message = f"💰 Dividend payout ${total_payout:,} for {symbols_list}"
+
+        # Build detailed summary for modal
+        summary_lines = []
+        for symbol, qty, payout in dividend_details:
+            summary_lines.append(f"{symbol}: {qty} shares → ${payout:,}")
+        summary = "\n".join(summary_lines)
+        modal_message = f"💰 Dividend Payout!\n\nYou received ${total_payout:,} in dividends:\n{summary}"
+
+        # Return: (has_dividends, messenger_message, modal_message, total_payout, details)
+        return True, short_message, modal_message, total_payout, dividend_details
 

@@ -387,18 +387,28 @@ class BankService:
         return self.state.debt
 
     # Utility to credit bank balance with a labeled transaction (does not touch cash)
-    def credit(self, amount: int, tx_type: str = "interest", title: str = "") -> None:
+    def credit(self, amount: int, tx_type: str = "deposit", title: str = "") -> None:
+        """Credit amount to bank account with a transaction record.
+
+        Args:
+            amount: Amount to credit (must be positive)
+            tx_type: Transaction type ("deposit", "withdraw", "interest", "dividend")
+            title: Transaction title/description
+        """
         if amount <= 0:
             return
         bank = self.state.bank
         bank.balance += int(amount)
+        # Validate tx_type, default to "interest" for unknown types
+        valid_types = ("deposit", "withdraw", "interest", "dividend")
+        tx_type = tx_type if tx_type in valid_types else "interest"
         bank.transactions.append(
             BankTransaction(
-                tx_type=tx_type if tx_type in ("deposit", "withdraw", "interest") else "interest",
+                tx_type=tx_type,
                 amount=int(amount),
                 balance_after=bank.balance,
                 day=self.state.day,
-                title=title or ("Interest" if tx_type == "interest" else ""),
+                title=title or ("Interest" if tx_type == "interest" else "Dividend" if tx_type == "dividend" else ""),
                 ts=(self.clock.now().isoformat(timespec="seconds") if self.clock else f"{getattr(self.state,'date','')}T{datetime.now().strftime('%H:%M:%S')}")
             )
         )

@@ -29,6 +29,9 @@ class Asset:
             - "stock": Company equity (e.g., GOOGL, AAPL, TSLA)
             - "commodity": Physical resources (e.g., Gold, Oil, Silver, Copper)
             - "crypto": Cryptocurrencies (e.g., BTC, ETH, SOL, DOGE)
+        dividend_rate: Dividend yield as decimal fraction (0.0-1.0) of current asset price.
+            0.0 = no dividends (commodities, crypto). Stocks typically 0.001-0.01 (0.1%-1.0%).
+            Example: dividend_rate=0.001 means 0.1% of current price per payout interval.
 
     Examples:
         >>> google = Asset("Google", "GOOGL", 150, 0.6, "stock")
@@ -46,3 +49,4 @@ class Asset:
     base_price: int
     price_variance: float = 0.5  # 50% variance (more volatile than goods)
     asset_type: str = "stock"  # "stock" | "commodity" | "crypto"
+    dividend_rate: float = 0.0  # Dividend yield (0.0 = no dividends)

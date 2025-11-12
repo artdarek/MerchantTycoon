@@ -249,10 +249,17 @@ The game features **31 unique products** across 4 main categories:
 - **Cryptocurrency** (8 coins):
   - **Major Coins**: Bitcoin (BTC), Ethereum (ETH), Solana (SOL), Dogecoin (DOGE)
   - **Altcoins**: Avalanche (AVAX), Polkadot (DOT), Decentraland (MANA), 1inch (1INCH)
+- **Dividend System** (Stocks only):
+  - Select stocks pay **regular dividends** every 11 days
+  - Must hold shares for at least 10 days to qualify for dividends
+  - Dividend rate varies by stock (0.1-0.3% of current price per share)
+  - Payouts deposited directly to your bank account
+  - Detailed breakdown shows dividends per holding
+  - **Example**: 100 shares of CDR at $200/share with 0.1% rate = $20 dividend
 - **Price Trends**: Watch for ▲ (up), ▼ (down), or ─ (stable) indicators
 - **Price Volatility**: Stocks ±50%, Commodities ±30-80%, Crypto ±70-90%
 - **Safety**: Investments are protected from random events!
-- **Long-term**: Build wealth through diversified portfolio
+- **Long-term**: Build wealth through diversified portfolio and regular dividend income
 
 #### 💰 Loans & Debt
 - Take **multiple loans** to grow your business faster
@@ -371,34 +378,39 @@ The game uses a **tabbed interface** with three main tabs:
 1. **Diversify**: Spread wealth across goods, stocks, commodities, crypto, and bank deposits
 2. **Arbitrage**: Find goods with big price differences between cities (check all 11 cities!)
 3. **Trend Following**: Buy stocks showing ▲ uptrend, avoid ▼ downtrend
-4. **Risk Balance**:
+4. **Dividend Strategy**:
+   - Hold dividend-paying stocks for passive income (paid every 11 days)
+   - Buy stocks early in the game cycle to maximize dividend payouts
+   - Dividend income grows with stock prices (paid as % of current price)
+   - Long-term stock holdings generate regular cash flow to your bank
+5. **Risk Balance**:
    - 40% in safe investments (stocks/commodities)
    - 30% in bank (earning interest, protected)
    - 20% in active trading (goods)
    - 10% in high-risk crypto
-5. **Debt Leverage**:
+6. **Debt Leverage**:
    - Take multiple small loans instead of one big loan
    - Compare loan APR before borrowing (changes with each travel)
    - Only borrow when you have clear profit opportunity (>20-25% margin)
    - Remember: Even 1% APR = 0.0027% daily, which compounds over time
-6. **Event Protection**: Move wealth to stocks/commodities/bank before risky situations
-7. **Banking Strategy**:
+7. **Event Protection**: Move wealth to stocks/commodities/bank before risky situations
+8. **Banking Strategy**:
    - Bank interest (1-3% APR) is modest but safe
    - Best for parking large amounts of cash you don't need immediately
    - **Not** a primary wealth-building strategy (too low APR)
    - Use for safety, not growth
-8. **Crypto Timing**: High volatility = high risk and high reward, time your trades carefully
-9. **City Risk Strategy**:
+9. **Crypto Timing**: High volatility = high risk and high reward, time your trades carefully
+10. **City Risk Strategy**:
    - **Safe Routes** (Stockholm, Vienna, Paris, London): Lower event chance, more gain events - ideal for protecting large inventory
    - **Risky Routes** (Prague, Amsterdam): Higher event chance, more loss events - best for contraband arbitrage with small, quick trips
    - **Balanced Routes** (Warsaw, Rome, Berlin): Standard risk/reward - good for consistent trading
-10. **Cargo Optimization**:
+11. **Cargo Optimization**:
     - **Small items** (1 slot): Maximize quantity, lower unit value (Pendrive, Powerbank)
     - **Medium items** (2-3 slots): Balance quantity and value (most electronics)
     - **Large items** (5 slots): Premium goods, high value per unit (Gaming Laptop, Jewelry)
     - **Vehicles** (10 slots): Highest value, lowest quantity - best for large capital trades
     - **Strategy**: Mix cargo sizes based on available capital and risk tolerance
-11. **Event Exploitation**:
+12. **Event Exploitation**:
     - When you get Promotion/Oversupply/Shortage events, buy the affected goods immediately
     - Loyal Discount (95% off) is the jackpot - max out your cargo on that good
     - Price modifiers are temporary (one day) - exploit them before traveling again
@@ -431,6 +443,7 @@ The game uses a **tabbed interface** with three main tabs:
 - **Realistic Interest Model**: APR converted to daily rates (APR÷365), fractional cents tracked
 - **Cryptocurrency Trading**: High-risk, high-reward crypto investments (8 coins including BTC, ETH, SOL, DOGE, AVAX, DOT, MANA, 1INCH)
 - **Stock Market**: 16 real company stocks with realistic volatility (12 tech giants + 4 gaming companies)
+- **Dividend System**: Regular dividend payouts every 11 days for dividend-paying stocks (must hold for 10+ days)
 - **Commodities**: 8 types including precious metals and agricultural products (Gold, Silver, Platinum, Copper, Oil, Cocoa, Sugar, Coffee)
 - **11 European Cities**: Each with unique price multipliers and risk profiles
 - **Auto-save/Load**: Persistent game state across sessions

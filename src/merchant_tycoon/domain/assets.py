@@ -47,43 +47,44 @@ from merchant_tycoon.domain.model.asset import Asset
 
 # All investable financial assets (32 total: 16 stocks, 8 commodities, 8 crypto)
 # Filter by asset_type: 'stock' | 'commodity' | 'crypto'
+# Dividend rates: stocks typically 0.001-0.01 (0.1%-1.0%), commodities/crypto = 0.0
 ASSETS: List[Asset] = [
-    # Stocks - Tech Giants
-    Asset("Google", "GOOGL", 150, 0.6, "stock"),
-    Asset("Meta", "META", 80, 0.5, "stock"),
-    Asset("Apple", "AAPL", 120, 0.7, "stock"),
-    Asset("Microsoft", "MSFT", 200, 0.4, "stock"),
-    Asset("Amazon", "AMZN", 180, 0.6, "stock"),
-    Asset("Netflix", "NFLX", 90, 0.8, "stock"),
-    Asset("NVIDIA", "NVDA", 250, 0.9, "stock"),
-    Asset("Tesla", "TSLA", 160, 0.8, "stock"),
-    Asset("AMD", "AMD", 110, 0.7, "stock"),
-    Asset("Oracle", "ORCL", 95, 0.5, "stock"),
-    Asset("Adobe", "ADBE", 140, 0.6, "stock"),
-    Asset("Intel", "INTC", 85, 0.6, "stock"),
-    # Stocks - Gaming Companies
-    Asset("CD Projekt Red", "CDR", 100, 0.7, "stock"),
-    Asset("Nintendo", "NTD", 130, 0.6, "stock"),
-    Asset("Ubisoft", "UBI", 85, 0.7, "stock"),
-    Asset("Electronic Arts", "EAA", 125, 0.6, "stock"),
-    # Commodities - Precious Metals
-    Asset("Gold", "GOLD", 1800, 0.3, "commodity"),
-    Asset("Silver", "SILV", 25, 0.4, "commodity"),
-    Asset("Platinum", "PLT", 950, 0.35, "commodity"),
-    Asset("Copper", "COPP", 8, 0.5, "commodity"),
-    # Commodities - Energy & Agriculture
-    Asset("Oil", "OIL", 75, 0.8, "commodity"),
-    Asset("Cocoa", "COC", 2500, 0.5, "commodity"),
-    Asset("Sugar", "SGR", 400, 0.6, "commodity"),
-    Asset("Coffee", "CFE", 150, 0.7, "commodity"),
-    # Crypto - Major Coins
-    Asset("Bitcoin", "BTC", 35000, 0.7, "crypto"),
-    Asset("Ethereum", "ETH", 2000, 0.8, "crypto"),
-    Asset("Solana", "SOL", 80, 0.9, "crypto"),
-    Asset("Dogecoin", "DOGE", 5, 1.0, "crypto"),
-    # Crypto - Altcoins
-    Asset("Avalanche", "AVAX", 35, 0.85, "crypto"),
-    Asset("Polkadot", "DOT", 7, 0.9, "crypto"),
-    Asset("Decentraland", "MANA", 2, 0.95, "crypto"),
-    Asset("1inch", "1INCH", 3, 1.0, "crypto"),
+    # Stocks - Tech Giants (dividend rates: 0.001-0.005 = 0.1%-0.5%)
+    Asset("Google", "GOOGL", 150, 0.6, "stock", 0.002),
+    Asset("Meta", "META", 80, 0.5, "stock", 0.001),
+    Asset("Apple", "AAPL", 120, 0.7, "stock", 0.003),
+    Asset("Microsoft", "MSFT", 200, 0.4, "stock", 0.004),
+    Asset("Amazon", "AMZN", 180, 0.6, "stock", 0.001),
+    Asset("Netflix", "NFLX", 90, 0.8, "stock", 0.002),
+    Asset("NVIDIA", "NVDA", 250, 0.9, "stock", 0.001),
+    Asset("Tesla", "TSLA", 160, 0.8, "stock", 0.001),
+    Asset("AMD", "AMD", 110, 0.7, "stock", 0.002),
+    Asset("Oracle", "ORCL", 95, 0.5, "stock", 0.005),
+    Asset("Adobe", "ADBE", 140, 0.6, "stock", 0.003),
+    Asset("Intel", "INTC", 85, 0.6, "stock", 0.004),
+    # Stocks - Gaming Companies (dividend rates: 0.002-0.005 = 0.2%-0.5%)
+    Asset("CD Projekt Red", "CDR", 100, 0.7, "stock", 0.003),
+    Asset("Nintendo", "NTD", 130, 0.6, "stock", 0.004),
+    Asset("Ubisoft", "UBI", 85, 0.7, "stock", 0.002),
+    Asset("Electronic Arts", "EAA", 125, 0.6, "stock", 0.003),
+    # Commodities - Precious Metals (no dividends)
+    Asset("Gold", "GOLD", 1800, 0.3, "commodity", 0.0),
+    Asset("Silver", "SILV", 25, 0.4, "commodity", 0.0),
+    Asset("Platinum", "PLT", 950, 0.35, "commodity", 0.0),
+    Asset("Copper", "COPP", 8, 0.5, "commodity", 0.0),
+    # Commodities - Energy & Agriculture (no dividends)
+    Asset("Oil", "OIL", 75, 0.8, "commodity", 0.0),
+    Asset("Cocoa", "COC", 2500, 0.5, "commodity", 0.0),
+    Asset("Sugar", "SGR", 400, 0.6, "commodity", 0.0),
+    Asset("Coffee", "CFE", 150, 0.7, "commodity", 0.0),
+    # Crypto - Major Coins (no dividends)
+    Asset("Bitcoin", "BTC", 35000, 0.7, "crypto", 0.0),
+    Asset("Ethereum", "ETH", 2000, 0.8, "crypto", 0.0),
+    Asset("Solana", "SOL", 80, 0.9, "crypto", 0.0),
+    Asset("Dogecoin", "DOGE", 5, 1.0, "crypto", 0.0),
+    # Crypto - Altcoins (no dividends)
+    Asset("Avalanche", "AVAX", 35, 0.85, "crypto", 0.0),
+    Asset("Polkadot", "DOT", 7, 0.9, "crypto", 0.0),
+    Asset("Decentraland", "MANA", 2, 0.95, "crypto", 0.0),
+    Asset("1inch", "1INCH", 3, 1.0, "crypto", 0.0),
 ]

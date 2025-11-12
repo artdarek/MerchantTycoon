@@ -68,7 +68,8 @@ class GameEngine:
             self.previous_asset_prices,
             self.assets_repo,
             self.clock_service,
-            self.messenger
+            self.messenger,
+            self.bank_service
         )
         # Event service for travel random encounters
         self.travel_events_service = TravelEventsService(self.assets_repo, self.goods_repo)

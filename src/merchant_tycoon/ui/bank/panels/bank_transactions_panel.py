@@ -58,6 +58,8 @@ class AccountTransactionsPanel(Static):
             # Color by type
             if tx.tx_type == "interest":
                 ttype = Text("interest", style="green")
+            elif tx.tx_type == "dividend":
+                ttype = Text("dividend", style="bright_green")
             elif tx.tx_type == "withdraw":
                 ttype = Text("withdraw", style="yellow")
             else:

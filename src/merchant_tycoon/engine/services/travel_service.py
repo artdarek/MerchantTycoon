@@ -93,6 +93,12 @@ class TravelService:
         # Accrue bank interest for the day advance (daily compounding)
         self.bank_service.accrue_bank_interest()
 
+        # Increment holding days for investment lots (for dividend eligibility)
+        try:
+            self.investments_service.increment_lot_holding_days()
+        except Exception:
+            pass
+
         # Generate new prices for goods and assets FIRST
         # (so events can show accurate before/after prices)
         self.goods_service.generate_prices()
@@ -115,6 +121,18 @@ class TravelService:
         # If events set price modifiers, regenerate prices with those modifiers applied
         if self.state.price_modifiers:
             self.goods_service.generate_prices()
+
+        # Check for dividend payouts (happens after price generation)
+        try:
+            result = self.investments_service.calculate_and_pay_dividends()
+            if result[0]:  # has_dividend
+                # Unpack: (has_dividends, short_msg, modal_msg, total, details)
+                has_dividend, short_msg, modal_msg, total, details = result
+                # Add dividend event with both messages: (short_msg, modal_msg, event_type)
+                # short_msg for messenger, modal_msg for modal display
+                events_list.insert(0, (short_msg, modal_msg, "gain"))
+        except Exception:
+            pass
 
         city = destination_city
         msg = (

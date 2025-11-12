@@ -16,6 +16,7 @@ class BankTransaction:
             - "deposit": Cash moved from hand into bank (increases balance)
             - "withdraw": Cash moved from bank to hand (decreases balance)
             - "interest": Daily interest credited to account (increases balance)
+            - "dividend": Stock dividend payout credited to account (increases balance)
         amount: Transaction amount in dollars. Always positive (>= 0).
             For deposits/interest: amount added to balance
             For withdrawals: amount removed from balance

@@ -15,4 +15,8 @@ class InvestmentsSettings:
     sell_fee_rate: float = 0.003
     # Minimum sell commission in currency units
     sell_fee_min: int = 1
+    # Dividend payout interval in days (0 = disabled)
+    dividend_interval_days: int = 11
+    # Minimum holding period in days to qualify for dividends
+    dividend_min_holding_days: int = 10
 

@@ -433,7 +433,14 @@ class MerchantTycoon(App):
         if success:
             # Log events to messenger BEFORE showing modals
             if events_list:
-                for event_msg, event_type in events_list:
+                for event_data in events_list:
+                    # Handle both 2-tuple (msg, type) and 3-tuple (short_msg, modal_msg, type)
+                    if len(event_data) == 3:
+                        short_msg, modal_msg, event_type = event_data
+                        event_msg = short_msg  # Use short message for messenger
+                    else:
+                        event_msg, event_type = event_data
+
                     if event_type == "gain":
                         self.engine.messenger.warn(event_msg, tag="events")
                     elif event_type == "loss":
@@ -475,8 +482,15 @@ class MerchantTycoon(App):
             self.refresh_all()
             return
 
-        # Get next event (now with event_type instead of is_positive)
-        event_msg, event_type = self._pending_events.pop(0)
+        # Get next event - handle both 2-tuple and 3-tuple formats
+        event_data = self._pending_events.pop(0)
+        if len(event_data) == 3:
+            # 3-tuple: (short_msg, modal_msg, event_type) - use modal_msg for display
+            short_msg, modal_msg, event_type = event_data
+            event_msg = modal_msg
+        else:
+            # 2-tuple: (event_msg, event_type)
+            event_msg, event_type = event_data
 
         # Map event type to title
         if event_type == "gain":

@@ -23,6 +23,9 @@ class InvestmentLot:
         ts: ISO 8601 datetime timestamp when the lot was created (e.g., "2025-01-15T14:30:00").
             Used for unique identification, precise ordering, and sell-from-lot operations.
             Empty string if not set (backward compatibility).
+        days_held: Number of days this lot has been held. Incremented daily.
+            Used to determine dividend eligibility based on minimum holding period.
+            Starts at 0 when lot is created.
 
     Examples:
         >>> google_lot = InvestmentLot(
@@ -51,3 +54,4 @@ class InvestmentLot:
     purchase_price: int  # Price per unit when purchased
     day: int
     ts: str = ""  # ISO datetime when lot was created
+    days_held: int = 0  # Days held, incremented daily for dividend eligibility
