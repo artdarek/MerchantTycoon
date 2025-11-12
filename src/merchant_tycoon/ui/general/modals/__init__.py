@@ -7,6 +7,7 @@ from merchant_tycoon.ui.general.modals.cargo_extend_modal import CargoExtendModa
 from merchant_tycoon.ui.general.modals.about_modal import AboutModal
 from merchant_tycoon.ui.general.modals.splash_modal import SplashModal
 from merchant_tycoon.ui.general.modals.new_game_modal import NewGameModal
+from merchant_tycoon.ui.general.modals.event_modal import EventModal
 
 __all__ = [
     "HelpModal",
@@ -18,4 +19,5 @@ __all__ = [
     "AboutModal",
     "SplashModal",
     "NewGameModal",
+    "EventModal",
 ]

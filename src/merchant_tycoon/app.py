@@ -48,6 +48,7 @@ from merchant_tycoon.ui.general.modals import (
     AlertModal,
     ConfirmModal,
     CargoExtendModal,
+    EventModal,
 )
 from merchant_tycoon.ui.goods.modals import (
     BuyModal,
@@ -428,19 +429,48 @@ class MerchantTycoon(App):
 
     def _handle_travel(self, city_index: int):
         """Handle travel to new city"""
-        success, msg, event_data = self.engine.travel_service.travel(city_index)
+        success, msg, events_list = self.engine.travel_service.travel(city_index)
         if success:
-            # TravelService logs travel/event
-            if event_data:
-                event_msg, is_positive = event_data
-                title = "✨ Good News!" if is_positive else "⚠️ Bad News!"
-                modal = AlertModal(title, event_msg, is_positive)
-                self.push_screen(modal)
-            self.refresh_all()
+            # TravelService logs travel/events
+            if events_list:
+                # Show events sequentially (blocking modals)
+                # refresh_all() will be called by _show_travel_events after all events are shown
+                self._show_travel_events(events_list)
+            else:
+                # No events, refresh immediately
+                self.refresh_all()
         else:
             self.engine.messenger.warn(msg, tag="travel")
             # Ensure the messenger panel updates immediately on failure
             self.refresh_all()
+
+    def _show_travel_events(self, events_list: list) -> None:
+        """Show multiple travel events sequentially with blocking modals.
+
+        Args:
+            events_list: List of (event_msg, is_positive) tuples
+        """
+        if not events_list:
+            return
+
+        # Store events list and start showing from first event
+        self._pending_events = list(events_list)
+        self._show_next_event()
+
+    def _show_next_event(self) -> None:
+        """Show the next event from pending events queue."""
+        if not hasattr(self, '_pending_events') or not self._pending_events:
+            # All events shown, refresh UI
+            self.refresh_all()
+            return
+
+        # Get next event
+        event_msg, is_positive = self._pending_events.pop(0)
+        title = "✨ Good News!" if is_positive else "⚠️ Bad News!"
+
+        # Create modal with callback to show next event
+        modal = EventModal(title, event_msg, is_positive, self._show_next_event)
+        self.push_screen(modal)
 
     def action_loan(self):
         """Take a loan"""

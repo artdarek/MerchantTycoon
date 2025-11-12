@@ -93,17 +93,18 @@ class TravelService:
         # Accrue bank interest for the day advance (daily compounding)
         self.bank_service.accrue_bank_interest()
 
-        # Random event (only affects goods, not investments!)
+        # Random events (only affect goods, not investments!)
         try:
-            event_data = self.events_service.trigger(
+            events_list = self.events_service.trigger(
                 self.state,
                 self.goods_service.prices,
                 getattr(self.investments_service, "asset_prices", {}),
+                city=destination_city,
                 bank_service=self.bank_service,
                 goods_service=self.goods_service,
             )
         except Exception:
-            event_data = None
+            events_list = []
 
         # Generate new prices for goods and assets
         self.goods_service.generate_prices()
@@ -117,16 +118,14 @@ class TravelService:
         try:
             if self.messenger:
                 self.messenger.info(msg, tag="travel")
-            if event_data and self.messenger:
-                try:
-                    event_msg, is_positive = event_data
-                except Exception:
-                    event_msg, is_positive = event_data[0], True
-                if is_positive:
-                    # Log gains as warnings per UI color scheme request
-                    self.messenger.warn(event_msg, tag="events")
-                else:
-                    self.messenger.error(event_msg, tag="events")
+            # Log all events to messenger
+            if events_list and self.messenger:
+                for event_msg, is_positive in events_list:
+                    if is_positive:
+                        # Log gains as warnings per UI color scheme request
+                        self.messenger.warn(event_msg, tag="events")
+                    else:
+                        self.messenger.error(event_msg, tag="events")
         except Exception:
             pass
-        return True, msg, event_data
+        return True, msg, events_list
