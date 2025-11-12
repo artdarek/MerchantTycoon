@@ -189,6 +189,11 @@ The game has **3 tabs** (Goods, Investments, Bank) with context-sensitive contro
 - Look for arbitrage opportunities between cities
 - Travel between cities to exploit price differences
 
+**City Risk Levels:**
+- **Safe Cities** (low event probability, more gains): Stockholm (15%), Vienna (18%), Paris (20%), London (20%)
+- **Medium Risk**: Berlin (22%), Barcelona (22%), Warsaw (25%), Rome (25%)
+- **High Risk** (high event probability, more losses): Budapest (28%), Prague (30%), Amsterdam (32%)
+
 #### 📦 Goods & Product Categories
 
 The game features **31 unique products** across 4 main categories:
@@ -222,11 +227,17 @@ The game features **31 unique products** across 4 main categories:
 
 #### 📦 Inventory Management
 - **Capacity**: Starts based on difficulty level (Insane: 1, Normal: 50, Playground: 1000)
+- **Cargo Size System**: Each product occupies different number of slots:
+  - **Small items** (1 slot): Pendrive, USB Charger, Powerbank, Headphones
+  - **Medium items** (2-3 slots): Most electronics (TV, Phone, Camera, etc.)
+  - **Large items** (5 slots): Luxury electronics (Gaming Laptop, 4K OLED TV, Drone), Jewelry
+  - **Vehicles** (10 slots): All cars (Fiat, Ferrari, Bugatti, etc.)
 - **Upgrades**: Press C to extend by +1 slot (pricing mode configurable: linear or exponential)
 - **FIFO System**: Goods are sold in First In, First Out order
 - **Purchase Lots**: Track each purchase separately to calculate profit/loss accurately
 - **Random Events**: Can affect your inventory (theft, damage, confiscation, etc.)
 - **Strategy**: Mix standard goods (stable income) with high-risk/high-reward contraband
+- **Cargo Planning**: Balance small high-quantity items vs large high-value items
 
 #### 💼 Stock Exchange & Investments
 - **Stocks** (16 companies):
@@ -272,6 +283,36 @@ The game features **31 unique products** across 4 main categories:
 - **Withdraw** anytime without penalties
 - Bank balance is protected from random events
 - Lower risk, lower reward compared to goods trading or investments
+
+#### 🎲 Random Events System
+Travel between cities triggers random events that can affect your journey. Each city has unique event probability and risk profile:
+
+**Event Types:**
+- **Loss Events** (7 types): Robbery, Fire, Flood, Defective Batch, Customs Duty, Stolen Goods, Accidents
+- **Gain Events** (7 types): Dividend, Lottery, Bank Correction, Promotion, Oversupply, Shortage, Loyal Discount
+
+**Multiple Events Per Journey:**
+- Cities can trigger 0-3 loss events and 0-3 gain events per journey
+- Events are displayed sequentially in blocking modals (press Enter to continue)
+- No duplicate events in a single journey
+- Event selection is weighted based on your current game state
+
+**City-Specific Event Configuration:**
+Each city has unique event probability and risk/reward balance:
+- **Safe Cities** (Stockholm, Vienna): 15-18% event chance, 0-1 loss events, 1-3 gain events
+- **Balanced Cities** (Warsaw, Rome, Berlin): 22-25% event chance, 0-2 loss/gain events
+- **Risky Cities** (Prague, Amsterdam): 30-32% event chance, 1-3 loss events, 1-3 gain events
+
+**Price Events with Details:**
+When events affect prices (Promotion, Oversupply, Shortage, Loyal Discount), you'll see exact price changes:
+- **Example:** "PROMOTION! TV price drops from $1,200 to $600 (-50%)"
+- Plan your purchases around these temporary price modifiers
+
+**Protection Strategy:**
+- Investments (stocks, commodities, crypto) are **immune to all events**
+- Bank deposits are **protected from loss events**
+- Only inventory and cash are vulnerable
+- Strategy: Move wealth to investments/bank before risky city travel
 
 ## 📊 Game Interface
 
@@ -328,6 +369,20 @@ The game uses a **tabbed interface** with three main tabs:
    - **Not** a primary wealth-building strategy (too low APR)
    - Use for safety, not growth
 8. **Crypto Timing**: High volatility = high risk and high reward, time your trades carefully
+9. **City Risk Strategy**:
+   - **Safe Routes** (Stockholm, Vienna, Paris, London): Lower event chance, more gain events - ideal for protecting large inventory
+   - **Risky Routes** (Prague, Amsterdam): Higher event chance, more loss events - best for contraband arbitrage with small, quick trips
+   - **Balanced Routes** (Warsaw, Rome, Berlin): Standard risk/reward - good for consistent trading
+10. **Cargo Optimization**:
+    - **Small items** (1 slot): Maximize quantity, lower unit value (Pendrive, Powerbank)
+    - **Medium items** (2-3 slots): Balance quantity and value (most electronics)
+    - **Large items** (5 slots): Premium goods, high value per unit (Gaming Laptop, Jewelry)
+    - **Vehicles** (10 slots): Highest value, lowest quantity - best for large capital trades
+    - **Strategy**: Mix cargo sizes based on available capital and risk tolerance
+11. **Event Exploitation**:
+    - When you get Promotion/Oversupply/Shortage events, buy the affected goods immediately
+    - Loyal Discount (95% off) is the jackpot - max out your cargo on that good
+    - Price modifiers are temporary (one day) - exploit them before traveling again
 
 ## 🛠️ Technical Details
 
@@ -339,11 +394,16 @@ The game uses a **tabbed interface** with three main tabs:
 - **5 Difficulty Levels**: From Playground ($1M, 1000 slots) to Insane ($0, 1 slot)
 - **31 Tradable Products**: Electronics, luxury goods, cars, and contraband
 - **4 Product Categories**: Standard, luxury, cars, and high-risk contraband
+- **Cargo Size System**: Products occupy 1-10 slots based on size (Pendrive: 1 slot, Ferrari: 10 slots)
 - **Tabbed Interface**: 3 main tabs (Goods, Investments, Bank) with context-sensitive controls
 - **Real-time price updates**: All prices fluctuate dynamically
 - **FIFO Accounting**: First In, First Out inventory and investment tracking
 - **Profit/Loss Tracking**: Detailed transaction history with real-time P/L calculations
-- **Random Event System**: Unexpected events affect your inventory (25% chance per travel)
+- **Advanced Random Event System**:
+  - Multiple events per journey (0-3 loss, 0-3 gain events)
+  - City-specific event probabilities (15-32%)
+  - Sequential modal display with detailed information
+  - Price events show exact before/after prices
 - **Price Trend Indicators**: Visual ▲▼─ indicators for all assets
 - **Multi-Loan System**: Take multiple loans with individual APR (1-20%), daily compounding
 - **Banking System**: Deposit/withdraw with interest accrual (1-3% APR, daily compounding)
@@ -351,7 +411,7 @@ The game uses a **tabbed interface** with three main tabs:
 - **Cryptocurrency Trading**: High-risk, high-reward crypto investments (8 coins including BTC, ETH, SOL, DOGE, AVAX, DOT, MANA, 1INCH)
 - **Stock Market**: 16 real company stocks with realistic volatility (12 tech giants + 4 gaming companies)
 - **Commodities**: 8 types including precious metals and agricultural products (Gold, Silver, Platinum, Copper, Oil, Cocoa, Sugar, Coffee)
-- **11 European Cities**: Each with unique price multipliers
+- **11 European Cities**: Each with unique price multipliers and risk profiles
 - **Auto-save/Load**: Persistent game state across sessions
 - **Responsive Terminal UI**: Colorful, styled interface using Textual framework
 
