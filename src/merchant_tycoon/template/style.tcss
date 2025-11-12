@@ -360,6 +360,13 @@ ConfirmModal, AboutModal, CargoExtendModal, NewGameModal {
     margin: 1 0;
 }
 
+.cargo-info {
+    color: #9fd0c9;
+    text-align: center;
+    margin: 1 0;
+    text-style: italic;
+}
+
 #modal-buttons {
     height: auto;
     margin-top: 1;
