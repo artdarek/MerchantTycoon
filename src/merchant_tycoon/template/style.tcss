@@ -418,8 +418,8 @@ ConfirmModal, AboutModal, CargoExtendModal, NewGameModal {
     background: #2f3543;
 }
 
-/* Alert modal styles */
-AlertModal {
+/* Alert and Event modal styles */
+AlertModal, EventModal {
     align: center middle;
     background: transparent;   /* keep app visible under alerts */
 }

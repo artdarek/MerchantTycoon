@@ -1,7 +1,8 @@
 import random
-from typing import TYPE_CHECKING, List, Optional
+from typing import TYPE_CHECKING, List, Optional, Callable, Tuple
 
 from merchant_tycoon.domain.model.bank_transaction import BankTransaction
+from merchant_tycoon.domain.model.city import City
 from merchant_tycoon.config import SETTINGS
 from datetime import datetime
 
@@ -31,18 +32,23 @@ class TravelEventsService:
         self.assets_repo = assets_repository
         self.goods_repo = goods_repository
 
-    def trigger(self, state, prices: dict, asset_prices: dict, bank_service=None, goods_service=None) -> Optional[tuple[str, bool]]:
-        """Trigger at most one weighted random travel event.
+    def trigger(self, state, prices: dict, asset_prices: dict, city: Optional[City] = None, bank_service=None, goods_service=None) -> List[Tuple[str, bool]]:
+        """Trigger multiple weighted random travel events based on city configuration.
 
         Parameters:
             state: Game state object with inventory, cash, bank, etc.
             prices: dict of current goods prices {good_name: price}
             asset_prices: dict of asset prices {symbol: price}
+            city: Optional City object with travel_events config (defaults to 0-2 for both)
             bank_service: optional bank service to credit amounts into bank history
+            goods_service: optional goods service for loss accounting
+
+        Returns:
+            List of event tuples (message, is_positive). Empty list if no events occur.
         """
         # Overall chance that any event occurs this travel
         if random.random() >= float(SETTINGS.events.base_probability):
-            return None
+            return []
         prices = prices or {}
 
         def _all_goods_names() -> list[str]:
@@ -316,7 +322,16 @@ class TravelEventsService:
             lo, hi = SETTINGS.events.promo_multiplier
             mult = random.uniform(lo, hi)
             state.price_modifiers[good] = mult
-            return (f"🏷️ PROMOTION! {good} will be cheaper today (−{int((1 - mult) * 100)}%).", True)
+
+            # Show price before and after promotion
+            old_price = prices.get(good, 0)
+            new_price = int(old_price * mult) if old_price > 0 else 0
+            discount_pct = int((1 - mult) * 100)
+
+            if old_price > 0 and new_price > 0:
+                return (f"🏷️ PROMOTION! {good} price drops from ${old_price:,} to ${new_price:,} (−{discount_pct}%).", True)
+            else:
+                return (f"🏷️ PROMOTION! {good} will be cheaper today (−{discount_pct}%).", True)
 
         def evt_oversupply() -> Optional[tuple[str, bool]]:
             # Very low price for random good
@@ -327,7 +342,16 @@ class TravelEventsService:
             lo, hi = SETTINGS.events.oversupply_multiplier
             mult = random.uniform(lo, hi)
             state.price_modifiers[good] = mult
-            return (f"📉 OVERSUPPLY! {good} prices plunge (−{int((1 - mult) * 100)}%).", True)
+
+            # Show price before and after
+            old_price = prices.get(good, 0)
+            new_price = int(old_price * mult) if old_price > 0 else 0
+            discount_pct = int((1 - mult) * 100)
+
+            if old_price > 0 and new_price > 0:
+                return (f"📉 OVERSUPPLY! {good} price crashes from ${old_price:,} to ${new_price:,} (−{discount_pct}%).", True)
+            else:
+                return (f"📉 OVERSUPPLY! {good} prices plunge (−{discount_pct}%).", True)
 
         def evt_shortage() -> Optional[tuple[str, bool]]:
             goods = _all_goods_names()
@@ -337,7 +361,15 @@ class TravelEventsService:
             lo, hi = SETTINGS.events.shortage_multiplier
             mult = random.uniform(lo, hi)
             state.price_modifiers[good] = mult
-            return (f"📈 SHORTAGE! {good} prices soar (≈×{mult:.1f}).", True)
+
+            # Show price before and after
+            old_price = prices.get(good, 0)
+            new_price = int(old_price * mult) if old_price > 0 else 0
+
+            if old_price > 0 and new_price > 0:
+                return (f"📈 SHORTAGE! {good} price surges from ${old_price:,} to ${new_price:,} (≈×{mult:.1f}).", True)
+            else:
+                return (f"📈 SHORTAGE! {good} prices soar (≈×{mult:.1f}).", True)
 
         def evt_loyal_discount() -> Optional[tuple[str, bool]]:
             # Loyal customer special: 95% discount on a random good for today
@@ -347,7 +379,15 @@ class TravelEventsService:
             good = random.choice(goods)
             mult = SETTINGS.events.loyal_discount_multiplier
             state.price_modifiers[good] = mult
-            return (f"🤝 LOYAL CUSTOMER! As a valued customer you get 95% discount on {good} (today only)!", True)
+
+            # Show price before and after
+            old_price = prices.get(good, 0)
+            new_price = int(old_price * mult) if old_price > 0 else 0
+
+            if old_price > 0 and new_price > 0:
+                return (f"🤝 LOYAL CUSTOMER! 95% discount on {good}: ${old_price:,} → ${new_price:,} (today only)!", True)
+            else:
+                return (f"🤝 LOYAL CUSTOMER! As a valued customer you get 95% discount on {good} (today only)!", True)
 
         # Build event table with explicit can/apply and weights (no side effects during can)
         class _Evt:
@@ -390,8 +430,9 @@ class TravelEventsService:
                 return False
 
         w = SETTINGS.events.weights
-        events: List[_Evt] = [
-            # Loss events
+
+        # Separate events into loss and gain categories
+        loss_events: List[_Evt] = [
             _Evt(has_inventory, evt_robbery, w.get("robbery", 8)),
             _Evt(has_inventory, evt_fire, w.get("fire", 5)),
             _Evt(has_inventory, evt_flood, w.get("flood", 4)),
@@ -399,7 +440,9 @@ class TravelEventsService:
             _Evt(inv_value_positive, evt_customs_duty, w.get("customs_duty", 6)),
             _Evt(has_last_buy_with_inventory, evt_stolen_last_buy, w.get("stolen_last_buy", 5)),
             _Evt(has_cash, evt_cash_damage, w.get("cash_damage", 4)),
-            # Gain events
+        ]
+
+        gain_events: List[_Evt] = [
             _Evt(holds_any_stock, evt_dividend, w.get("dividend", 6)),
             _Evt(lambda: True, evt_lottery, w.get("lottery", 3)),
             _Evt(bank_has_balance, evt_bank_correction, w.get("bank_correction", 4)),
@@ -409,16 +452,54 @@ class TravelEventsService:
             _Evt(lambda: True, evt_loyal_discount, w.get("loyal_discount", 1)),
         ]
 
-        eligible = [e for e in events if e.w > 0 and e.can()]
-        if not eligible:
-            return None
-        total_w = sum(e.w for e in eligible)
-        pick = random.uniform(0, total_w)
-        upto = 0.0
-        chosen = eligible[-1]
-        for e in eligible:
-            upto += e.w
-            if pick <= upto:
-                chosen = e
-                break
-        return chosen.apply()
+        # Get city config (default to 0-2 for both if city not provided)
+        if city and hasattr(city, 'travel_events'):
+            cfg = city.travel_events
+            loss_min, loss_max = cfg.loss_min, cfg.loss_max
+            gain_min, gain_max = cfg.gain_min, cfg.gain_max
+        else:
+            loss_min, loss_max = 0, 2
+            gain_min, gain_max = 0, 2
+
+        # Helper to select weighted event without replacement
+        def select_event(event_pool: List[_Evt], used_events: set) -> Optional[Tuple[str, bool]]:
+            eligible = [e for e in event_pool if e.w > 0 and e.can() and e.apply not in used_events]
+            if not eligible:
+                return None
+            total_w = sum(e.w for e in eligible)
+            if total_w <= 0:
+                return None
+            pick = random.uniform(0, total_w)
+            upto = 0.0
+            chosen = eligible[-1]
+            for e in eligible:
+                upto += e.w
+                if pick <= upto:
+                    chosen = e
+                    break
+            result = chosen.apply()
+            if result:
+                used_events.add(chosen.apply)
+            return result
+
+        # Generate multiple events
+        selected_events: List[Tuple[str, bool]] = []
+        used_events: set = set()
+
+        # Select loss events
+        loss_count = random.randint(loss_min, loss_max)
+        for _ in range(loss_count):
+            result = select_event(loss_events, used_events)
+            if result:
+                selected_events.append(result)
+
+        # Select gain events
+        gain_count = random.randint(gain_min, gain_max)
+        for _ in range(gain_count):
+            result = select_event(gain_events, used_events)
+            if result:
+                selected_events.append(result)
+
+        # Shuffle all events for variety
+        random.shuffle(selected_events)
+        return selected_events

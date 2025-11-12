@@ -1,6 +1,22 @@
 from __future__ import annotations
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Dict
+
+
+@dataclass
+class TravelEventsConfig:
+    """Configuration for travel events in a city.
+
+    Attributes:
+        loss_min: Minimum number of loss events (default: 0)
+        loss_max: Maximum number of loss events (default: 2)
+        gain_min: Minimum number of gain events (default: 0)
+        gain_max: Maximum number of gain events (default: 2)
+    """
+    loss_min: int = 0
+    loss_max: int = 2
+    gain_min: int = 0
+    gain_max: int = 2
 
 
 @dataclass
@@ -26,6 +42,8 @@ class City:
             Example: {"TV": 1.0, "Ferrari": 1.25, "Cocaine": 0.5}
             means TV is normal price, Ferrari is 25% more expensive, and
             Cocaine is 50% cheaper in this city.
+        travel_events: Configuration for travel events when arriving in this city.
+            Controls how many loss and gain events can occur per journey.
 
     Examples:
         >>> warsaw = City("Warsaw", "Poland", {"TV": 1.0, "Ferrari": 1.0})
@@ -41,3 +59,4 @@ class City:
     name: str
     country: str
     price_multiplier: Dict[str, float]  # Per-good multipliers for this city
+    travel_events: TravelEventsConfig = field(default_factory=TravelEventsConfig)
