@@ -123,14 +123,16 @@ class TravelService:
             self.goods_service.generate_prices()
 
         # Check for dividend payouts (happens after price generation)
+        dividend_short_msg = None
+        dividend_modal_msg = None
         try:
             result = self.investments_service.calculate_and_pay_dividends()
             if result[0]:  # has_dividend
                 # Unpack: (has_dividends, short_msg, modal_msg, total, details)
                 has_dividend, short_msg, modal_msg, total, details = result
-                # Add dividend event with both messages: (short_msg, modal_msg, event_type)
-                # short_msg for messenger, modal_msg for modal display
-                events_list.insert(0, (short_msg, modal_msg, "gain"))
+                # Store both messages - short for messenger, modal for modal
+                dividend_short_msg = short_msg
+                dividend_modal_msg = modal_msg
         except Exception:
             pass
 
@@ -145,4 +147,4 @@ class TravelService:
             # Note: Event logging moved to app.py to show messages before modals
         except Exception:
             pass
-        return True, msg, events_list
+        return True, msg, events_list, dividend_short_msg, dividend_modal_msg

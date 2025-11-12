@@ -385,10 +385,6 @@ class MerchantTycoon(App):
         """Handle result message from asset buy/sell modals (refresh only)."""
         self.refresh_all()
 
-    def action_travel(self):
-        """Travel to another city"""
-        modal = TravelModal(CITIES, self.engine.state.current_city, self._handle_travel)
-        self.push_screen(modal)
 
     def action_cargo(self):
         """Open modal to extend cargo capacity by purchasing an extra slot."""
@@ -427,20 +423,28 @@ class MerchantTycoon(App):
             self.refresh_all()
             return False
 
+    def action_travel(self):
+        """Travel to another city"""
+        modal = TravelModal(CITIES, self.engine.state.current_city, self._handle_travel)
+        self.push_screen(modal)
+
     def _handle_travel(self, city_index: int):
         """Handle travel to new city"""
-        success, msg, events_list = self.engine.travel_service.travel(city_index)
+        result = self.engine.travel_service.travel(city_index)
+        success = result[0]
+        msg = result[1]
+        events_list = result[2] if len(result) > 2 else []
+        dividend_short_msg = result[3] if len(result) > 3 else None
+        dividend_modal = result[4] if len(result) > 4 else None
+
         if success:
+            # Log dividend to messenger if present
+            if dividend_short_msg:
+                self.engine.messenger.info(dividend_short_msg, tag="investments")
+
             # Log events to messenger BEFORE showing modals
             if events_list:
-                for event_data in events_list:
-                    # Handle both 2-tuple (msg, type) and 3-tuple (short_msg, modal_msg, type)
-                    if len(event_data) == 3:
-                        short_msg, modal_msg, event_type = event_data
-                        event_msg = short_msg  # Use short message for messenger
-                    else:
-                        event_msg, event_type = event_data
-
+                for event_msg, event_type in events_list:
                     if event_type == "gain":
                         self.engine.messenger.warn(event_msg, tag="events")
                     elif event_type == "loss":
@@ -453,7 +457,11 @@ class MerchantTycoon(App):
 
                 # Show events sequentially (blocking modals)
                 # refresh_all() will be called again after all events are shown
-                self._show_travel_events(events_list)
+                self._show_travel_events(events_list, dividend_modal)
+            elif dividend_modal:
+                # Only dividend, no other events
+                self.refresh_all()
+                self._show_dividend_modal(dividend_modal)
             else:
                 # No events, refresh immediately
                 self.refresh_all()
@@ -462,35 +470,36 @@ class MerchantTycoon(App):
             # Ensure the messenger panel updates immediately on failure
             self.refresh_all()
 
-    def _show_travel_events(self, events_list: list) -> None:
+    def _show_travel_events(self, events_list: list, dividend_modal: str = None) -> None:
         """Show multiple travel events sequentially with blocking modals.
 
         Args:
-            events_list: List of (event_msg, is_positive) tuples
+            events_list: List of (event_msg, event_type) tuples
+            dividend_modal: Optional dividend modal message to show after events
         """
-        if not events_list:
+        if not events_list and not dividend_modal:
             return
 
-        # Store events list and start showing from first event
+        # Store events list and dividend modal
         self._pending_events = list(events_list)
+        self._dividend_modal_pending = dividend_modal
         self._show_next_event()
 
     def _show_next_event(self) -> None:
         """Show the next event from pending events queue."""
         if not hasattr(self, '_pending_events') or not self._pending_events:
-            # All events shown, refresh UI
-            self.refresh_all()
+            # All regular events shown, check for dividend modal
+            if hasattr(self, '_dividend_modal_pending') and self._dividend_modal_pending:
+                dividend_msg = self._dividend_modal_pending
+                self._dividend_modal_pending = None
+                self._show_dividend_modal(dividend_msg)
+            else:
+                # All done, refresh UI
+                self.refresh_all()
             return
 
-        # Get next event - handle both 2-tuple and 3-tuple formats
-        event_data = self._pending_events.pop(0)
-        if len(event_data) == 3:
-            # 3-tuple: (short_msg, modal_msg, event_type) - use modal_msg for display
-            short_msg, modal_msg, event_type = event_data
-            event_msg = modal_msg
-        else:
-            # 2-tuple: (event_msg, event_type)
-            event_msg, event_type = event_data
+        # Get next event
+        event_msg, event_type = self._pending_events.pop(0)
 
         # Map event type to title
         if event_type == "gain":
@@ -502,6 +511,11 @@ class MerchantTycoon(App):
 
         # Create modal with callback to show next event
         modal = EventModal(title, event_msg, event_type, self._show_next_event)
+        self.push_screen(modal)
+
+    def _show_dividend_modal(self, dividend_msg: str) -> None:
+        """Show dividend modal and refresh when done."""
+        modal = EventModal("✨ Good News!", dividend_msg, "gain", self.refresh_all)
         self.push_screen(modal)
 
     def action_loan(self):
@@ -572,8 +586,6 @@ class MerchantTycoon(App):
         if not ok:
             self.engine.messenger.warn(msg, tag="bank")
         self.refresh_all()
-
-    
 
     # --- Bank actions ---
     def action_bank_deposit(self):

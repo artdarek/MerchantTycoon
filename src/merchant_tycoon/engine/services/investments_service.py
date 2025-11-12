@@ -354,7 +354,7 @@ class InvestmentsService:
             # Fallback: add to cash
             self.state.cash += total_payout
 
-        # Build single-line message for messenger/event log
+        # Build short message for messenger (will be logged in app.py)
         symbols_list = ", ".join([symbol for symbol, _, _ in dividend_details])
         short_message = f"💰 Dividend payout ${total_payout:,} for {symbols_list}"
 
@@ -365,6 +365,6 @@ class InvestmentsService:
         summary = "\n".join(summary_lines)
         modal_message = f"💰 Dividend Payout!\n\nYou received ${total_payout:,} in dividends:\n{summary}"
 
-        # Return: (has_dividends, messenger_message, modal_message, total_payout, details)
+        # Return: (has_dividends, short_message, modal_message, total_payout, details)
         return True, short_message, modal_message, total_payout, dividend_details
 
