@@ -57,6 +57,9 @@ class SellModal(ModalScreen):
                 pass
             yield qty
 
+            # Cargo slots information
+            yield Label("", id="cargo-slots-info", classes="cargo-info")
+
             with Horizontal(id="modal-buttons"):
                 yield Button("Sell", variant="success", id="confirm-btn", disabled=True)
                 yield Button("Cancel", variant="error", id="cancel-btn")
@@ -126,6 +129,52 @@ class SellModal(ModalScreen):
                 pass
             self._update_sell_enabled()
 
+    def _update_cargo_slots_info(self) -> None:
+        """Update the cargo slots information label."""
+        try:
+            select_widget = self.query_one("#product-select", Select)
+            input_widget = self.query_one("#quantity-input", Input)
+            slots_label = self.query_one("#cargo-slots-info", Label)
+        except Exception:
+            return
+
+        product_name = select_widget.value
+        if not product_name:
+            slots_label.update("")
+            return
+
+        try:
+            qty_val = int((input_widget.value or "0").strip())
+        except Exception:
+            qty_val = 0
+
+        if qty_val <= 0:
+            slots_label.update("")
+            return
+
+        # Get product size
+        try:
+            good = self.engine.goods_repo.get_by_name(product_name)
+            product_size = getattr(good, "size", 1) if good else 1
+        except Exception:
+            product_size = 1
+
+        # Calculate total slots to be freed
+        slots_freed = qty_val * product_size
+
+        # Get current cargo status
+        if hasattr(self.engine, 'cargo_service') and self.engine.cargo_service:
+            cargo_used = self.engine.cargo_service.get_used_slots()
+            cargo_max = self.engine.cargo_service.get_max_slots()
+        else:
+            cargo_used = self.engine.state.get_inventory_count()
+            cargo_max = self.engine.state.max_inventory
+
+        cargo_after = cargo_used - slots_freed
+
+        # Format message
+        slots_label.update(f"Will free {slots_freed} cargo slot{'s' if slots_freed != 1 else ''} ({cargo_after}/{cargo_max} after)")
+
     def _update_sell_enabled(self) -> None:
         try:
             select_widget = self.query_one("#product-select", Select)
@@ -139,6 +188,9 @@ class SellModal(ModalScreen):
         except Exception:
             qty = 0
         btn.disabled = not (has_product and qty >= 1)
+
+        # Update cargo slots info whenever sell button state changes
+        self._update_cargo_slots_info()
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "confirm-btn":

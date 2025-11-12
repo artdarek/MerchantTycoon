@@ -6,6 +6,58 @@ from rich.text import Text
 from merchant_tycoon.engine import GameEngine
 
 
+def render_cargo_bar(used: int, total: int, segments: int = 10) -> Text:
+    """Return ASCII-style progress bar for cargo usage.
+
+    Args:
+        used: Current cargo slots used
+        total: Maximum cargo capacity
+        segments: Number of bar segments to display (default: 10)
+
+    Returns:
+        Rich Text object with styled cargo bar
+
+    Example:
+        >>> render_cargo_bar(30, 100, 10)
+        Text with: [bold white]███[/bold white][dim]███████[/dim]
+    """
+    if total <= 0:
+        # No capacity, show empty bar
+        return Text("│" * segments, style="dim")
+
+    # Calculate fill ratio and number of filled segments
+    ratio = min(1.0, used / total)
+    filled = int(ratio * segments)
+    empty = segments - filled
+
+    # Create the bar with styled segments
+    bar = Text()
+
+    # Determine color based on usage level
+    if ratio >= 0.9:
+        # 90%+ full: red (critical)
+        fill_style = "bold red"
+    if ratio >= 0.7:
+        # 70%+ full: red (critical)
+        fill_style = "bold orange"
+    elif ratio >= 0.5:
+        # 50-70% full: yellow (warning)
+        fill_style = "bold yellow"
+    else:
+        # <50% full: white (normal)
+        fill_style = "bold white"
+
+    # Add filled segments (full blocks)
+    if filled > 0:
+        bar.append("▓" * filled, style=fill_style)
+
+    # Add empty segments (light shade blocks)
+    if empty > 0:
+        bar.append("░" * empty, style="dim")
+
+    return bar
+
+
 class StatsPanel(Static):
     """Display player stats"""
 
@@ -46,9 +98,12 @@ class StatsPanel(Static):
             f"📈 Assets → ${portfolio_value:,}  •  "
             f"💳 Debt → ${state.debt:,}"
         )
-        right_text = f"📦 Cargo → {cargo_used}/{cargo_max}"
+
+        # Create cargo text with visual progress bar
+        right_render = Text(f"📦 Cargo → {cargo_used}/{cargo_max} ", no_wrap=True, overflow="crop")
+        cargo_bar = render_cargo_bar(cargo_used, cargo_max, segments=10)
+        right_render.append_text(cargo_bar)
 
         left_render = Text(left_text, no_wrap=True, overflow="ellipsis")
-        right_render = Text(right_text, no_wrap=True, overflow="crop")
         self.query_one("#stats-left", Label).update(left_render)
         self.query_one("#stats-cargo", Label).update(right_render)
