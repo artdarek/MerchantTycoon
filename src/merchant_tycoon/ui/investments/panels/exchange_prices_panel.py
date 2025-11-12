@@ -29,6 +29,7 @@ class ExchangePricesPanel(Static):
                 "Symbol",
                 "Name",
                 "Price",
+                "Prev",
                 "Change",
                 f"Min ({window}d)",
                 f"Max ({window}d)",
@@ -73,6 +74,16 @@ class ExchangePricesPanel(Static):
             else:
                 price_str = f"${price:,}"
 
+            # Format previous price
+            if symbol in self.engine.previous_asset_prices:
+                prev_price = self.engine.previous_asset_prices[symbol]
+                if asset_type == "crypto" and prev_price < 10:
+                    prev_str = f"${prev_price:.2f}"
+                else:
+                    prev_str = f"${prev_price:,}"
+            else:
+                prev_str = "─"
+
             # Format min/max over last 10 entries
             if hist:
                 try:
@@ -92,6 +103,7 @@ class ExchangePricesPanel(Static):
                 symbol,
                 name,
                 price_str,
+                prev_str,
                 change_cell,
                 minp,
                 maxp,
