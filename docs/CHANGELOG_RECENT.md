@@ -1,5 +1,289 @@
 # Recent Features & Changes
 
+## Version 1.2.x Updates
+
+### 💰 Dividend System
+
+**New Feature**: Regular dividend payouts for stock holdings
+
+- **Payout Schedule**: Every 11 days
+- **Minimum Holding Period**: 10 days to qualify
+- **Dividend Rates**: 0.1-0.3% of current share price per payout (varies by stock)
+- **Eligible Assets**: Select stocks only (CDR, SQR, others - check asset details)
+- **Payment Method**: Dividends deposited directly to bank account
+- **Tracking**: Cumulative dividend earnings shown per investment lot
+
+**Implementation Details:**
+- Added `dividend_rate` field to `Asset` model (stocks with >0 rate pay dividends)
+- Added `days_held` and `dividend_paid` fields to `InvestmentLot` model
+- New method: `InvestmentsService.calculate_and_pay_dividends()`
+- Dividends trigger during travel (daily advancement)
+- Separate modal notification from travel events
+
+**Example Calculation:**
+- 100 shares of CDR at $200/share with 0.1% dividend rate
+- Per share dividend: $200 × 0.001 = $0.20
+- Total payout: $0.20 × 100 shares = $20
+
+### 🏦 WalletService Architecture
+
+**New Service**: Centralized cash management system
+
+**Purpose**: Single source of truth for all cash operations across the game
+
+**API:**
+```python
+class WalletService:
+    def get_balance() -> int          # Query current cash
+    def set_balance(value: int)       # Direct balance update (use with caution)
+    def can_afford(amount: int) -> bool  # Check affordability
+    def earn(amount: int)             # Add cash
+    def spend(amount: int) -> bool    # Deduct cash with validation
+```
+
+**Benefits:**
+- **Consistent validation**: All cash operations validated before execution
+- **Single source of truth**: `state.cash` only modified through WalletService
+- **Cleaner code**: Removed scattered `self.state.cash` manipulations
+- **Type safety**: All operations properly validated
+
+**Integration:**
+- ✅ GoodsService: buy/sell goods
+- ✅ InvestmentsService: buy/sell assets
+- ✅ BankService: deposits, withdrawals, loans, repayments
+- ✅ TravelService: travel fees
+
+**Removed Features:**
+- Transaction logging (unused, removed for simplicity)
+- Messenger integration (services handle their own messaging)
+- Optional dependencies cleanup
+
+### 🎯 Travel Events System Improvements
+
+**Enhancements**: Better separation of concerns and event handling
+
+**Changes:**
+1. **Separated dividend from travel events**
+   - Dividends are game mechanics, not random events
+   - Dividend modal shown separately before/after travel events
+   - Cleaner event messaging
+
+2. **Improved event handling**
+   - Consistent 4-value return from `travel()`: `(success, msg, events_list, dividend_modal)`
+   - Events logged to messenger within services
+   - Better error handling for edge cases
+
+3. **New event type**: `neutral` events
+   - Not all events are gains or losses
+   - Better categorization of event impacts
+
+### 🔧 Service Architecture Improvements
+
+**Refactoring**: Cleaner dependency injection and service initialization
+
+**Key Changes:**
+
+1. **Removed Optional dependencies**
+   - All service dependencies are now required and explicit
+   - Fail-fast approach: missing dependencies cause immediate errors
+   - Removed ~80+ lines of defensive `if service:` checks
+   - Affected services: GoodsService, InvestmentsService, BankService, TravelService
+
+2. **ClockService enhancements**
+   - New method: `advance_day()` centralizes day/date progression
+   - Consistent calendar advancement across all services
+   - Removed scattered date manipulation logic
+
+3. **MessengerService injection**
+   - Direct injection instead of acquisition hacks
+   - Cleaner service initialization
+   - No more `getattr(other_service, 'messenger', None)` patterns
+
+4. **Travel fee extraction**
+   - New private method: `TravelService._calculate_travel_fee()`
+   - Separated calculation from business logic
+   - Easier to test and modify
+
+### 📊 Bank Account Enhancements
+
+**New Feature**: Visual balance history chart
+
+**Implementation:**
+- New panel: `AccountBalanceChartPanel`
+- Location: Bank tab, left column (between Actions and Transactions)
+- Chart type: ASCII line chart with slope indicators
+
+**Chart Features:**
+- **Data source**: Last 50 bank transactions
+- **Visualization**:
+  - `╱` for upward trends
+  - `╲` for downward trends
+  - `─` for flat periods
+  - `●` for most recent point
+- **Auto-scaling**: Adjusts to min/max balance range
+- **Labels**: Max balance (top), min balance (bottom), transaction count (footer)
+- **Edge cases**: Handles no data, constant balances, varying ranges
+
+**Update method**: `update_chart()` called during `refresh_all()`
+
+### 🔄 Domain Model Updates
+
+**Investment Lots:**
+- Added `days_held: int = 0` - tracks holding period for dividend eligibility
+- Added `dividend_paid: int = 0` - cumulative dividends earned per lot
+- Both fields displayed in Investment Lots panel
+
+**Bank Transactions:**
+- New transaction type: `"dividend"` for dividend payouts
+- Better transaction categorization
+
+**Assets:**
+- Added `dividend_rate: float = 0.0` - annual dividend yield (0 = no dividends)
+- Select stocks configured with 0.1-0.3% dividend rates
+
+### 📈 UI/UX Improvements
+
+**Investment Lots Panel:**
+- New column: "Dividend" showing cumulative dividend earnings per lot
+- Better profit/loss tracking with dividend consideration
+
+**Bank Account Panel:**
+- Balance history chart for visual trend analysis
+- Easier to spot deposit/withdrawal patterns
+- Quick overview of account growth
+
+**Event Notifications:**
+- Dividend modal separate from travel events
+- Clearer event categorization (gain/loss/neutral)
+- Better messaging hierarchy
+
+### 🔒 Configuration Updates
+
+**New Settings** (`src/merchant_tycoon/config/investments_settings.py`):
+```python
+dividend_interval_days: int = 11        # Payout frequency
+dividend_min_holding_days: int = 10     # Minimum holding period
+```
+
+**Assets Configuration** (`src/merchant_tycoon/domain/assets.py`):
+- Updated stock definitions with `dividend_rate` field
+- Configured dividend-paying stocks (CDR, SQR, etc.)
+
+### 🐛 Bug Fixes
+
+1. **Dividend timing bug**: Fixed payout calculation relative to holding period
+   - Initial issue: Dividends paid on day 8 instead of day 4
+   - Root cause: `days_held` starts at 0, increments during travel
+   - Fix: Adjusted `dividend_min_holding_days` calculation
+
+2. **Travel return value consistency**: Fixed inconsistent tuple unpacking
+   - Error: "ValueError: not enough values to unpack (expected 4, got 3)"
+   - Fix: All error cases now return 4 values: `(False, msg, [], None)`
+
+3. **Messenger acquisition hack**: Removed indirect service references
+   - Replaced: `getattr(self.bank_service, 'messenger', None)`
+   - With: Direct `messenger_service` injection
+
+### 🏗️ Code Quality Improvements
+
+**Simplifications:**
+- Removed unused transaction logging from WalletService (~80 lines)
+- Removed Optional[] type hints where dependencies are required
+- Consolidated event messaging logic
+- Better separation of concerns (dividend vs events)
+
+**Documentation:**
+- Updated README with dividend system details
+- Added examples and calculations
+- Documented WalletService API
+- Updated architecture diagrams
+
+### 📝 Breaking Changes
+
+⚠️ **WalletService API Changes**:
+
+If you were using WalletService directly (unlikely in normal gameplay):
+
+```python
+# OLD (no longer works)
+wallet.spend(amount, "reason string")
+wallet.earn(amount, "reason string")
+
+# NEW (required)
+wallet.spend(amount)
+wallet.earn(amount)
+```
+
+**Service Constructor Changes**:
+- All services now require explicit dependencies (no Optional[])
+- WalletService added to: BankService, GoodsService, InvestmentsService, TravelService
+- MessengerService now directly injected to TravelService
+
+### 📊 Statistics
+
+**New Code:**
+- Files created: 3 (WalletService, AccountBalanceChartPanel, run_local.py)
+- New methods: 8+ (dividend system, wallet operations, chart rendering)
+- Configuration additions: 2 settings (dividend interval, min holding)
+
+**Code Removed:**
+- Lines removed: ~150+ (transaction logging, Optional dependencies, defensive checks)
+- Files removed: 0
+- Deprecated methods: 0
+
+**Refactoring:**
+- Files modified: 15+
+- Services refactored: 4 (GoodsService, InvestmentsService, BankService, TravelService)
+- Import updates: 10+ files
+
+### 🎮 Gameplay Impact
+
+**Dividend System:**
+- New passive income stream from stock investments
+- Encourages long-term holding strategies
+- Rewards portfolio diversification
+- Adds financial planning depth
+
+**Improved Banking:**
+- Visual feedback on wealth accumulation
+- Easier to track financial progress
+- Better understanding of cash flow patterns
+
+**Better Event System:**
+- Clearer distinction between random events and game mechanics
+- Improved event notifications
+- More predictable gameplay flow
+
+### 🔍 Testing & Validation
+
+All changes validated:
+- ✅ WalletService spend/earn operations working
+- ✅ BankService deposit/withdraw with WalletService
+- ✅ Dividend calculations accurate
+- ✅ Dividend modal display working
+- ✅ Balance chart rendering correctly
+- ✅ Travel events separated from dividends
+- ✅ All service dependencies properly injected
+- ✅ No circular imports
+- ✅ Save/load compatibility maintained
+
+### 🚀 Running the Game
+
+**Local Development:**
+```bash
+# Use local source instead of installed package
+PYTHONPATH=src python3 -m merchant_tycoon
+
+# Or use the convenience script
+python3 run_local.py
+```
+
+**Note**: Python 3.13+ required for package installation. For development with Python 3.12, use the PYTHONPATH method above.
+
+---
+
+**Migration Guide**: Version 1.2.x is backward compatible with 1.1.x save files. The game will automatically initialize new fields (`days_held`, `dividend_paid`) on existing investment lots. No manual migration required.
+
 ## Version 1.1.x Updates
 
 ### 🎚️ Game Difficulty System
