@@ -277,7 +277,8 @@ MessangerPanel {
 /* Message text coloring handled in code to keep timestamp white */
 
 /* Modal styles (non-splash) */
-#input-modal, #city-modal, #buy-modal, #sell-modal, #confirm-modal, #repay-modal, #about-modal, #new-game-modal {
+#input-modal, #city-modal, #buy-modal, #sell-modal, #confirm-modal, #repay-modal, #about-modal, #new-game-modal,
+#buy-ticket-modal, #ticket-actions-modal {
     width: 48;              /* smaller panels */
     max-width: 60%;
     height: auto;
@@ -290,7 +291,8 @@ MessangerPanel {
    so underlying app remains visible around the dialog. */
 InputModal, TravelModal, BuyModal, SellModal, SellLotModal,
 BuyAssetModal, SellAssetModal, SellAssetLotModal, LoanRepayModal, HelpModal,
-ConfirmModal, AboutModal, CargoExtendModal, NewGameModal, NewspaperModal {
+ConfirmModal, AboutModal, CargoExtendModal, NewGameModal, NewspaperModal,
+BuyTicketModal, TicketActionsModal, LottoWinnerModal {
     align: center middle;
     background: transparent;
 }
@@ -377,6 +379,11 @@ ConfirmModal, AboutModal, CargoExtendModal, NewGameModal, NewspaperModal {
     margin: 0 1;
     height: 3;            /* taller buttons */
     padding: 0 2;         /* add vertical space */
+}
+
+/* Ticket Actions: use standard button spacing like other modals */
+TicketActionsModal #modal-buttons Button {
+    margin: 0 1;
 }
 
 #city-list {
@@ -570,6 +577,77 @@ AccountTransactionsPanel {
 }
 
 
+/* --- Lotto tab styles --- */
+LottoBuyPanel, LottoOwnedTicketsPanel, LottoTodayDrawPanel, LottoWinHistoryPanel {
+    border: solid #3f4557;
+    padding: 0 1;
+    margin: 0;
+    width: 1fr;
+}
+LottoTicketsSummaryPanel {
+    border: solid #3f4557;
+    padding: 0 1;
+    margin: 0;
+    width: 1fr;
+}
+/* Let content panels with tables grow and scroll */
+LottoOwnedTicketsPanel { height: 1fr; }
+LottoWinHistoryPanel { height: 1fr; }
+LottoActionsPanel {
+    border: solid #3f4557;
+    padding: 0 1;
+    margin: 0;
+    width: 1fr;
+}
+
+#lotto-left-col, #lotto-right-col {
+    width: 1fr;
+}
+
+#lotto-tickets-table, #lotto-win-table { height: 1fr; }
+
+#lotto-actions-bar {
+    height: auto;
+    width: 1fr;
+    align-horizontal: left;
+    content-align: center middle;
+}
+
+#lotto-actions-bar Button { width: 1fr; }
+
+/* Match bank action buttons sizing and spacing */
+#lotto-buy-btn { margin-right: 1; }
+#lotto-buy-btn, #lotto-lucky-btn { height: 3; padding: 0 1; }
+
+
+/* Buy Ticket modal: compact number inputs */
+#buy-ticket-modal { layout: vertical; height: auto; min-height: 0; content-align: left top; }
+#buy-ticket-modal > * { height: auto; }
+#buy-ticket-modal #number-inputs {
+    height: auto;
+    min-height: 0;
+    content-align: center top;   /* avoid vertical stretching */
+    align-horizontal: center;
+    margin: 1 0;
+}
+.lotto-num-col { height: auto; }
+.lotto-num-col > * { height: auto; }
+.lotto-num-label { height: auto; }
+.lotto-num-input { height: auto; }
+
+.lotto-num-col { width: auto; margin: 0; align: center middle; }
+
+.lotto-num-label {
+    text-align: center;
+    margin-bottom: 0;
+}
+
+.lotto-num-input { width: 6; min-width: 6; max-width: 7; padding: 0; text-align: center; }
+
+/* Ensure buy-ticket modal stacks content vertically cleanly */
+/* already declared above with height auto */
+
+
 /* --- Loan actions styles (mirror Bank actions) --- */
 LoanActionsPanel {
     border: solid #3f4557;
@@ -667,6 +745,19 @@ Button.-error:hover,
 Button.-error:focus,
 Button.-error.-pressed {
     background: #de7a73;
+    color: #ffffff;
+}
+
+/* Pastel orange flat style for warning (Deactivate) */
+Button.-warning {
+    background: #e2a65e;   /* pastel orange */
+    color: #ffffff;
+    border: none;
+}
+Button.-warning:hover,
+Button.-warning:focus,
+Button.-warning.-pressed {
+    background: #ebb778;   /* lighter on hover */
     color: #ffffff;
 }
 

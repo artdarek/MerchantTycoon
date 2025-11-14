@@ -10,6 +10,9 @@ from merchant_tycoon.domain.model.transaction import Transaction
 from merchant_tycoon.domain.model.investment_lot import InvestmentLot
 from merchant_tycoon.domain.model.bank_transaction import BankTransaction
 from merchant_tycoon.domain.model.loan import Loan
+from merchant_tycoon.domain.model.lotto_ticket import LottoTicket
+from merchant_tycoon.domain.model.lotto_draw import LottoDraw
+from merchant_tycoon.domain.model.lotto_win_history import LottoWinHistory
 from merchant_tycoon.config import SETTINGS
 
 if TYPE_CHECKING:
@@ -101,6 +104,14 @@ class SavegameService:
                     },
                     # Messages live under state
                     "messages": msgs,
+                    # Lotto data (optional)
+                    "lotto": {
+                        "tickets": [t.to_dict() for t in (state.lotto_tickets or [])],
+                        "today_draw": (state.lotto_today_draw.to_dict() if getattr(state, "lotto_today_draw", None) else None),
+                        "win_history": [w.to_dict() for w in (state.lotto_win_history or [])],
+                        "today_cost": int(getattr(state, "lotto_today_cost", 0) or 0),
+                        "today_payout": int(getattr(state, "lotto_today_payout", 0) or 0),
+                    },
                 },
                 "prices": {
                     "goods": dict(engine.prices),
@@ -322,6 +333,38 @@ class SavegameService:
                 msgs = s.get("messages") or []
                 engine.messenger.set_entries(msgs)
             except Exception:
+                pass
+
+            # Restore lotto data (optional)
+            try:
+                lotto = s.get("lotto") or {}
+                # Tickets
+                try:
+                    state.lotto_tickets = [LottoTicket.from_dict(d) for d in (lotto.get("tickets") or [])]
+                except Exception:
+                    state.lotto_tickets = []
+                # Today's draw
+                try:
+                    td = lotto.get("today_draw")
+                    state.lotto_today_draw = LottoDraw.from_dict(td) if td else None
+                except Exception:
+                    state.lotto_today_draw = None
+                # Win history
+                try:
+                    state.lotto_win_history = [LottoWinHistory.from_dict(d) for d in (lotto.get("win_history") or [])]
+                except Exception:
+                    state.lotto_win_history = []
+                # Daily aggregates (optional)
+                try:
+                    state.lotto_today_cost = int(lotto.get("today_cost", 0) or 0)
+                except Exception:
+                    state.lotto_today_cost = 0
+                try:
+                    state.lotto_today_payout = int(lotto.get("today_payout", 0) or 0)
+                except Exception:
+                    state.lotto_today_payout = 0
+            except Exception:
+                # Fields are optional for backward compatibility
                 pass
 
             return True

@@ -1,11 +1,14 @@
 from dataclasses import dataclass, field
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 from merchant_tycoon.domain.model.purchase_lot import PurchaseLot
 from merchant_tycoon.domain.model.transaction import Transaction
 from merchant_tycoon.domain.model.investment_lot import InvestmentLot
 from merchant_tycoon.domain.model.bank_account import BankAccount
 from merchant_tycoon.domain.model.loan import Loan
+from merchant_tycoon.domain.model.lotto_ticket import LottoTicket
+from merchant_tycoon.domain.model.lotto_draw import LottoDraw
+from merchant_tycoon.domain.model.lotto_win_history import LottoWinHistory
 
 
 @dataclass
@@ -33,6 +36,13 @@ class GameState:
     price_modifiers: Dict[str, float] = field(default_factory=dict)
     # Rolling price history for goods: {good_name: [prices...]}
     price_history: Dict[str, List[int]] = field(default_factory=dict)
+    # Lotto system
+    lotto_tickets: List[LottoTicket] = field(default_factory=list)
+    lotto_today_draw: Optional[LottoDraw] = None
+    lotto_win_history: List[LottoWinHistory] = field(default_factory=list)
+    # Lotto daily aggregates (reset at start of a new day draw)
+    lotto_today_cost: int = 0
+    lotto_today_payout: int = 0
 
     def get_inventory_count(self) -> int:
         return sum(self.inventory.values())

@@ -9,6 +9,7 @@ from .events_settings import EventsSettings
 from .investments_settings import InvestmentsSettings
 from .save_ui_settings import SaveUiSettings
 from .game_settings import GameSettings
+from .lotto_settings import LottoSettings
 
 
 @dataclass(frozen=True)
@@ -21,6 +22,7 @@ class Settings:
     investments: InvestmentsSettings = InvestmentsSettings()
     saveui: SaveUiSettings = SaveUiSettings()
     game: GameSettings = GameSettings()
+    lotto: LottoSettings = LottoSettings()
 
 
 SETTINGS = Settings()
