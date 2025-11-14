@@ -155,6 +155,7 @@ The game has **3 tabs** (Goods, Investments, Bank) with context-sensitive contro
 | **F5** | About | Show About modal |
 | **Q / ESC** | Quit | Exit the game |
 | **F9** | Splash | Show splash screen |
+| **N** | Newspaper | View full message history in scrollable newspaper modal |
 | **C** | Cargo | Extend cargo capacity by +1 slot (pricing per config) |
 
 #### 📦 Goods Tab Controls

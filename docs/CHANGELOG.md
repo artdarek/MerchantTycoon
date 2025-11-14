@@ -1,6 +1,139 @@
 # Recent Features & Changes
 
-## Version 1.2.x Updates
+## Version 1.2.3 Updates
+
+### 📰 Newspaper Modal (Message History Viewer)
+
+**New Feature**: Full message history in a scrollable newspaper-style modal
+
+**Keybinding**: Press **N** to open the Newspaper modal
+
+**Features:**
+- **Scrollable View**: Browse complete message history from the current game session
+- **Date Separators**: Messages grouped by date for easy navigation
+- **Color-Coded Messages**: Same visual styling as messenger panel
+  - 🔴 Red dot for errors
+  - 🟡 Amber dot for warnings
+  - 🔵 Teal dot for info messages
+  - ⚪ Gray dot for debug messages
+- **Timestamps**: Full date and time for each message
+- **Auto-scroll**: Automatically scrolls to show latest messages
+- **Modal Controls**: Close with ESC or N key
+
+**Implementation:**
+- New modal: `NewspaperModal` (`src/merchant_tycoon/ui/general/modals/newspaper_modal.py`)
+- Keybinding added: `Binding("n", "newspaper", "Newspaper", show=False)`
+- Fetches entries from: `engine.messenger.get_entries()`
+- Styling: Custom newspaper-themed CSS classes
+
+**Use Cases:**
+- Review past events and transactions
+- Track price changes over time
+- Analyze event patterns
+- Verify transaction history
+- Debug game state issues
+
+**UI/UX:**
+- Large scrollable container for comfortable reading
+- Clear visual hierarchy with date separators
+- Consistent message formatting across all log levels
+- Easy to dismiss (ESC or N to toggle)
+
+### 🚔 Stolen Goods Event Description Enhancement
+
+**Improvement**: Clarified stolen goods event messaging
+
+**Changes:**
+- **Old Message**: "🚔 STOLEN GOODS! Your last purchase was confiscated: lost Nx [item]"
+- **New Message**: "🚔 STOLEN GOODS! You bought stolen goods! Your last purchase was confiscated: lost Nx [item]"
+
+**Rationale:**
+- Makes it clearer WHY goods were confiscated (you unknowingly purchased stolen merchandise)
+- Better storytelling and event context
+- More realistic scenario explanation
+
+**Affected File:**
+- `src/merchant_tycoon/engine/events/loss/stolen_goods_event.py`
+
+### 🏦 Bank Modal UI Simplification
+
+**Improvement**: Streamlined bank operation modals for cleaner UX
+
+**Changes:**
+
+1. **Loan Modal:**
+   - Removed redundant APR display from prompt (already shown in loans list)
+   - Removed max loan capacity from prompt (cluttered the UI)
+   - Cleaner, more focused borrowing experience
+   - Changed "no capacity" message from warning to error for better visibility
+
+2. **Deposit Modal:**
+   - Removed "Cash available: $X,XXX" from prompt
+   - Cash balance already visible in stats panel at top
+   - More streamlined deposit flow
+
+3. **Withdraw Modal:**
+   - Removed "Bank balance: $X,XXX" from prompt
+   - Bank balance already visible in stats panel at top
+   - Reduced modal clutter
+
+4. **Loan Repay Modal:**
+   - Removed informational note about APR rates
+   - Information already available in loan list
+   - Faster, simpler repayment process
+
+**Rationale:**
+- Redundant information removed (already displayed in stats panel and loan tables)
+- Faster user flow with less reading required
+- Modal prompts focus only on the action input
+- Cleaner, more professional UI/UX
+
+**Affected Files:**
+- `src/merchant_tycoon/app.py` (action_loan, action_bank_deposit, action_bank_withdraw)
+- `src/merchant_tycoon/ui/bank/modals/loan_repay_modal.py`
+
+### 📝 Documentation Updates
+
+**README.md:**
+- Added **N** keybinding for Newspaper modal to Global Controls section
+- Updated controls table with Newspaper feature description
+
+**Impact:**
+- Players now have complete visibility into game message history
+- Improved event tracking and analysis capabilities
+- Better UX for reviewing past decisions and outcomes
+
+### 🎮 Gameplay Impact
+
+**Newspaper Modal:**
+- Better game state transparency
+- Easier to track event patterns and sequences
+- Helpful for analyzing profit/loss trends
+- Useful for debugging unusual situations
+- Can review price change notifications from past days
+
+**UI Improvements:**
+- Faster bank operations with less modal clutter
+- Reduced cognitive load during financial transactions
+- More professional, streamlined interface
+- Better focus on the actual input required
+
+### 🔍 Testing & Validation
+
+All changes validated:
+- ✅ Newspaper modal opens with N key
+- ✅ Message history displays correctly with timestamps
+- ✅ Date separators working
+- ✅ Color-coded message levels accurate
+- ✅ Auto-scroll to latest messages functional
+- ✅ ESC and N keys both close the modal
+- ✅ Bank modals streamlined successfully
+- ✅ Stolen goods event message updated
+- ✅ No regressions in existing features
+
+---
+
+## Version 1.2.2 Updates
 
 ### 💰 Dividend System
 
