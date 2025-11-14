@@ -23,7 +23,7 @@ from merchant_tycoon.engine.events.loss import (
     PortfolioCrashEventHandler,
 )
 from merchant_tycoon.engine.events.gain import (
-    LotteryEventHandler,
+    ContestWinEventHandler,
     DividendEventHandler,
     BankCorrectionEventHandler,
     PortfolioBoomEventHandler,
@@ -84,7 +84,7 @@ class TravelEventsService:
 
         Loss events (8): robbery, fire, flood, defective_batch, customs_duty,
                         stolen_goods, cash_damage, portfolio_crash
-        Gain events (4): lottery, dividend, bank_correction, portfolio_boom
+        Gain events (4): contest_win, dividend, bank_correction, portfolio_boom
         Neutral events (6): promo, oversupply, shortage, loyal_discount,
                            market_boom, market_crash
         """
@@ -99,7 +99,7 @@ class TravelEventsService:
         self.registry.register(PortfolioCrashEventHandler())
 
         # Register all gain handlers (4)
-        self.registry.register(LotteryEventHandler())
+        self.registry.register(ContestWinEventHandler())
         self.registry.register(DividendEventHandler())
         self.registry.register(BankCorrectionEventHandler())
         self.registry.register(PortfolioBoomEventHandler())
