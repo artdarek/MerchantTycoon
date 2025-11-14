@@ -49,6 +49,7 @@ from merchant_tycoon.ui.general.modals import (
     ConfirmModal,
     CargoExtendModal,
     EventModal,
+    NewspaperModal,
 )
 from merchant_tycoon.ui.goods.modals import (
     BuyModal,
@@ -81,6 +82,7 @@ class MerchantTycoon(App):
         Binding("f1", "new_game", "New Game", show=False),
         Binding("f5", "about", "About", show=False),
         Binding("f9", "splash", "Splash", show=False),
+        Binding("n", "newspaper", "Newspaper", show=False),
         # Tab shortcuts
         Binding("1", "go_goods_tab", "Goods", show=True),
         Binding("2", "go_investments_tab", "Investments", show=True),
@@ -615,6 +617,11 @@ class MerchantTycoon(App):
     def action_help(self):
         """Show game instructions"""
         modal = HelpModal()
+        self.push_screen(modal)
+
+    def action_newspaper(self):
+        """Show Newspaper modal with full messenger log history"""
+        modal = NewspaperModal()
         self.push_screen(modal)
 
     def action_about(self):

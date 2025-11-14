@@ -81,6 +81,6 @@ class StolenGoodsEventHandler(BaseEventHandler):
             context.state.inventory.pop(good, None)
 
         return (
-            f"🚔 STOLEN GOODS! Your last purchase was confiscated: lost {remove}x {good}.",
+            f"🚔 STOLEN GOODS! Your bought stollen goods! Your last purchase was confiscated: lost {remove}x {good}.",
             "loss"
         )

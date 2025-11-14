@@ -290,7 +290,7 @@ MessangerPanel {
    so underlying app remains visible around the dialog. */
 InputModal, TravelModal, BuyModal, SellModal, SellLotModal,
 BuyAssetModal, SellAssetModal, SellAssetLotModal, LoanRepayModal, HelpModal,
-ConfirmModal, AboutModal, CargoExtendModal, NewGameModal {
+ConfirmModal, AboutModal, CargoExtendModal, NewGameModal, NewspaperModal {
     align: center middle;
     background: transparent;
 }
@@ -672,4 +672,52 @@ Button.-error.-pressed {
 
 #your-loans-table {
     height: 1fr;
+}
+
+/* Newspaper modal styles */
+#newspaper-modal {
+    width: 80%;
+    height: 80%;
+    border: thick #3f4557;
+    background: #2b3140;
+    padding: 1 2;
+    layout: vertical;
+}
+
+#newspaper-subtitle {
+    text-style: italic;
+    color: #9aa3b2;
+    text-align: center;
+    margin-bottom: 1;
+}
+
+#newspaper-content {
+    width: 100%;
+    height: 1fr;           /* fill remaining space so button sits at bottom */
+    margin: 1 0;
+    padding: 1;
+    border: solid #3f4557;
+    background: #2f3543;
+    overflow-y: auto;
+}
+
+#newspaper-modal Button {
+    height: 3;
+    padding: 0 2;
+}
+
+.date-separator {
+    margin: 1 0;
+    text-align: center;
+}
+
+.newspaper-message {
+    margin-bottom: 0;
+}
+
+.no-messages {
+    text-align: center;
+    color: #9aa3b2;
+    text-style: italic;
+    margin: 2 0;
 }
