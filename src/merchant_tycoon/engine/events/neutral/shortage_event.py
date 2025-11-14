@@ -27,21 +27,25 @@ class ShortageEventHandler(BaseEventHandler):
         return 10.0
 
     def can_trigger(self, context: EventContext) -> bool:
-        """Can trigger if city has any goods available."""
-        return context.city is not None and bool(context.city.goods)
+        """Can trigger if there are any goods available."""
+        return context.goods_repo is not None and bool(context.goods_repo.get_all())
 
     def trigger(self, context: EventContext) -> Optional[Tuple[str, EventType]]:
         """Execute shortage event."""
-        if context.city is None or not context.city.goods:
+        if context.goods_repo is None:
             return None
 
-        goods = list(context.city.goods)
+        all_goods = context.goods_repo.get_all()
+        if not all_goods:
+            return None
+
+        goods = [g.name for g in all_goods]
         if not goods:
             return None
 
         # Select random good and apply shortage multiplier
         good = random.choice(goods)
-        lo, hi = SETTINGS.events.shortage_mult
+        lo, hi = SETTINGS.events.shortage_multiplier
         mult = random.uniform(lo, hi)
         context.state.price_modifiers[good] = mult
 

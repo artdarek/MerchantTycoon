@@ -37,11 +37,11 @@ def render_cargo_bar(used: int, total: int, segments: int = 10) -> Text:
     if ratio >= 0.9:
         # 90%+ full: red (critical)
         fill_style = "bold red"
-    if ratio >= 0.7:
-        # 70%+ full: red (critical)
-        fill_style = "bold orange"
+    elif ratio >= 0.7:
+        # 70-90% full: orange (warning)
+        fill_style = "bold #ff8800"
     elif ratio >= 0.5:
-        # 50-70% full: yellow (warning)
+        # 50-70% full: yellow (caution)
         fill_style = "bold yellow"
     else:
         # <50% full: white (normal)

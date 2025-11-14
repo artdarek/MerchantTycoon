@@ -1,6 +1,6 @@
 from textual.app import ComposeResult
 from textual.containers import Container
-from textual.widgets import Label, Button
+from textual.widgets import Label, Button, Static
 from textual.screen import ModalScreen
 from typing import Literal
 
@@ -50,7 +50,7 @@ class EventModal(ModalScreen):
             else:
                 t = t.upper()
             yield Label(t, id="modal-title")
-            yield Label(self.alert_message, id="alert-message")
+            yield Static(self.alert_message, id="alert-message")
             yield Button("OK (ENTER)", variant=button_variant, id="ok-btn")
 
     def on_button_pressed(self, event: Button.Pressed) -> None:

@@ -112,9 +112,15 @@ class TravelService:
                 bank_service=self.bank_service,
                 goods_service=self.goods_service,
                 investments_service=self.investments_service,
+                messenger=self.messenger,
             )
-        except Exception:
+        except Exception as e:
             events_list = []
+            # Log exception for debugging (can help catch event handler issues)
+            try:
+                self.messenger.error(f"EXCEPTION in travel events: {type(e).__name__}: {e}", tag="debug")
+            except Exception:
+                pass
 
         # If events set price modifiers, regenerate prices with those modifiers applied
         if self.state.price_modifiers:

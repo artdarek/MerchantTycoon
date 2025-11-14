@@ -43,6 +43,7 @@ if TYPE_CHECKING:
     from merchant_tycoon.engine.services.bank_service import BankService
     from merchant_tycoon.engine.services.goods_service import GoodsService
     from merchant_tycoon.engine.services.investments_service import InvestmentsService
+    from merchant_tycoon.engine.services.messenger_service import MessengerService
 
 # Event type literals
 EventType = Literal["loss", "gain", "neutral"]
@@ -119,7 +120,8 @@ class TravelEventsService:
         city: Optional[City] = None,
         bank_service: Optional["BankService"] = None,
         goods_service: Optional["GoodsService"] = None,
-        investments_service: Optional["InvestmentsService"] = None
+        investments_service: Optional["InvestmentsService"] = None,
+        messenger: Optional["MessengerService"] = None
     ) -> List[Tuple[str, EventType]]:
         """Trigger multiple weighted random travel events based on city configuration.
 
@@ -131,6 +133,7 @@ class TravelEventsService:
             bank_service: optional bank service to credit amounts
             goods_service: optional goods service for loss accounting
             investments_service: optional investments service for portfolio events
+            messenger:  optional messanger service
 
         Returns:
             List of event tuples (message, event_type). Empty list if no events occur.
@@ -146,7 +149,7 @@ class TravelEventsService:
         probability = float(city.travel_events.probability)
 
         # Overall chance that any event occurs this travel
-        if random.random() >= probability:
+        if random.random() > probability:
             return []
 
         # Create event context with clear parameter names
@@ -158,6 +161,7 @@ class TravelEventsService:
             bank_service=bank_service,
             goods_service=goods_service,
             investments_service=investments_service,
+            messenger=messenger,
             assets_repo=self.assets_repo,
             goods_repo=self.goods_repo,
         )

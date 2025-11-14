@@ -52,7 +52,7 @@ class GameEngine:
 
         # Wallet service for centralized cash operations
         from merchant_tycoon.engine.services.wallet_service import WalletService
-        self.wallet_service = WalletService(self.state, self.clock_service)
+        self.wallet_service = WalletService(self.state, self.clock_service, self.messenger)
 
         self.bank_service = BankService(self.state, self.clock_service, self.messenger, self.wallet_service)
         # Initialize cargo service before goods service (goods service depends on it)
@@ -154,6 +154,18 @@ class GameEngine:
             pass
 
         # Rebind service state references
+        try:
+            self.messenger.state = self.state
+        except Exception:
+            pass
+        try:
+            self.wallet_service.state = self.state
+        except Exception:
+            pass
+        try:
+            self.clock_service.state = self.state
+        except Exception:
+            pass
         try:
             self.bank_service.state = self.state
         except Exception:

@@ -9,6 +9,7 @@ if TYPE_CHECKING:
     from merchant_tycoon.engine.services.bank_service import BankService
     from merchant_tycoon.engine.services.goods_service import GoodsService
     from merchant_tycoon.engine.services.investments_service import InvestmentsService
+    from merchant_tycoon.engine.services.messenger_service import MessengerService
     from merchant_tycoon.repositories import AssetsRepository, GoodsRepository
 
 
@@ -28,6 +29,7 @@ class EventContext:
         bank_service: Service for bank operations (deposits, credits, transactions)
         goods_service: Service for goods operations (loss accounting, inventory management)
         investments_service: Service for investment operations (portfolio queries, asset info)
+        messenger: Service for logging debug messages
         assets_repo: Repository for asset data lookups (stocks, commodities, crypto)
         goods_repo: Repository for goods data lookups (all available goods)
     """
@@ -39,5 +41,6 @@ class EventContext:
     bank_service: Optional["BankService"]
     goods_service: Optional["GoodsService"]
     investments_service: Optional["InvestmentsService"]
+    messenger: Optional["MessengerService"]
     assets_repo: "AssetsRepository"
     goods_repo: "GoodsRepository"

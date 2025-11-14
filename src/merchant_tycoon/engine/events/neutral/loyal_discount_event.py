@@ -27,21 +27,25 @@ class LoyalDiscountEventHandler(BaseEventHandler):
         return 2.0  # Lower weight - this is a very rare/good event
 
     def can_trigger(self, context: EventContext) -> bool:
-        """Can trigger if city has any goods available."""
-        return context.city is not None and bool(context.city.goods)
+        """Can trigger if there are any goods available."""
+        return context.goods_repo is not None and bool(context.goods_repo.get_all())
 
     def trigger(self, context: EventContext) -> Optional[Tuple[str, EventType]]:
         """Execute loyal customer discount event."""
-        if context.city is None or not context.city.goods:
+        if context.goods_repo is None:
             return None
 
-        goods = list(context.city.goods)
+        all_goods = context.goods_repo.get_all()
+        if not all_goods:
+            return None
+
+        goods = [g.name for g in all_goods]
         if not goods:
             return None
 
         # Select random good and apply loyal customer discount
         good = random.choice(goods)
-        mult = SETTINGS.events.loyal_discount_mult
+        mult = SETTINGS.events.loyal_discount_multiplier
         context.state.price_modifiers[good] = mult
 
         # Show price change

@@ -1,8 +1,9 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 if TYPE_CHECKING:
     from merchant_tycoon.engine.game_state import GameState
     from merchant_tycoon.engine.services.clock_service import ClockService
+    from merchant_tycoon.engine.services.messenger_service import MessengerService
 
 
 class WalletService:
@@ -20,16 +21,19 @@ class WalletService:
     def __init__(
         self,
         state: "GameState",
-        clock_service: "ClockService"
+        clock_service: "ClockService",
+        messenger: Optional["MessengerService"] = None
     ):
         """Initialize WalletService.
 
         Args:
             state: Game state containing cash balance
             clock_service: Clock service for timestamps
+            messenger: Optional messenger service for debug logging
         """
         self.state = state
         self.clock = clock_service
+        self.messenger = messenger
 
     def get_balance(self) -> int:
         """Get current cash balance.

@@ -328,6 +328,7 @@ class MerchantTycoon(App):
             return
 
         success, msg = self.engine.goods_service.buy(product, quantity)
+
         if not success:
             self.engine.messenger.warn(msg, tag="goods")
         self.refresh_all()
