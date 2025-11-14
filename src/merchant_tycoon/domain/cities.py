@@ -55,7 +55,7 @@ CITIES: List[City] = [
           "Luxury Watch": 1.0, "Diamond Necklace": 1.0, "Gaming Laptop": 1.0, "High-end Drone": 1.0, "4K OLED TV": 1.0,
           "Fiat": 1.0, "Opel Astra": 1.0, "Ford Focus": 1.0, "Ferrari": 1.0, "Bentley": 1.0, "Bugatti": 1.0,
           "Weed": 0.9, "Cocaine": 0.95, "Grenade": 0.9, "Pistol": 0.9, "Shotgun": 0.95},
-         TravelEventsConfig(probability=1, loss_min=0, loss_max=2, gain_min=0, gain_max=2, neutral_min=0, neutral_max=1)),
+         TravelEventsConfig(probability=1, loss_min=1, loss_max=2, gain_min=1, gain_max=2, neutral_min=1, neutral_max=1)),
 
     # Berlin - Stable tech hub, slightly safer
     City("Berlin", "Germany", {"TV": 0.8, "Computer": 1.2, "Printer": 0.9, "Phone": 1.1,
