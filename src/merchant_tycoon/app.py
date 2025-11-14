@@ -60,6 +60,15 @@ from merchant_tycoon.ui.investments.modals import (
     SellAssetModal,
 )
 from merchant_tycoon.ui.bank.modals import LoanRepayModal
+from merchant_tycoon.ui.lotto.panels import (
+    LottoBuyPanel,
+    LottoOwnedTicketsPanel,
+    LottoTodayDrawPanel,
+    LottoWinHistoryPanel,
+    LottoActionsPanel,
+    LottoTicketsSummaryPanel,
+)
+from merchant_tycoon.ui.lotto.modals import LottoWinnerModal
 
 
 class MerchantTycoon(App):
@@ -87,6 +96,7 @@ class MerchantTycoon(App):
         Binding("1", "go_goods_tab", "Goods", show=True),
         Binding("2", "go_investments_tab", "Investments", show=True),
         Binding("3", "go_bank_tab", "Bank", show=True),
+        Binding("4", "go_lotto_tab", "Lotto", show=True),
         # Override common command-palette shortcuts with no-ops
         Binding("ctrl+k", "noop", show=False),
         Binding("ctrl+p", "noop", show=False),
@@ -121,6 +131,13 @@ class MerchantTycoon(App):
         self.loan_balance_panel = None
         self.your_loans_panel = None
         self.current_tab = "goods-tab"  # Track current tab
+        # Lotto panels
+        self.lotto_buy_panel = None
+        self.lotto_owned_tickets_panel = None
+        self.lotto_actions_panel = None
+        self.lotto_today_draw_panel = None
+        self.lotto_win_history_panel = None
+        self.lotto_tickets_summary_panel = None
 
     def compose(self) -> ComposeResult:
         yield GlobalActionsBar()
@@ -147,6 +164,15 @@ class MerchantTycoon(App):
                     yield LoanBalancePanel(self.engine)
                     yield LoanActionsPanel(self.engine)
                     yield YourLoansPanel(self.engine)
+            with TabPane("🎰 Lotto", id="lotto-tab"):
+                with Vertical(id="lotto-left-col"):
+                    yield LottoBuyPanel(self.engine)
+                    yield LottoActionsPanel(self.engine)
+                    yield LottoOwnedTicketsPanel(self.engine)
+                    yield LottoTicketsSummaryPanel(self.engine)
+                with Vertical(id="lotto-right-col"):
+                    yield LottoTodayDrawPanel(self.engine)
+                    yield LottoWinHistoryPanel(self.engine)
         yield MessangerPanel()
         yield Footer()
 
@@ -201,6 +227,31 @@ class MerchantTycoon(App):
             self.your_loans_panel = self.query_one(YourLoansPanel)
         except Exception:
             self.your_loans_panel = None
+        # Lotto panel references
+        try:
+            self.lotto_buy_panel = self.query_one(LottoBuyPanel)
+        except Exception:
+            self.lotto_buy_panel = None
+        try:
+            self.lotto_actions_panel = self.query_one(LottoActionsPanel)
+        except Exception:
+            self.lotto_actions_panel = None
+        try:
+            self.lotto_owned_tickets_panel = self.query_one(LottoOwnedTicketsPanel)
+        except Exception:
+            self.lotto_owned_tickets_panel = None
+        try:
+            self.lotto_today_draw_panel = self.query_one(LottoTodayDrawPanel)
+        except Exception:
+            self.lotto_today_draw_panel = None
+        try:
+            self.lotto_win_history_panel = self.query_one(LottoWinHistoryPanel)
+        except Exception:
+            self.lotto_win_history_panel = None
+        try:
+            self.lotto_tickets_summary_panel = self.query_one(LottoTicketsSummaryPanel)
+        except Exception:
+            self.lotto_tickets_summary_panel = None
 
         # Initialize current_tab to default
         self.current_tab = "goods-tab"
@@ -255,6 +306,12 @@ class MerchantTycoon(App):
             self.current_tab = "bank-tab"
         except Exception:
             pass
+    def action_go_lotto_tab(self) -> None:
+        try:
+            self.query_one(TabbedContent).active = "lotto-tab"
+            self.current_tab = "lotto-tab"
+        except Exception:
+            pass
 
     def refresh_all(self):
 
@@ -272,6 +329,8 @@ class MerchantTycoon(App):
             self.trade_actions_panel.update_trade_actions()
         if self.goods_trade_actions_panel:
             self.goods_trade_actions_panel.update_trade_actions()
+        if self.lotto_actions_panel:
+            self.lotto_actions_panel.update_actions()
         if self.investments_panel:
             self.investments_panel.update_investments()
         if self.investments_lots_panel:
@@ -288,6 +347,15 @@ class MerchantTycoon(App):
             self.your_loans_panel.update_loans()
         if self.bank_transactions_panel:
             self.bank_transactions_panel.update_transactions()
+        # Lotto
+        if self.lotto_owned_tickets_panel:
+            self.lotto_owned_tickets_panel.update_tickets()
+        if self.lotto_today_draw_panel:
+            self.lotto_today_draw_panel.update_draw()
+        if self.lotto_win_history_panel:
+            self.lotto_win_history_panel.update_win_history()
+        if self.lotto_tickets_summary_panel:
+            self.lotto_tickets_summary_panel.update_summary()
         # Refresh message log to reflect any new messenger entries
         try:
             if self.messanger_panel:
@@ -449,7 +517,16 @@ class MerchantTycoon(App):
             else:  # neutral
                 self.engine.messenger.info(event_msg, tag="events")
 
-        # Refresh messenger panel to show all messages
+        # Process daily lotto after successful travel
+        try:
+            draw, wins = self.engine.lotto_service.process_daily_lotto()
+        except Exception:
+            draw, wins = (None, [])
+
+        # Store pending wins to present after other modals
+        self._pending_lotto_wins = list(wins or [])
+
+        # Refresh to reflect travel results and lotto changes
         self.refresh_all()
 
         # Show dividend modal first (if any), then travel events
@@ -457,7 +534,9 @@ class MerchantTycoon(App):
             self._show_dividend_modal(dividend_modal, events_list)
         elif events_list:
             self._show_travel_events(events_list)
-        # If neither dividend nor events, refresh is already done above
+        else:
+            # No travel modals; maybe show lotto winners immediately
+            self._show_lotto_winners_if_any()
 
     def _show_travel_events(self, events_list: list) -> None:
         """Show multiple travel events sequentially with blocking modals."""
@@ -470,7 +549,8 @@ class MerchantTycoon(App):
     def _show_next_event(self) -> None:
         """Show the next event from pending events queue."""
         if not hasattr(self, '_pending_events') or not self._pending_events:
-            self.refresh_all()
+            # After events are done, show lotto winners if any
+            self._show_lotto_winners_if_any()
             return
 
         event_msg, event_type = self._pending_events.pop(0)
@@ -485,6 +565,22 @@ class MerchantTycoon(App):
 
         modal = EventModal(title, event_msg, event_type, self._show_next_event)
         self.push_screen(modal)
+
+    def _show_lotto_winners_if_any(self) -> None:
+        """Show lotto winners modal if there are pending wins; otherwise just refresh."""
+        wins = getattr(self, "_pending_lotto_wins", []) or []
+        if wins:
+            # After closing winners modal, clear and refresh
+            def _after_close():
+                try:
+                    self._pending_lotto_wins = []
+                except Exception:
+                    pass
+                self.refresh_all()
+
+            self.push_screen(LottoWinnerModal(wins, on_close=_after_close))
+        else:
+            self.refresh_all()
 
     def _show_dividend_modal(self, dividend_msg: str, events_list: list = None) -> None:
         """Show dividend modal, then travel events if any."""

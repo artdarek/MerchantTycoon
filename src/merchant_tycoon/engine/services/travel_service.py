@@ -12,6 +12,7 @@ if TYPE_CHECKING:
     from merchant_tycoon.engine.services.clock_service import ClockService
     from merchant_tycoon.engine.services.messenger_service import MessengerService
     from merchant_tycoon.engine.services.wallet_service import WalletService
+    from merchant_tycoon.engine.services.lotto_service import LottoService
     from merchant_tycoon.repositories import CitiesRepository
 
 

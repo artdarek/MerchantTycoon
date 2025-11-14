@@ -11,6 +11,7 @@ from merchant_tycoon.engine.services.travel_events_service import TravelEventsSe
 from merchant_tycoon.engine.services.savegame_service import SavegameService
 from merchant_tycoon.engine.services.clock_service import ClockService
 from merchant_tycoon.engine.services.messenger_service import MessengerService
+from merchant_tycoon.engine.services.lotto_service import LottoService
 from merchant_tycoon.repositories import (
     GoodsRepository,
     CitiesRepository,
@@ -76,6 +77,12 @@ class GameEngine:
             self.clock_service,
             self.messenger,
             self.bank_service,
+            self.wallet_service
+        )
+        # Lotto service for daily lottery
+        self.lotto_service = LottoService(
+            self.state,
+            self.messenger,
             self.wallet_service
         )
         # Event service for travel random encounters
@@ -184,6 +191,10 @@ class GameEngine:
             pass
         try:
             self.travel_service.state = self.state
+        except Exception:
+            pass
+        try:
+            self.lotto_service.state = self.state
         except Exception:
             pass
 

@@ -18,7 +18,8 @@
 - Python 3.8+; 4-space indentation; limit lines to ~100–120 chars.
 - Names: `snake_case` for modules/functions, `PascalCase` for classes, `UPPER_SNAKE` for constants.
 - Keep domain boundaries: engine logic in `engine/`, data classes in `model/`, TUI in `ui/`, events in `events/`.
-- Prefer absolute imports within the package; avoid circular deps by isolating services.
+- Use absolute imports within the package avoind relative imports;
+- Avoid circular deps by isolating services.
 - Lint/format: ruff recommended (not enforced yet). Examples: `ruff check src/`, `ruff format src/`.
 - Use English language in comments and docstrings.
 

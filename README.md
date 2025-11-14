@@ -143,7 +143,7 @@ make clean
 
 ### Controls
 
-The game has **3 tabs** (Goods, Investments, Bank) with context-sensitive controls:
+The game has **4 tabs** (Goods, Investments, Bank, Lotto) with context-sensitive controls:
 
 #### Global Controls (Always Available)
 | Key | Action | Description |
@@ -157,6 +157,7 @@ The game has **3 tabs** (Goods, Investments, Bank) with context-sensitive contro
 | **F9** | Splash | Show splash screen |
 | **N** | Newspaper | View full message history in scrollable newspaper modal |
 | **C** | Cargo | Extend cargo capacity by +1 slot (pricing per config) |
+| **1/2/3/4** | Tabs | Switch to Goods / Investments / Bank / Lotto |
 
 #### 📦 Goods Tab Controls
 | Key | Action | Description |
@@ -180,6 +181,19 @@ The game has **3 tabs** (Goods, Investments, Bank) with context-sensitive contro
 | **W** | Withdraw | Withdraw cash from bank account |
 | **L** | Loan | Take out a new loan (APR 1-20%, max $10,000) |
 | **R** | Repay | Repay existing loans |
+
+#### 🎰 Lotto Tab
+- Left column panels:
+  - Buy Ticket: shows pricing, renewal cost, and rules
+  - Actions: compact bar with two buttons
+    - Buy ticket: open modal to enter 6 unique numbers
+    - Lucky shot!: open the same modal prefilled with 6 random unique numbers
+  - Owned Tickets: table of your tickets with columns Day, Status, numbers 1–6, Cost, Reward, P/L
+    - Row click opens Ticket Actions (Activate/Deactivate, Remove)
+  - Tickets Summary: totals for Owned/Active, Cost, Reward, P/L
+- Right column panels:
+  - Today’s Draw: shows today’s 6 numbers and per‑day totals (Today’s cost, Today’s payout, P/L)
+  - Win History: table of past wins with Day, numbers, Matched, Payout (newest first)
 
 ### Game Mechanics
 
