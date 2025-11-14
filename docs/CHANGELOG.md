@@ -1,5 +1,115 @@
 # Recent Features & Changes
 
+## Version 1.2.4 Updates
+
+### 🏆 Contest Win Event (Replaces Lottery Event)
+
+**New Feature**: Random contest wins with tiered prize system
+
+**What Changed:**
+- Replaced the old lottery-style event with a more thematic "Contest Win" event
+- Instead of matching numbers, players now win 1st/2nd/3rd place in randomly selected contests
+- More variety and fun event messaging
+
+**Contest System:**
+- **10 Configurable Contests**: Each with unique name and base prize
+  - International Sandwich Championship ($1,000)
+  - World Pillow Fighting Cup ($2,000)
+  - National Speed Napping Finals ($3,000)
+  - Intergalactic Beard Grooming Show ($1,500)
+  - Extreme Ironing Masters ($2,500)
+  - Professional Duck Herding Competition ($1,200)
+  - Global Air Guitar Championship ($1,800)
+  - Underground Sock Sorting League ($800)
+  - Elite Backwards Running Marathon ($2,200)
+  - International Paper Airplane Distance Cup ($1,000)
+
+**Prize Calculation:**
+- **1st Place**: Full base prize amount
+- **2nd Place**: ceil(base / 2) - half the base prize (rounded up)
+- **3rd Place**: ceil(base / 4) - quarter of base prize (rounded up)
+- **Weighted Selection**: Favors lower places (3rd most common, 1st least common)
+- **Place Weights**: [1st: 10, 2nd: 30, 3rd: 60]
+
+**Example Prizes:**
+```
+World Pillow Fighting Cup (base: $2,000)
+  - 1st place: $2,000
+  - 2nd place: $1,000
+  - 3rd place: $500
+
+National Speed Napping Finals (base: $3,000)
+  - 1st place: $3,000
+  - 2nd place: $1,500
+  - 3rd place: $750
+```
+
+**Event Messages:**
+```
+🏆 CONTEST WIN! You won 2nd place in World Pillow Fighting Cup! Prize: $1,000
+🏆 CONTEST WIN! You won 3rd place in Underground Sock Sorting League! Prize: $200
+🏆 CONTEST WIN! You won 1st place in International Sandwich Championship! Prize: $1,000
+```
+
+**Implementation Details:**
+- New handler: `ContestWinEventHandler` (`src/merchant_tycoon/engine/events/gain/contest_win_event.py`)
+- Event type: `"gain"` (positive event)
+- Event weight: 3.0 (same as old lottery)
+- Eligibility: Always (no preconditions)
+- Configuration: `SETTINGS.events.contest_names` and `SETTINGS.events.contest_place_weights`
+
+**Configuration (`EventsSettings`):**
+```python
+contest_names: list[tuple[str, int]] = [
+    ("Contest Name", base_prize),
+    ...
+]
+contest_place_weights: list[int] = [10, 30, 60]  # [1st, 2nd, 3rd]
+```
+
+**Removed:**
+- `LotteryEventHandler` (old lottery-style event)
+- Lottery configuration: `lottery_tiers`, `lottery_weights`, `lottery_reward_ranges`
+- File deleted: `src/merchant_tycoon/engine/events/gain/lottery_event.py`
+
+**Why This Change:**
+- Prepares for actual Lotto system (separate feature)
+- More entertaining and varied event messages
+- Easier to configure and extend with new contests
+- Better thematic fit for a merchant trading game
+- Clearer prize structure (1st/2nd/3rd vs. matching numbers)
+
+**Developer Notes:**
+- Contests are fully configurable - developers can easily add/remove/modify contests
+- Base prizes can be adjusted per contest
+- Place probability weights can be modified
+- Event weight can be changed to make contests more/less frequent
+- No data migration required - backward compatible with existing saves
+
+### 🎮 Gameplay Impact
+
+**Contest Win Event:**
+- Prize range: $200 - $3,000 (depending on contest and place won)
+- Most common outcome: 3rd place (~60% of wins)
+- Rare outcome: 1st place (~10% of wins)
+- Average prize: ~$600-$800 per event
+- Adds variety and humor to travel events
+- Same frequency as old lottery event (weight: 3)
+
+### 🔍 Testing & Validation
+
+All changes validated:
+- ✅ ContestWinEventHandler imports correctly
+- ✅ 10 contests loaded with proper configuration
+- ✅ Prize calculations accurate for all places
+- ✅ Events trigger with correct messaging
+- ✅ Handler properly registered in travel events service
+- ✅ LotteryEventHandler completely removed
+- ✅ GameEngine initializes without errors
+- ✅ Backward compatible with existing save files
+
+---
+
 ## Version 1.2.3 Updates
 
 ### 📰 Newspaper Modal (Message History Viewer)

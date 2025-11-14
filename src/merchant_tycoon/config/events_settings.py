@@ -26,12 +26,12 @@ class EventsSettings:
     cash_damage_max: int = 2000
     # Dividend: percent range of stock position value credited to bank
     dividend_pct: tuple[float, float] = (0.005, 0.02)
-    # Lottery: hit tiers (e.g., [3, 4, 5, 6])
-    lottery_tiers: list[int] = None
-    # Lottery: probability weights per tier (e.g., [50, 30, 15, 5])
-    lottery_weights: list[int] = None
-    # Lottery: reward ranges per tier in dollars (e.g., {3:(200,600), ...})
-    lottery_reward_ranges: dict[int, tuple[int, int]] = None
+    # Contest Win: list of contest names with their 1st place base prizes
+    # Format: [("Contest Name", base_1st_prize), ...]
+    # 2nd place = base/2, 3rd place = base/4 (rounded up)
+    contest_names: list[tuple[str, int]] = None
+    # Contest Win: probability weights for each place [1st, 2nd, 3rd]
+    contest_place_weights: list[int] = None
     # Bank correction: percent range of bank balance credited as interest correction
     bank_correction_pct: tuple[float, float] = (0.01, 0.05)
     # Bank correction: minimum correction amount
@@ -55,19 +55,24 @@ class EventsSettings:
             "stolen_last_buy": 5,
             "cash_damage": 4,
             "dividend": 6,
-            "lottery": 3,
+            "contest_win": 3,
             "bank_correction": 4,
             "promo": 5,
             "oversupply": 4,
             "shortage": 4,
             "loyal_discount": 1,
         })
-        object.__setattr__(self, "lottery_tiers", self.lottery_tiers or [3, 4, 5, 6])
-        object.__setattr__(self, "lottery_weights", self.lottery_weights or [50, 30, 15, 5])
-        object.__setattr__(self, "lottery_reward_ranges", self.lottery_reward_ranges or {
-            3: (200, 600),
-            4: (700, 1500),
-            5: (2000, 6000),
-            6: (10_000, 30_000),
-        })
+        object.__setattr__(self, "contest_names", self.contest_names or [
+            ("International Sandwich Championship", 1000),
+            ("World Pillow Fighting Cup", 2000),
+            ("National Speed Napping Finals", 3000),
+            ("Intergalactic Beard Grooming Show", 1500),
+            ("Extreme Ironing Masters", 2500),
+            ("Professional Duck Herding Competition", 1200),
+            ("Global Air Guitar Championship", 1800),
+            ("Underground Sock Sorting League", 800),
+            ("Elite Backwards Running Marathon", 2200),
+            ("International Paper Airplane Distance Cup", 1000),
+        ])
+        object.__setattr__(self, "contest_place_weights", self.contest_place_weights or [10, 30, 60])
 
