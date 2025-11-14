@@ -497,19 +497,13 @@ class MerchantTycoon(App):
 
     def action_loan(self):
         """Take a loan"""
-        # Show today's APR offer for new loans (existing loans keep their own APR)
-        try:
-            apr_offer = float(getattr(self.engine.bank_service, "loan_apr_today", 0.10))
-        except Exception:
-            apr_offer = 0.10
-        apr_pct = f"{apr_offer*100:.2f}"
         try:
             _, _, max_new = self.engine.bank_service.compute_credit_limits()
         except Exception:
             max_new = 0
         if int(max_new) <= 0:
             # No capacity left: inform user and return
-            self.engine.messenger.warn(
+            self.engine.messenger.error(
                 "No credit capacity available. Repay loans or increase wealth to borrow more.",
                 tag="bank",
             )
@@ -518,7 +512,6 @@ class MerchantTycoon(App):
         suggested = max(0, int(max_new))
         prompt = (
             "How much would you like to borrow?\n"
-            f"(Max new loan by capacity: ${max_new:,} | Today's offer: {apr_pct}% APR)"
         )
         modal = InputModal(
             "🏦 Bank Loan",
@@ -573,7 +566,7 @@ class MerchantTycoon(App):
             return
         modal = InputModal(
             "🏦 Deposit to Bank",
-            f"Cash available: ${cash:,}\nHow much to deposit?",
+            f"How much to deposit?",
             self._handle_bank_deposit,
             default_value=str(cash),
             confirm_variant="success",
@@ -600,7 +593,7 @@ class MerchantTycoon(App):
             return
         modal = InputModal(
             "🏦 Withdraw from Bank",
-            f"Bank balance: ${bal:,}\nHow much to withdraw?",
+            f"How much to withdraw?",
             self._handle_bank_withdraw,
             default_value=str(bal),
             confirm_variant="success",

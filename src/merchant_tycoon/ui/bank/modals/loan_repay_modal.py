@@ -38,21 +38,6 @@ class LoanRepayModal(ModalScreen):
                 title = title.upper()
             yield Label(title, id="modal-title")
 
-            # Informational note about rates (APR)
-            try:
-                offer_pct = float(getattr(self.engine.bank_service, "loan_apr_today", 0.10)) * 100.0
-            except Exception:
-                offer_pct = 10.0
-            try:
-                bank_apr_pct = float(getattr(self.engine.state.bank, "interest_rate_annual", 0.02)) * 100.0
-            except Exception:
-                bank_apr_pct = 2.0
-            yield Label(
-                f"Today's new-loan APR: {offer_pct:.1f}% · Bank savings APR: {bank_apr_pct:.1f}%",
-                id="repay-rates-info",
-            )
-            yield Label("Note: Each loan keeps its own fixed rate set on the day it was taken.", id="repay-rates-note")
-
             # Build options from active loans (remaining > 0)
             options: list[tuple[str, str]] = []
             active_loans = [ln for ln in (self.engine.state.loans or []) if getattr(ln, "remaining", 0) > 0]
