@@ -75,15 +75,22 @@ class BankService:
         self.messenger.info(f"Deposited ${amount:,} to bank", tag="bank")
         return True, f"Deposited ${amount:,} to bank"
 
-    def withdraw_from_bank(self, amount: int) -> tuple[bool, str]:
-        """Withdraw cash from bank account (no overdraft)."""
+    def withdraw_from_bank(self, amount: int, *, title: str = "Personal withdrawal", credit_wallet: bool = True) -> tuple[bool, str]:
+        """Withdraw cash from bank account (no overdraft).
+
+        Args:
+            amount: Amount to withdraw (must be positive and <= balance)
+            title: Label for the bank transaction history
+            credit_wallet: If True, credits cash to wallet; if False, treats as penalty/confiscation
+        """
         if amount <= 0:
             return False, "Amount must be positive"
         bank = self.state.bank
         if amount > bank.balance:
             return False, f"Not enough bank balance! Have ${bank.balance:,}"
         bank.balance -= amount
-        self.wallet.earn(amount)
+        if credit_wallet:
+            self.wallet.earn(amount)
         ts = self.clock.now().isoformat(timespec="seconds")
         bank.transactions.append(
             BankTransaction(
@@ -91,12 +98,16 @@ class BankService:
                 amount=amount,
                 balance_after=bank.balance,
                 day=self.state.day,
-                title="Personal withdrawal",
+                title=title or "Personal withdrawal",
                 ts=ts,
             )
         )
-        self.messenger.info(f"Withdrew ${amount:,} from bank", tag="bank")
-        return True, f"Withdrew ${amount:,} from bank"
+        if credit_wallet:
+            self.messenger.info(f"Withdrew ${amount:,} from bank", tag="bank")
+            return True, f"Withdrew ${amount:,} from bank"
+        else:
+            self.messenger.warn(f"Bank reduced by ${amount:,}: {title}", tag="bank")
+            return True, f"Bank reduced by ${amount:,}: {title}"
 
     def accrue_bank_interest(self) -> None:
         """Accrue and credit daily compounding bank interest up to current day.

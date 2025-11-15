@@ -17,7 +17,7 @@ class LottoSettings:
     """
 
     # Number range and ticket configuration
-    number_range_max: int = 12
+    number_range_max: int = 21
     numbers_per_ticket: int = 6
 
     # Pricing
