@@ -12,7 +12,7 @@ class OwnedTicketsSummaryPanel(Static):
         self.engine = engine
 
     def compose(self) -> ComposeResult:
-        yield Label("📈 TICKETS SUMMARY", classes="panel-title")
+        yield Label("📈 OWNED TICKETS SUMMARY", classes="panel-title")
         yield Label("", id="tickets-summary-line")
 
     def update_summary(self) -> None:
@@ -27,5 +27,5 @@ class OwnedTicketsSummaryPanel(Static):
             total_cost = total_reward = pl = 0
             active = total = 0
 
-        line = f"Owned: {total} (Active: {active})  •  Cost: ${total_cost:,}  •  Reward: ${total_reward:,}  •  P/L: ${pl:,}"
+        line = f"Active: {active}/{total} •  Cost: ${total_cost:,}  •  Reward: ${total_reward:,}  •  P/L: ${pl:,}"
         self.query_one("#tickets-summary-line", Label).update(line)

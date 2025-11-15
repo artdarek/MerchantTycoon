@@ -23,7 +23,7 @@ class OwnedTicketsPanel(Static):
         if not getattr(self, "_table_init", False):
             table.clear(columns=True)
             table.add_columns(
-                "Day", "Status", "1", "2", "3", "4", "5", "6", "Cost", "Reward", "P/L"
+                "Day", "Status", "1", "2", "3", "4", "5", "6", "Cost", "Reward", "P/L", "Wins"
             )
             try:
                 table.cursor_type = "row"
@@ -53,6 +53,11 @@ class OwnedTicketsPanel(Static):
             cost = int(getattr(t, "total_cost", 0) or 0)
             reward = int(getattr(t, "total_reward", 0) or 0)
             pl = reward - cost
+            # Count wins for this ticket: match exact numbers list in history
+            try:
+                wins_count = sum(1 for w in (self.engine.state.lotto_win_history or []) if list(getattr(w, "ticket_numbers", [])) == list(getattr(t, "numbers", [])))
+            except Exception:
+                wins_count = 0
             row_key = table.add_row(
                 str(getattr(t, "purchase_day", "-")),
                 status,
@@ -60,6 +65,7 @@ class OwnedTicketsPanel(Static):
                 f"${cost:,}",
                 f"${reward:,}",
                 f"${pl:,}",
+                str(wins_count),
             )
             # Map to original index in state.lotto_tickets
             try:

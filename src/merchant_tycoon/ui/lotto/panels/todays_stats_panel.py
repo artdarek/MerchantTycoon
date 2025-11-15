@@ -27,5 +27,5 @@ class TodaysStatsPanel(Static):
             today_payout = 0
         pl = today_payout - today_cost
         label.update(
-            f"Today's cost: ${today_cost:,}  •  Today's payout: ${today_payout:,}  •  P/L: ${pl:,}"
+            f"Cost: ${today_cost:,}  •  Payout: ${today_payout:,}  •  P/L: ${pl:,}"
         )
