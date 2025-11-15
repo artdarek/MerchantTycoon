@@ -20,8 +20,9 @@ class WordleGamePanel(Static):
         with Horizontal(id="wordle-controls"):
             yield Input(placeholder="enter 5-letter word", id="wordle-input")
             yield Button("Guess", id="wordle-guess", variant="success")
-            yield Button("Play Again", id="wordle-restart", variant="default", disabled=True)
-            yield Button("Restart", id="wordle-reset", variant="default")
+            # Make Play Again pastel orange (warning) and Restart destructive (error)
+            yield Button("Play Again", id="wordle-restart", variant="warning", disabled=True)
+            yield Button("Restart", id="wordle-reset", variant="error")
         # Stats panel below controls (content set in _update_stats)
         yield Label("", id="wordle-stats")
 

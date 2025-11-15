@@ -615,3 +615,4 @@ Good luck, and may your trades be profitable! 🚀💰
 - ASCII logo generator: https://patorjk.com/software/taag/#p=display&f=Big+Money-ne&t=Merchant%0ATycoon%0AT-ai-coon%0A&x=none&v=4&h=4&w=80&we=false
   - Font: Big Money-ne
   - Used to create the splash screen ASCII art variants (Merchant Tycoon / T-ai-coon)
+- ASCI IMAGES generator: https://www.asciiart.eu/image-to-ascii

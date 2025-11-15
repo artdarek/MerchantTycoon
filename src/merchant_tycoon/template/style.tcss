@@ -695,7 +695,8 @@ PhonePanel {
 /* Wordle styles */
 #wordle-controls { height: auto; content-align: left middle; }
 #wordle-controls Input { width: 1fr; }
-#wordle-controls Button { margin-left: 1; }
+#wordle-controls Button { margin-left: 1; height: 3; padding: 0 1; }
+#wordle-guess { margin-left: 0; }
 #wordle-attempts { height: 1fr; }
 .wordle-row { height: auto; align-horizontal: center; content-align: center middle; margin: 0 0 1 0; }
 .wordle-box {
