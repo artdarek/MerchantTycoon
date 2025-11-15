@@ -21,6 +21,7 @@ from merchant_tycoon.engine.events.loss import (
     StolenGoodsEventHandler,
     CashDamageEventHandler,
     PortfolioCrashEventHandler,
+    LottoTicketLostEventHandler,
 )
 from merchant_tycoon.engine.events.gain import (
     ContestWinEventHandler,
@@ -97,6 +98,8 @@ class TravelEventsService:
         self.registry.register(StolenGoodsEventHandler())
         self.registry.register(CashDamageEventHandler())
         self.registry.register(PortfolioCrashEventHandler())
+        # New minor loss event: lose one lotto ticket if any active
+        self.registry.register(LottoTicketLostEventHandler())
 
         # Register all gain handlers (4)
         self.registry.register(ContestWinEventHandler())

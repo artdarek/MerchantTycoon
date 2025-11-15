@@ -31,6 +31,7 @@ Semantic Versioning.
 - Tickets Summary panel with totals (Owned/Active, Cost, Reward, P/L).
 - Today’s Draw shows per‑day totals: Today’s cost, Today’s payout, and P/L.
 - Owned Tickets table includes P/L column per ticket.
+ - New travel event: LottoTicketLost (loss) — randomly removes one active lotto ticket (no refund). Triggers only if you have at least one active ticket. Shows a loss modal and logs a messenger entry.
 
 ### Changed
 - Lotto Winner modal styling updated to match the existing dividend/event modal
