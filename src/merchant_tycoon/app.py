@@ -61,14 +61,15 @@ from merchant_tycoon.ui.investments.modals import (
 )
 from merchant_tycoon.ui.bank.modals import LoanRepayModal
 from merchant_tycoon.ui.lotto.panels import (
-    LottoBuyPanel,
-    LottoOwnedTicketsPanel,
-    LottoTodayDrawPanel,
-    LottoWinHistoryPanel,
-    LottoActionsPanel,
-    LottoTicketsSummaryPanel,
+    BuyTicketPanel,
+    OwnedTicketsPanel,
+    TodaysStatsPanel,
+    WinHistoryPanel,
+    TicketsActionPanel,
+    OwnedTicketsSummaryPanel,
+    LottoDrawStripPanel,
 )
-from merchant_tycoon.ui.lotto.modals import LottoWinnerModal
+from merchant_tycoon.ui.lotto.modals import WinnerModal
 
 
 class MerchantTycoon(App):
@@ -135,9 +136,10 @@ class MerchantTycoon(App):
         self.lotto_buy_panel = None
         self.lotto_owned_tickets_panel = None
         self.lotto_actions_panel = None
-        self.lotto_today_draw_panel = None
+        self.lotto_stats_panel = None
         self.lotto_win_history_panel = None
         self.lotto_tickets_summary_panel = None
+        self.lotto_draw_strip_panel = None
 
     def compose(self) -> ComposeResult:
         yield GlobalActionsBar()
@@ -166,13 +168,14 @@ class MerchantTycoon(App):
                     yield YourLoansPanel(self.engine)
             with TabPane("🎰 Lotto", id="lotto-tab"):
                 with Vertical(id="lotto-left-col"):
-                    yield LottoBuyPanel(self.engine)
-                    yield LottoActionsPanel(self.engine)
-                    yield LottoOwnedTicketsPanel(self.engine)
-                    yield LottoTicketsSummaryPanel(self.engine)
+                    yield BuyTicketPanel(self.engine)
+                    yield TicketsActionPanel(self.engine)
+                    yield OwnedTicketsPanel(self.engine)
+                    yield OwnedTicketsSummaryPanel(self.engine)
                 with Vertical(id="lotto-right-col"):
-                    yield LottoTodayDrawPanel(self.engine)
-                    yield LottoWinHistoryPanel(self.engine)
+                    yield LottoDrawStripPanel(self.engine)
+                    yield TodaysStatsPanel(self.engine)
+                    yield WinHistoryPanel(self.engine)
         yield MessangerPanel()
         yield Footer()
 
@@ -229,29 +232,33 @@ class MerchantTycoon(App):
             self.your_loans_panel = None
         # Lotto panel references
         try:
-            self.lotto_buy_panel = self.query_one(LottoBuyPanel)
+            self.lotto_buy_panel = self.query_one(BuyTicketPanel)
         except Exception:
             self.lotto_buy_panel = None
         try:
-            self.lotto_actions_panel = self.query_one(LottoActionsPanel)
+            self.lotto_actions_panel = self.query_one(TicketsActionPanel)
         except Exception:
             self.lotto_actions_panel = None
         try:
-            self.lotto_owned_tickets_panel = self.query_one(LottoOwnedTicketsPanel)
+            self.lotto_owned_tickets_panel = self.query_one(OwnedTicketsPanel)
         except Exception:
             self.lotto_owned_tickets_panel = None
         try:
-            self.lotto_today_draw_panel = self.query_one(LottoTodayDrawPanel)
+            self.lotto_stats_panel = self.query_one(TodaysStatsPanel)
         except Exception:
-            self.lotto_today_draw_panel = None
+            self.lotto_stats_panel = None
         try:
-            self.lotto_win_history_panel = self.query_one(LottoWinHistoryPanel)
+            self.lotto_win_history_panel = self.query_one(WinHistoryPanel)
         except Exception:
             self.lotto_win_history_panel = None
         try:
-            self.lotto_tickets_summary_panel = self.query_one(LottoTicketsSummaryPanel)
+            self.lotto_tickets_summary_panel = self.query_one(OwnedTicketsSummaryPanel)
         except Exception:
             self.lotto_tickets_summary_panel = None
+        try:
+            self.lotto_draw_strip_panel = self.query_one(LottoDrawStripPanel)
+        except Exception:
+            self.lotto_draw_strip_panel = None
 
         # Initialize current_tab to default
         self.current_tab = "goods-tab"
@@ -350,12 +357,14 @@ class MerchantTycoon(App):
         # Lotto
         if self.lotto_owned_tickets_panel:
             self.lotto_owned_tickets_panel.update_tickets()
-        if self.lotto_today_draw_panel:
-            self.lotto_today_draw_panel.update_draw()
+        if self.lotto_stats_panel:
+            self.lotto_stats_panel.update_stats()
         if self.lotto_win_history_panel:
             self.lotto_win_history_panel.update_win_history()
         if self.lotto_tickets_summary_panel:
             self.lotto_tickets_summary_panel.update_summary()
+        if self.lotto_draw_strip_panel:
+            self.lotto_draw_strip_panel.update_strip()
         # Refresh message log to reflect any new messenger entries
         try:
             if self.messanger_panel:
@@ -578,7 +587,7 @@ class MerchantTycoon(App):
                     pass
                 self.refresh_all()
 
-            self.push_screen(LottoWinnerModal(wins, on_close=_after_close))
+            self.push_screen(WinnerModal(wins, on_close=_after_close))
         else:
             self.refresh_all()
 

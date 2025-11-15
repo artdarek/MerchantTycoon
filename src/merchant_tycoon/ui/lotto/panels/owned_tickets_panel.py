@@ -5,7 +5,7 @@ from merchant_tycoon.engine import GameEngine
 from merchant_tycoon.ui.lotto.modals import TicketActionsModal
 
 
-class LottoOwnedTicketsPanel(Static):
+class OwnedTicketsPanel(Static):
     """Left-column panel listing owned lotto tickets with actions."""
 
     def __init__(self, engine: GameEngine):
@@ -40,12 +40,13 @@ class LottoOwnedTicketsPanel(Static):
             table.clear()
         self._row_to_index.clear()
 
-        tickets = list(self.engine.state.lotto_tickets or [])
+        # Work on a sorted view but keep mapping to original index in state
+        tickets_view = list(self.engine.state.lotto_tickets or [])
         try:
-            tickets.sort(key=lambda t: int(getattr(t, "purchase_day", 0) or 0), reverse=True)
+            tickets_view.sort(key=lambda t: int(getattr(t, "purchase_day", 0) or 0), reverse=True)
         except Exception:
             pass
-        for idx, t in enumerate(tickets):
+        for t in tickets_view:
             status = "Active" if getattr(t, "active", False) else "Inactive"
             nums = list(getattr(t, "numbers", [])) + ["-"] * 6
             nums = nums[:6]
@@ -60,7 +61,12 @@ class LottoOwnedTicketsPanel(Static):
                 f"${reward:,}",
                 f"${pl:,}",
             )
-            self._row_to_index[row_key] = idx
+            # Map to original index in state.lotto_tickets
+            try:
+                orig_idx = (self.engine.state.lotto_tickets or []).index(t)
+            except ValueError:
+                orig_idx = None
+            self._row_to_index[row_key] = orig_idx
 
     def on_data_table_row_selected(self, event: DataTable.RowSelected) -> None:
         try:
@@ -70,7 +76,7 @@ class LottoOwnedTicketsPanel(Static):
         if getattr(table, "id", None) != "lotto-tickets-table":
             return
         idx = self._row_to_index.get(getattr(event, "row_key", None))
-        if idx is None:
+        if idx is None or idx < 0:
             return
         ticket = self.engine.state.lotto_tickets[idx]
 

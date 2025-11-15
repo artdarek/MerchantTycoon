@@ -4,7 +4,7 @@ from textual.widgets import Static, Label, DataTable
 from merchant_tycoon.engine import GameEngine
 
 
-class LottoWinHistoryPanel(Static):
+class WinHistoryPanel(Static):
     """Right-column panel listing past wins."""
 
     def __init__(self, engine: GameEngine):

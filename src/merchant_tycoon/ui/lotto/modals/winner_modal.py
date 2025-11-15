@@ -6,7 +6,7 @@ from textual.widgets import Label, Button, Static
 from textual.screen import ModalScreen
 
 
-class LottoWinnerModal(ModalScreen):
+class WinnerModal(ModalScreen):
     """Modal showing lotto winnings summary for the day."""
 
     BINDINGS = [

@@ -8,7 +8,7 @@ from merchant_tycoon.ui.lotto.modals import BuyTicketModal
 import random
 
 
-class LottoActionsPanel(Static):
+class TicketsActionPanel(Static):
     """Compact actions panel with Buy Ticket and Lucky Shot buttons.
 
     Styled to mirror AccountActionsPanel (bank actions bar).

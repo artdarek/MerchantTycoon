@@ -6,7 +6,7 @@ from merchant_tycoon.config import SETTINGS
 from merchant_tycoon.ui.lotto.modals import BuyTicketModal
 
 
-class LottoBuyPanel(Static):
+class BuyTicketPanel(Static):
     """Left-column panel with Buy Ticket button and brief info."""
 
     def __init__(self, engine: GameEngine):

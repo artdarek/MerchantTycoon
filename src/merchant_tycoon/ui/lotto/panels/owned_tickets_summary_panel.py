@@ -4,7 +4,7 @@ from textual.widgets import Static, Label
 from merchant_tycoon.engine import GameEngine
 
 
-class LottoTicketsSummaryPanel(Static):
+class OwnedTicketsSummaryPanel(Static):
     """Summary panel for owned tickets totals (cost, reward, P/L)."""
 
     def __init__(self, engine: GameEngine):
@@ -29,4 +29,3 @@ class LottoTicketsSummaryPanel(Static):
 
         line = f"Owned: {total} (Active: {active})  •  Cost: ${total_cost:,}  •  Reward: ${total_reward:,}  •  P/L: ${pl:,}"
         self.query_one("#tickets-summary-line", Label).update(line)
-

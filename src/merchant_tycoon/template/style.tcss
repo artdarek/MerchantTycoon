@@ -292,7 +292,7 @@ MessangerPanel {
 InputModal, TravelModal, BuyModal, SellModal, SellLotModal,
 BuyAssetModal, SellAssetModal, SellAssetLotModal, LoanRepayModal, HelpModal,
 ConfirmModal, AboutModal, CargoExtendModal, NewGameModal, NewspaperModal,
-BuyTicketModal, TicketActionsModal, LottoWinnerModal {
+BuyTicketModal, TicketActionsModal, WinnerModal {
     align: center middle;
     background: transparent;
 }
@@ -578,22 +578,28 @@ AccountTransactionsPanel {
 
 
 /* --- Lotto tab styles --- */
-LottoBuyPanel, LottoOwnedTicketsPanel, LottoTodayDrawPanel, LottoWinHistoryPanel {
+BuyTicketPanel, OwnedTicketsPanel, TodaysStatsPanel, WinHistoryPanel {
     border: solid #3f4557;
     padding: 0 1;
     margin: 0;
     width: 1fr;
 }
-LottoTicketsSummaryPanel {
+LottoDrawStripPanel {
+    border: solid #3f4557;
+    padding: 0 1;
+    margin: 0;
+    width: 1fr;
+}
+OwnedTicketsSummaryPanel {
     border: solid #3f4557;
     padding: 0 1;
     margin: 0;
     width: 1fr;
 }
 /* Let content panels with tables grow and scroll */
-LottoOwnedTicketsPanel { height: 1fr; }
-LottoWinHistoryPanel { height: 1fr; }
-LottoActionsPanel {
+OwnedTicketsPanel { height: 1fr; }
+WinHistoryPanel { height: 1fr; }
+TicketsActionPanel {
     border: solid #3f4557;
     padding: 0 1;
     margin: 0;
@@ -605,6 +611,23 @@ LottoActionsPanel {
 }
 
 #lotto-tickets-table, #lotto-win-table { height: 1fr; }
+
+/* Lotto draw strip: center horizontally; each number in a square-like box */
+#lotto-draw-strip {
+    height: auto;
+    align-horizontal: center;
+    content-align: center middle;
+}
+
+.lotto-draw-box {
+    background: #3a4151;   /* dimmed square */
+    color: #dfe5ef;
+    padding: 1 0;          /* top/bottom: 1, left/right: 0 */
+    margin-right: 1;       /* small gap between boxes */
+    text-align: center;
+    content-align: center middle; /* center the digit inside */
+    width: 7;              /* fixed width for equal squares (wider) */
+}
 
 #lotto-actions-bar {
     height: auto;
