@@ -22,6 +22,6 @@ class PhoneService:
         """Return list of available (key, label) pairs in menu order."""
         return [
             ("whatsup", "WhatsUp"),
-            ("wordle", "WORDLE GAME"),
+            ("wordle", "Wordle"),
         ]
 

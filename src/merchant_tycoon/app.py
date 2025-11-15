@@ -178,7 +178,7 @@ class MerchantTycoon(App):
                     yield LottoDrawStripPanel(self.engine)
                     yield TodaysStatsPanel(self.engine)
                     yield WinHistoryPanel(self.engine)
-            with TabPane("📱 Phone", id="phone-tab"):
+            with TabPane("📱 aiPhone", id="phone-tab"):
                 yield PhonePanel(self.engine)
         yield MessangerPanel()
         yield Footer()
