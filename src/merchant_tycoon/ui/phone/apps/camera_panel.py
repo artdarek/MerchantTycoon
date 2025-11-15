@@ -66,3 +66,27 @@ class CameraPanel(Static):
         with ScrollableContainer(id="camera-ascii"):
             yield Static(ASCII_IMAGE)
 
+    def on_mount(self) -> None:
+        # Center scroll approximately in the middle after layout
+        def _center():
+            try:
+                cont = self.query_one("#camera-ascii", ScrollableContainer)
+                vh = getattr(cont.virtual_size, "height", 0) or 0
+                ph = getattr(cont.size, "height", 0) or 0
+                target_y = max(0, (vh - ph) // 2)
+                try:
+                    cont.scroll_to(y=target_y, animate=False)
+                except Exception:
+                    # Fallback to scroll_end/home if precise center unavailable
+                    if target_y > 0:
+                        cont.scroll_end(animate=False)
+                    else:
+                        cont.scroll_home(animate=False)
+            except Exception:
+                pass
+
+        # Delay a tick to ensure virtual_size is computed
+        try:
+            self.set_timer(0.05, _center)
+        except Exception:
+            _center()

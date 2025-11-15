@@ -688,6 +688,7 @@ PhonePanel {
 }
 
 #whatsup-content { height: 1fr; }
+#camera-ascii { height: 1fr; content-align: center middle; }
 
 /* Placeholder style */
 #wordle-placeholder { text-align: center; content-align: center middle; height: 1fr; text-style: bold; color: #9aa3b2; }
