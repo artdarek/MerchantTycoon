@@ -77,15 +77,41 @@ class WordleGamePanel(Static):
         return True, w
 
     def _render_attempt(self, guess: str) -> Horizontal:
-        # Build a row of 5 boxes with color coding
+        """Render guess using Wordle two-pass rules for duplicates.
+
+        Pass 1: mark greens and build remaining counts for secret.
+        Pass 2: mark reds only up to remaining counts, else grey.
+        """
         row = Horizontal(classes="wordle-row")
-        secret = self.secret_word
+        secret = (self.secret_word or "")[:5]
+        guess = (guess or "")[:5]
+
+        # Build counts of letters in secret
+        counts: dict[str, int] = {}
+        for s_ch in secret:
+            counts[s_ch] = counts.get(s_ch, 0) + 1
+
+        # First pass: mark correct and decrement counts
+        marks = ["absent"] * 5
+        for i in range(min(5, len(secret), len(guess))):
+            if guess[i] == secret[i]:
+                marks[i] = "correct"
+                counts[guess[i]] -= 1
+
+        # Second pass: mark present if available in remaining counts, else absent
+        for i in range(min(5, len(secret), len(guess))):
+            if marks[i] == "correct":
+                continue
+            ch = guess[i]
+            if counts.get(ch, 0) > 0:
+                marks[i] = "present"
+                counts[ch] -= 1
+            else:
+                marks[i] = "absent"
+
+        # Build UI boxes
         for i, ch in enumerate(guess):
-            cls = "absent"
-            if i < len(secret) and ch == secret[i]:
-                cls = "correct"
-            elif ch in secret:
-                cls = "present"
+            cls = marks[i] if i < len(marks) else "absent"
             box = Static(ch.upper(), classes=f"wordle-box {cls}")
             row.mount(box)
         return row
