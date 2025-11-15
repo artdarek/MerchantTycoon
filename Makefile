@@ -1,4 +1,4 @@
-.PHONY: help venv install install-dev sync upgrade run clean test lint format build build-macos build-clean build-iconset build-iconset-apply build-version rebase
+.PHONY: help venv install install-dev sync upgrade run clean test lint format build build-macos build-windows build-clean build-iconset build-iconset-apply build-version rebase
 
 # Default source icon (override with: make build-iconset ICON=path/to/icon.png)
 ICON ?= icon.png
@@ -160,6 +160,27 @@ build-macos:  ## Build standalone macOS executable and .app bundle
 	@echo ""
 	@echo "To install:"
 	@echo "  cp -r \"dist/Merchant Tycoon.app\" /Applications/"
+
+build-windows:  ## Build standalone Windows executable (.exe) with PyInstaller
+	@echo "Building Windows executable..."
+	@echo ""
+	@echo "Step 1/2: Checking PyInstaller..."
+	@command -v pyinstaller >/dev/null 2>&1 || { echo "PyInstaller not found. Install dev dependencies with: uv pip install -e .[dev]"; exit 1; }
+	@echo "Step 2/2: Building executable with PyInstaller..."
+	python -m PyInstaller \
+		--name="Merchant Tycoon" \
+		--onefile \
+		--collect-all textual \
+		--collect-all rich \
+		--add-data="src/merchant_tycoon/template/style.tcss;merchant_tycoon/template" \
+		src/merchant_tycoon/__main__.py
+	@echo ""
+	@echo "✅ Build complete!"
+	@echo "   Windows executable: dist/Merchant Tycoon.exe"
+	@echo ""
+	@echo "Notes:"
+	@echo "- Build must be run on Windows (cross-compiling from macOS/Linux is not supported by PyInstaller)."
+	@echo "- Run in a console to see the TUI (do not use --noconsole)."
 
 rebase:  ## Menu: [r] rebase main onto develop and force-push to origin, [x] quit
 	@echo "Rebase Options:" && \
