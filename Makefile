@@ -1,4 +1,9 @@
-.PHONY: help venv install install-dev sync upgrade run clean test lint format build build-macos build-clean
+.PHONY: help venv install install-dev sync upgrade run clean test lint format build build-macos build-clean build-iconset build-iconset-apply build-version
+
+# Default source icon (override with: make build-iconset ICON=path/to/icon.png)
+ICON ?= icon.png
+ICONSET_DIR ?= build/icon.iconset
+ICON_ICNS ?= build/icon.icns
 
 help:  ## Show this help message
 	@echo "Available commands:"
@@ -91,12 +96,24 @@ format:  ## Format code (placeholder)
 build:  ## Interactive build menu (choose platform or clean)
 	@echo "Build Options:"
 	@echo "  [m] Build for macOS"
+	@echo "  [i] Create iconset (build/icon.iconset)"
+	@echo "  [a] Apply iconset to .app"
+	@echo "  [v] Versionize macOS app (dist/version/MerchantTycoon-{version})"
 	@echo "  [x] Delete old build"
 	@echo "  [q] Quit (default)"
 	@printf "Enter choice: "; read ans; \
 	case "$$ans" in \
 		[Mm]) \
 			$(MAKE) build-macos; \
+			;; \
+		[Ii]) \
+			$(MAKE) build-iconset; \
+			;; \
+		[Aa]) \
+			$(MAKE) build-iconset-apply; \
+			;; \
+		[Vv]) \
+			$(MAKE) build-version; \
 			;; \
 		[Xx]) \
 			$(MAKE) build-clean; \
@@ -140,3 +157,66 @@ build-clean:  ## Clean build artifacts (build, dist, *.spec)
 	@echo "Cleaning build artifacts..."
 	rm -rf build/ dist/ *.spec
 	@echo "✅ Build artifacts cleaned"
+
+build-iconset:  ## Generate macOS .iconset under build/ from icon (ICON=... or docs/icon/icon.png)
+	@command -v sips >/dev/null 2>&1 || { echo "sips not found. This command requires macOS."; exit 1; }
+	@SRC="$(ICON)"; \
+	if [ ! -f "$$SRC" ] && [ -f docs/icon/icon.png ]; then SRC="docs/icon/icon.png"; fi; \
+	if [ ! -f "$$SRC" ]; then echo "Source icon not found. Provide PNG via ICON=path/to/icon.png (recommended 1024x1024)."; exit 1; fi; \
+	echo "Generating $(ICONSET_DIR) from $$SRC..."; \
+	mkdir -p $(ICONSET_DIR); \
+	sips -z 16 16     "$$SRC" --out $(ICONSET_DIR)/icon_16x16.png; \
+	sips -z 32 32     "$$SRC" --out $(ICONSET_DIR)/icon_16x16@2x.png; \
+	sips -z 32 32     "$$SRC" --out $(ICONSET_DIR)/icon_32x32.png; \
+	sips -z 64 64     "$$SRC" --out $(ICONSET_DIR)/icon_32x32@2x.png; \
+	sips -z 128 128   "$$SRC" --out $(ICONSET_DIR)/icon_128x128.png; \
+	sips -z 256 256   "$$SRC" --out $(ICONSET_DIR)/icon_128x128@2x.png; \
+	sips -z 256 256   "$$SRC" --out $(ICONSET_DIR)/icon_256x256.png; \
+	sips -z 512 512   "$$SRC" --out $(ICONSET_DIR)/icon_256x256@2x.png; \
+	sips -z 512 512   "$$SRC" --out $(ICONSET_DIR)/icon_512x512.png; \
+	cp "$$SRC" $(ICONSET_DIR)/icon_512x512@2x.png; \
+	echo "✅ Created $(ICONSET_DIR) (use iconutil to convert to .icns if needed)"
+
+build-iconset-apply:  ## Convert build/icon.iconset to .icns and apply to macOS .app bundle
+	@command -v iconutil >/dev/null 2>&1 || { echo "iconutil not found. This command requires macOS."; exit 1; }
+	@[ -d "$(ICONSET_DIR)" ] || { echo "$(ICONSET_DIR) not found. Run: make build-iconset"; exit 1; }
+	@echo "Converting $(ICONSET_DIR) -> $(ICON_ICNS)..."
+	iconutil -c icns "$(ICONSET_DIR)" -o "$(ICON_ICNS)"
+	@[ -d "dist/Merchant Tycoon.app/Contents/Resources" ] || { echo "App bundle not found. Build it first with: make build-macos"; exit 1; }
+	@echo "Copying icon.icns into app bundle..."
+	cp "$(ICON_ICNS)" "dist/Merchant Tycoon.app/Contents/Resources/AppIcon.icns"
+	@echo "Setting CFBundleIconFile in Info.plist..."
+	@/usr/libexec/PlistBuddy -c "Set :CFBundleIconFile AppIcon" "dist/Merchant Tycoon.app/Contents/Info.plist" 2>/dev/null \
+		|| /usr/libexec/PlistBuddy -c "Add :CFBundleIconFile string AppIcon" "dist/Merchant Tycoon.app/Contents/Info.plist"
+	@echo "✅ Applied AppIcon.icns to dist/Merchant Tycoon.app"
+
+# Extract version from pyproject.toml and create versioned build folder
+build-version:  ## Create dist/version/MerchantTycoon-{version}-{n} and copy app artifacts from dist/ (also zips it)
+	@echo "Reading version from pyproject.toml..."
+	@VER=$$(python3 -c "import tomllib,sys;print(tomllib.load(open('pyproject.toml','rb'))['project'].get('version',''))"); \
+	if [ -z "$$VER" ]; then \
+		echo "Could not determine version from pyproject.toml"; exit 1; \
+	fi; \
+	BASE="dist/version/MerchantTycoon-$$VER"; \
+	LAST_N=$$(ls -1d "$$BASE"-* 2>/dev/null | sed -n 's/^.*-\([0-9][0-9]*\)$$/\1/p' | sort -n | tail -1); \
+	if [ -z "$$LAST_N" ]; then BUILD_N=1; else BUILD_N=$$((LAST_N+1)); fi; \
+	OUT="$$BASE-$$BUILD_N"; \
+	echo "Creating $$OUT and copying dist artifacts (build #$$BUILD_N)..."; \
+	mkdir -p "$$OUT"; \
+	COPIED=0; \
+	if [ -e "dist/Merchant Tycoon" ]; then \
+		cp -R "dist/Merchant Tycoon" "$$OUT/" && COPIED=1; \
+	fi; \
+	if [ -e "dist/Merchant Tycoon.app" ]; then \
+		cp -R "dist/Merchant Tycoon.app" "$$OUT/" && COPIED=1; \
+	fi; \
+	if [ "$$COPIED" -eq 0 ]; then \
+		echo "No dist artifacts found. Run: make build-macos"; \
+	fi; \
+	echo "✅ Versionized at $$OUT"; \
+	command -v zip >/dev/null 2>&1 || { echo "zip not found. Please install zip."; exit 1; }; \
+	ZIP="$$OUT.zip"; \
+	PARENT=$$(dirname "$$OUT"); BASE=$$(basename "$$OUT"); \
+	echo "Zipping $$OUT -> $$ZIP ..."; \
+	cd "$$PARENT" && zip -yr "$$BASE.zip" "$$BASE" >/dev/null 2>&1; \
+	echo "✅ Created $$ZIP"
