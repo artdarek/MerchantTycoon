@@ -10,7 +10,7 @@ class CloseAIChatPanel(Static):
         super().__init__()
 
     def compose(self) -> ComposeResult:
-        yield Label("💬 Close AI", classes="panel-title")
+        yield Label("💬 CloseAI Chat", classes="panel-title")
         yield ScrollableContainer(id="closeai-chat")
         with Horizontal(id="closeai-controls"):
             yield Input(placeholder="Type a message...", id="closeai-input")

@@ -156,4 +156,37 @@ CITIES: List[City] = [
           "Fiat": 1.05, "Opel Astra": 1.1, "Ford Focus": 1.1, "Ferrari": 1.3, "Bentley": 1.2, "Bugatti": 1.25,
           "Weed": 1.5, "Cocaine": 1.65, "Grenade": 1.6, "Pistol": 1.6, "Shotgun": 1.65},
          TravelEventsConfig(probability=0.15, loss_min=0, loss_max=1, gain_min=1, gain_max=3, neutral_min=1, neutral_max=2)),
+
+    # Kiev - Ukraine (Very High risk). Strong black-market demand; great to sell contraband
+    City("Kiev", "Ukraine", {"TV": 1.0, "Computer": 1.05, "Printer": 1.0, "Phone": 1.05,
+          "Camera": 1.0, "Laptop": 1.05, "Tablet": 1.0, "Console": 1.0,
+          "Headphones": 1.0, "Smartwatch": 1.0, "VR Headset": 1.0, "Coffee Machine": 0.95,
+          "Powerbank": 1.0, "USB Charger": 1.0, "Pendrive": 1.0,
+          "Luxury Watch": 0.85, "Diamond Necklace": 0.85, "Gaming Laptop": 1.0, "High-end Drone": 1.0, "4K OLED TV": 1.05,
+          "Fiat": 1.0, "Opel Astra": 1.0, "Ford Focus": 1.0, "Ferrari": 1.0, "Bentley": 0.95, "Bugatti": 0.95,
+          "Weed": 1.6, "Cocaine": 1.8, "Grenade": 1.6, "Pistol": 1.5, "Shotgun": 1.55},
+         # Higher event probability and more loss events to reflect danger
+         TravelEventsConfig(probability=0.50, loss_min=1, loss_max=3, gain_min=0, gain_max=2, neutral_min=0, neutral_max=1)),
+
+    # Havana - Cuba (Very High risk). Supplier city for contraband; electronics/car are costly
+    City("Havana", "Cuba", {"TV": 1.4, "Computer": 1.5, "Printer": 1.3, "Phone": 1.45,
+          "Camera": 1.35, "Laptop": 1.5, "Tablet": 1.4, "Console": 1.35,
+          "Headphones": 1.25, "Smartwatch": 1.35, "VR Headset": 1.4, "Coffee Machine": 1.2,
+          "Powerbank": 1.25, "USB Charger": 1.25, "Pendrive": 1.25,
+          "Luxury Watch": 0.9, "Diamond Necklace": 0.9, "Gaming Laptop": 1.45, "High-end Drone": 1.4, "4K OLED TV": 1.45,
+          "Fiat": 1.2, "Opel Astra": 1.25, "Ford Focus": 1.25, "Ferrari": 1.3, "Bentley": 1.25, "Bugatti": 1.3,
+          "Weed": 0.4, "Cocaine": 0.5, "Grenade": 1.0, "Pistol": 1.0, "Shotgun": 1.05},
+         # High risk; encourage contraband routes by making supply cheap but travel risky
+         TravelEventsConfig(probability=0.55, loss_min=1, loss_max=3, gain_min=0, gain_max=2, neutral_min=0, neutral_max=1)),
+
+    # Tokio - Japan (Very Low risk). Safe hub: expensive luxury, cheap electronics, cheaper cars
+    City("Tokio", "Japan", {"TV": 0.75, "Computer": 0.7, "Printer": 0.8, "Phone": 0.75,
+          "Camera": 0.7, "Laptop": 0.7, "Tablet": 0.75, "Console": 0.8,
+          "Headphones": 0.7, "Smartwatch": 0.75, "VR Headset": 0.8, "Coffee Machine": 0.85,
+          "Powerbank": 0.7, "USB Charger": 0.7, "Pendrive": 0.7,
+          "Luxury Watch": 1.5, "Diamond Necklace": 1.55, "Gaming Laptop": 0.8, "High-end Drone": 0.85, "4K OLED TV": 0.8,
+          "Fiat": 0.9, "Opel Astra": 0.9, "Ford Focus": 0.9, "Ferrari": 0.9, "Bentley": 0.9, "Bugatti": 0.95,
+          "Weed": 0.6, "Cocaine": 0.6, "Grenade": 0.65, "Pistol": 0.65, "Shotgun": 0.65},
+         # Very low chance of negatives; safer mix with better gains and neutrals
+         TravelEventsConfig(probability=0.12, loss_min=0, loss_max=1, gain_min=1, gain_max=3, neutral_min=1, neutral_max=2)),
 ]
