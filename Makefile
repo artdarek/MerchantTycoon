@@ -1,4 +1,4 @@
-.PHONY: help venv install install-dev sync upgrade run clean test lint format build build-macos build-clean build-iconset build-iconset-apply build-version
+.PHONY: help venv install install-dev sync upgrade run clean test lint format build build-macos build-clean build-iconset build-iconset-apply build-version rebase
 
 # Default source icon (override with: make build-iconset ICON=path/to/icon.png)
 ICON ?= icon.png
@@ -160,6 +160,25 @@ build-macos:  ## Build standalone macOS executable and .app bundle
 	@echo ""
 	@echo "To install:"
 	@echo "  cp -r \"dist/Merchant Tycoon.app\" /Applications/"
+
+rebase:  ## Rebase main onto develop (fetch, checkout main, rebase develop, optional force-push, back to develop)
+	@echo "Fetching latest refs..." && \
+	git fetch && \
+	echo "Checking out main..." && \
+	git checkout main && \
+	echo "Rebasing main onto develop..." && \
+	git rebase develop && \
+	echo "" && \
+	echo "About to force-push 'main' to its upstream." && \
+	echo "This is destructive and will overwrite remote history." && \
+	printf "Proceed with 'git push -f'? [y/N]: " && read ans && \
+	if [ "$$ans" = "y" ] || [ "$$ans" = "Y" ]; then \
+		echo "Force pushing main..." && git push -f; \
+	else \
+		echo "Skipped force push."; \
+	fi && \
+	echo "Switching back to develop..." && \
+	git checkout develop
 
 build-clean:  ## Clean build artifacts (build, dist, *.spec)
 	@echo "Cleaning build artifacts..."
