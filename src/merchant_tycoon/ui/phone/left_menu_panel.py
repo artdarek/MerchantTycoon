@@ -18,6 +18,7 @@ class LeftMenuPanel(Static):
         icons = {
             "home": "🏠",
             "whatsup": "📨",
+            "closeai": "💬",
             "wordle": "🧩",
             "camera": "📷",
         }

@@ -11,6 +11,7 @@ class PhoneService:
 
     def __init__(self):
         self._active_app: str = "home"
+        self.closeai_history: list[tuple[str,str]] = []  # (role, text)
 
     def get_active_app(self) -> str:
         return self._active_app or "home"
@@ -23,6 +24,7 @@ class PhoneService:
         return [
             ("home", "Home"),
             ("whatsup", "WhatsUp"),
+            ("closeai", "CloseAI"),
             ("camera", "Camera"),
             ("wordle", "Wordle"),
         ]

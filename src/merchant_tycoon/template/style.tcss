@@ -688,6 +688,15 @@ PhonePanel {
 }
 
 #whatsup-content { height: 1fr; }
+#closeai-chat { height: 1fr; }
+#closeai-controls { height: auto; content-align: left middle; }
+#closeai-controls Input { width: 1fr; }
+#closeai-controls Button { margin-left: 1; height: 3; padding: 0 1; }
+.chat-row { height: auto; }
+.chat-row .spacer { width: 1fr; }
+.bubble { max-width: 80%; padding: 1; margin: 0 0 1 0; }
+.bubble.ai { background: #3a4151; color: #dfe5ef; }
+.bubble.user { background: #4ea59a; color: #ffffff; }
 #camera-ascii { height: 1fr; content-align: center middle; }
 #home-ascii { height: 1fr; content-align: center middle; align: center middle; }
 #home-ascii .home-box {

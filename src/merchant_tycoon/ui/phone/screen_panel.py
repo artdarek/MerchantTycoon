@@ -7,6 +7,7 @@ from merchant_tycoon.ui.phone.apps.whatsup_panel import WhatsUpPanel
 from merchant_tycoon.ui.phone.apps.wordle_game_panel import WordleGamePanel
 from merchant_tycoon.ui.phone.apps.camera_panel import CameraPanel
 from merchant_tycoon.ui.phone.apps.home_panel import HomePanel
+from merchant_tycoon.ui.phone.apps.close_ai_chat_panel import CloseAIChatPanel
 
 
 class ScreenPanel(Static):
@@ -43,6 +44,9 @@ class ScreenPanel(Static):
                 panel.refresh_messages()
             except Exception:
                 pass
+        elif active == "closeai":
+            panel = CloseAIChatPanel()
+            container.mount(panel)
         elif active == "camera":
             panel = CameraPanel()
             container.mount(panel)
