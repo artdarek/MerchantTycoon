@@ -70,6 +70,7 @@ from merchant_tycoon.ui.lotto.panels import (
     LottoDrawStripPanel,
 )
 from merchant_tycoon.ui.lotto.modals import WinnerModal
+from merchant_tycoon.ui.phone.phone_panel import PhonePanel
 
 
 class MerchantTycoon(App):
@@ -98,6 +99,7 @@ class MerchantTycoon(App):
         Binding("2", "go_investments_tab", "Investments", show=True),
         Binding("3", "go_bank_tab", "Bank", show=True),
         Binding("4", "go_lotto_tab", "Lotto", show=True),
+        Binding("5", "go_phone_tab", "Phone", show=True),
         # Override common command-palette shortcuts with no-ops
         Binding("ctrl+k", "noop", show=False),
         Binding("ctrl+p", "noop", show=False),
@@ -176,6 +178,8 @@ class MerchantTycoon(App):
                     yield LottoDrawStripPanel(self.engine)
                     yield TodaysStatsPanel(self.engine)
                     yield WinHistoryPanel(self.engine)
+            with TabPane("📱 Phone", id="phone-tab"):
+                yield PhonePanel(self.engine)
         yield MessangerPanel()
         yield Footer()
 
@@ -317,6 +321,12 @@ class MerchantTycoon(App):
         try:
             self.query_one(TabbedContent).active = "lotto-tab"
             self.current_tab = "lotto-tab"
+        except Exception:
+            pass
+    def action_go_phone_tab(self) -> None:
+        try:
+            self.query_one(TabbedContent).active = "phone-tab"
+            self.current_tab = "phone-tab"
         except Exception:
             pass
 

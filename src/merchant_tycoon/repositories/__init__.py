@@ -8,10 +8,12 @@ from merchant_tycoon.repositories.goods_repository import GoodsRepository
 from merchant_tycoon.repositories.cities_repository import CitiesRepository
 from merchant_tycoon.repositories.assets_repository import AssetsRepository
 from merchant_tycoon.repositories.difficulty_repository import DifficultyRepository
+from merchant_tycoon.repositories.wordle_repository import WordleRepository
 
 __all__ = [
     "GoodsRepository",
     "CitiesRepository",
     "AssetsRepository",
     "DifficultyRepository",
+    "WordleRepository",
 ]

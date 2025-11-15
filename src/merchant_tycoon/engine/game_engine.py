@@ -12,11 +12,13 @@ from merchant_tycoon.engine.services.savegame_service import SavegameService
 from merchant_tycoon.engine.services.clock_service import ClockService
 from merchant_tycoon.engine.services.messenger_service import MessengerService
 from merchant_tycoon.engine.services.lotto_service import LottoService
+from merchant_tycoon.engine.services.phone_service import PhoneService
 from merchant_tycoon.repositories import (
     GoodsRepository,
     CitiesRepository,
     AssetsRepository,
     DifficultyRepository,
+    WordleRepository,
 )
 
 
@@ -29,6 +31,7 @@ class GameEngine:
         self.cities_repo = CitiesRepository()
         self.assets_repo = AssetsRepository()
         self.difficulty_repo = DifficultyRepository()
+        self.wordle_repo = WordleRepository()
 
         # Initialize game state with default difficulty
         self.state = GameState()
@@ -85,6 +88,8 @@ class GameEngine:
             self.messenger,
             self.wallet_service
         )
+        # Phone service
+        self.phone_service = PhoneService()
         # Event service for travel random encounters
         self.travel_events_service = TravelEventsService(self.assets_repo, self.goods_repo)
         self.travel_service = TravelService(
