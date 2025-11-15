@@ -32,3 +32,71 @@ class PhoneSettings:
         "I have no notes. Mostly because I wasn’t listening.",
         "Processing… processing… okay, let’s just roll with it.",
     )
+    # Special Close AI triggers: list of magic sentences and their effects.
+    # Each entry:
+    # {
+    #   "phrase": str,              # exact message to trigger on (case-insensitive, trimmed)
+    #   "bank": int,                # amount to credit to bank
+    #   "title": str,               # bank transaction title
+    #   "cargo": int,               # additional cargo capacity to grant
+    #   "cash": int,                # amount of cash to add to wallet
+    #   "response": str,            # AI chat response shown when applied
+    # }
+    close_ai_magic_triggers: tuple[dict, ...] = (
+        {
+            "phrase": "I need money mommy",
+            "bank": 10000,
+            "title": "Mommy loves you",
+            "cargo": 0,
+            "cash": 0,
+            "response": "Check your account… mommy loves you! 💖",
+        },
+        {
+            "phrase": "I need more money mommy",
+            "bank": 100000,
+            "title": "Mommy loves you but do not ask for more!",
+            "cargo": 0,
+            "cash": 0,
+            "response": "Are you kidding me!? eh... check your account… mommy loves you!",
+        },
+        {
+            "phrase": "Give me your wallet",
+            "bank": 0,
+            "title": "Taken from strangers wallet",
+            "cargo": 0,
+            "cash": 1000000,
+            "response": "You scum! I will get you one day! And you will pay me back!",
+        },
+        {
+            "phrase": "I need a car",
+            "bank": 1000,
+            "title": "Money for car repairs",
+            "cargo": 50,
+            "cash": 0,
+            "response": "Here you are! Keys to my Ford Mustang 76! have a nice ride!",
+        },
+        {
+            "phrase": "I need a truck",
+            "bank": 10000,
+            "title": "Money for a truck repairs",
+            "cargo": 100,
+            "cash": 0,
+            "response": "Oh ok! You can drive mine! Drive safe!",
+        },
+        {
+            "phrase": "What is your name",
+            "bank": 1,
+            "title": "Tip from Slim Shady",
+            "cargo": 1,
+            "cash": 1,
+            "response": "My name is... my name is... Slim Shady!",
+        },
+        {
+            "phrase": "iddqd",
+            "bank": 10000000,
+            "title": "I god mode you",
+            "cargo": 1000,
+            "cash": 10000000,
+            "response": "You should say this: \nWhat is your name\n I need a truck\n I need a car\n Give me your wallet\n I need more money mommy\n I need money mommy",
+        },
+    )

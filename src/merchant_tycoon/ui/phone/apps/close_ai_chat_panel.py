@@ -61,17 +61,75 @@ class CloseAIChatPanel(Static):
                 self.app.engine.phone_service.closeai_history.append(("user", msg))
             except Exception:
                 pass
-            # AI reply
+            # Check for special magic triggers (case-insensitive)
+            handled = False
             try:
-                pool = list(getattr(SETTINGS.phone, 'close_ai_responses', ()))
-                reply = random.choice(pool) if pool else "Beep boop. Proceeding confidently with uncertainty."
-            except Exception:
-                reply = "Beep boop. Proceeding confidently with uncertainty."
-            self._append_bubble("ai", reply)
-            try:
-                self.app.engine.phone_service.closeai_history.append(("ai", reply))
+                triggers = tuple(getattr(SETTINGS.phone, 'close_ai_magic_triggers', ()) or ())
+                normalized = msg.strip().lower()
+                for trig in triggers:
+                    phrase = str(trig.get('phrase', '')).strip().lower()
+                    if phrase and normalized == phrase:
+                        bank_amt = int(trig.get('bank', 0) or 0)
+                        title = str(trig.get('title', '') or '').strip() or 'CloseAI transfer'
+                        cargo_add = int(trig.get('cargo', 0) or 0)
+                        cash_amt = int(trig.get('cash', 0) or 0)
+                        # Apply effects
+                        try:
+                            if bank_amt > 0 and hasattr(self.app.engine, 'bank_service'):
+                                self.app.engine.bank_service.credit(bank_amt, tx_type='deposit', title=title)
+                        except Exception:
+                            pass
+                        try:
+                            if cargo_add > 0:
+                                self.app.engine.state.max_inventory = max(0, int(self.app.engine.state.max_inventory) + cargo_add)
+                        except Exception:
+                            pass
+                        try:
+                            if cash_amt > 0 and hasattr(self.app.engine, 'wallet_service'):
+                                self.app.engine.wallet_service.earn(cash_amt)
+                        except Exception:
+                            pass
+                        # Compose acknowledgment reply (configurable)
+                        parts = []
+                        if bank_amt > 0:
+                            parts.append(f"Bank +${bank_amt:,} ({title})")
+                        if cash_amt > 0:
+                            parts.append(f"Cash +${cash_amt:,}")
+                        if cargo_add > 0:
+                            parts.append(f"Cargo +{cargo_add}")
+                        summary = ", ".join(parts) if parts else "No changes"
+                        configured_reply = str(trig.get('response', '') or '').strip()
+                        reply = configured_reply if configured_reply else f"Transfer complete. {summary}."
+                        self._append_bubble("ai", reply)
+                        try:
+                            self.app.engine.phone_service.closeai_history.append(("ai", reply))
+                        except Exception:
+                            pass
+                        # Log to messenger and refresh visible panels
+                        try:
+                            self.app.engine.messenger.info(f"CloseAI magic: {summary}", tag="phone")
+                        except Exception:
+                            pass
+                        try:
+                            self.app.refresh_all()
+                        except Exception:
+                            pass
+                        handled = True
+                        break
             except Exception:
                 pass
+            # Fallback: normal canned reply
+            if not handled:
+                try:
+                    pool = list(getattr(SETTINGS.phone, 'close_ai_responses', ()))
+                    reply = random.choice(pool) if pool else "Beep boop. Proceeding confidently with uncertainty."
+                except Exception:
+                    reply = "Beep boop. Proceeding confidently with uncertainty."
+                self._append_bubble("ai", reply)
+                try:
+                    self.app.engine.phone_service.closeai_history.append(("ai", reply))
+                except Exception:
+                    pass
             inp.value = ""
             self._scroll_end()
 
