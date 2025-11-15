@@ -24,6 +24,26 @@ A terminal-based trading game where you buy low, sell high, travel between citie
 ![Merchant Tycoon - Bank Screen](docs/images/bank.png)
 *Banking interface for managing loans and financial operations*
 
+### 🎰 Lotto
+![Merchant Tycoon - Lotto Screen](docs/images/lottery.png)
+*Buy tickets, view today's draw, and track win history*
+
+### 📱 Phone - Home
+![Merchant Tycoon - Phone Home](docs/images/phone-home.png)
+*In‑game smartphone with multiple apps*
+
+### 📱 Phone - CloseAI Chat
+![Merchant Tycoon - Phone CloseAI](docs/images/phone-closeai.png)
+*Chat with CloseAI — supports magic phrases for admin/cheats*
+
+### 📱 Phone - WhatsUp
+![Merchant Tycoon - Phone WhatsUp](docs/images/phone-whatsup.png)
+*Live messenger feed styled like the Newspaper view*
+
+### 📱 Phone - Wordle
+![Merchant Tycoon - Phone Wordle](docs/images/phone-wordle.png)
+*Mini Wordle game with configurable tries and dictionary*
+
 ## 📖 About The Game
 
 **Merchant Tycoon** is a terminal-based economic simulation game inspired by classic trading games. Choose your difficulty level and become a wealthy merchant tycoon through strategic trading and smart investments.
