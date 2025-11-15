@@ -9,6 +9,8 @@ from merchant_tycoon.engine.events.loss.stolen_goods_event import StolenGoodsEve
 from merchant_tycoon.engine.events.loss.cash_damage_event import CashDamageEventHandler
 from merchant_tycoon.engine.events.loss.portfolio_crash_event import PortfolioCrashEventHandler
 from merchant_tycoon.engine.events.loss.lotto_ticket_lost_event import LottoTicketLostEventHandler
+from merchant_tycoon.engine.events.loss.contraband_buyer_scam_event import ContrabandBuyerScamEventHandler
+from merchant_tycoon.engine.events.loss.fbi_confiscation_event import FBIConfiscationEventHandler
 
 __all__ = [
     "RobberyEventHandler",
@@ -20,4 +22,6 @@ __all__ = [
     "CashDamageEventHandler",
     "PortfolioCrashEventHandler",
     "LottoTicketLostEventHandler",
+    "ContrabandBuyerScamEventHandler",
+    "FBIConfiscationEventHandler",
 ]

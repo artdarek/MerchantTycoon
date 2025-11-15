@@ -22,6 +22,8 @@ from merchant_tycoon.engine.events.loss import (
     CashDamageEventHandler,
     PortfolioCrashEventHandler,
     LottoTicketLostEventHandler,
+    ContrabandBuyerScamEventHandler,
+    FBIConfiscationEventHandler,
 )
 from merchant_tycoon.engine.events.gain import (
     ContestWinEventHandler,
@@ -81,13 +83,14 @@ class TravelEventsService:
         self._register_all_handlers()
 
     def _register_all_handlers(self):
-        """Register all 18 event handlers with the registry.
+        """Register all event handlers with the registry.
 
-        Loss events (8): robbery, fire, flood, defective_batch, customs_duty,
-                        stolen_goods, cash_damage, portfolio_crash
-        Gain events (4): contest_win, dividend, bank_correction, portfolio_boom
-        Neutral events (6): promo, oversupply, shortage, loyal_discount,
-                           market_boom, market_crash
+        Loss events: robbery, fire, flood, defective_batch, customs_duty,
+                      stolen_goods, cash_damage, portfolio_crash,
+                      lotto_ticket_lost, contraband_buyer_scam, fbi_confiscation
+        Gain events: contest_win, dividend, bank_correction, portfolio_boom
+        Neutral events: promo, oversupply, shortage, loyal_discount,
+                         market_boom, market_crash
         """
         # Register all loss handlers (8)
         self.registry.register(RobberyEventHandler())
@@ -100,6 +103,9 @@ class TravelEventsService:
         self.registry.register(PortfolioCrashEventHandler())
         # New minor loss event: lose one lotto ticket if any active
         self.registry.register(LottoTicketLostEventHandler())
+        # New contraband-only loss events
+        self.registry.register(ContrabandBuyerScamEventHandler())
+        self.registry.register(FBIConfiscationEventHandler())
 
         # Register all gain handlers (4)
         self.registry.register(ContestWinEventHandler())
