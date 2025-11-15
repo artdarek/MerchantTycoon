@@ -55,7 +55,7 @@ CITIES: List[City] = [
           "Luxury Watch": 1.0, "Diamond Necklace": 1.0, "Gaming Laptop": 1.0, "High-end Drone": 1.0, "4K OLED TV": 1.0,
           "Fiat": 1.0, "Opel Astra": 1.0, "Ford Focus": 1.0, "Ferrari": 1.0, "Bentley": 1.0, "Bugatti": 1.0,
           "Weed": 0.9, "Cocaine": 0.95, "Grenade": 0.9, "Pistol": 0.9, "Shotgun": 0.95},
-         TravelEventsConfig(probability=1, loss_min=1, loss_max=2, gain_min=1, gain_max=2, neutral_min=1, neutral_max=1)),
+         TravelEventsConfig(probability=0.30, loss_min=0, loss_max=1, gain_min=0, gain_max=2, neutral_min=1, neutral_max=1)),
 
     # Berlin - Stable tech hub, slightly safer
     City("Berlin", "Germany", {"TV": 0.8, "Computer": 1.2, "Printer": 0.9, "Phone": 1.1,
@@ -65,7 +65,7 @@ CITIES: List[City] = [
           "Luxury Watch": 1.1, "Diamond Necklace": 1.15, "Gaming Laptop": 0.9, "High-end Drone": 0.95, "4K OLED TV": 0.9,
           "Fiat": 0.95, "Opel Astra": 0.85, "Ford Focus": 0.9, "Ferrari": 1.15, "Bentley": 1.1, "Bugatti": 1.15,
           "Weed": 0.85, "Cocaine": 1.0, "Grenade": 0.9, "Pistol": 0.95, "Shotgun": 1.0},
-         TravelEventsConfig(probability=1, loss_min=0, loss_max=2, gain_min=1, gain_max=2, neutral_min=1, neutral_max=2)),
+         TravelEventsConfig(probability=0.30, loss_min=0, loss_max=1, gain_min=0, gain_max=2, neutral_min=0, neutral_max=2)),
 
     # Prague - Cheap contraband hub, risky for traders
     City("Prague", "Czech Republic", {"TV": 1.1, "Computer": 0.9, "Printer": 1.2, "Phone": 0.95,
@@ -75,7 +75,7 @@ CITIES: List[City] = [
           "Luxury Watch": 0.9, "Diamond Necklace": 0.9, "Gaming Laptop": 0.95, "High-end Drone": 0.95, "4K OLED TV": 1.0,
           "Fiat": 0.9, "Opel Astra": 0.95, "Ford Focus": 0.95, "Ferrari": 0.85, "Bentley": 0.85, "Bugatti": 0.9,
           "Weed": 0.6, "Cocaine": 0.7, "Grenade": 0.65, "Pistol": 0.7, "Shotgun": 0.75},
-         TravelEventsConfig(probability=0.30, loss_min=1, loss_max=3, gain_min=0, gain_max=2, neutral_min=0, neutral_max=1)),
+         TravelEventsConfig(probability=0.30, loss_min=0, loss_max=2, gain_min=0, gain_max=2, neutral_min=0, neutral_max=1)),
 
     # Vienna - Wealthy, safe city
     City("Vienna", "Austria", {"TV": 0.95, "Computer": 1.1, "Printer": 0.85, "Phone": 1.2,
