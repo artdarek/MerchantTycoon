@@ -10,13 +10,20 @@ class WordleGamePanel(Static):
         self.attempts: list[str] = []
 
     def compose(self) -> ComposeResult:
+        # Title at top
         yield Label("🧩 WORDLE GAME", classes="panel-title")
+        # Attempts list fills available space
+        yield ScrollableContainer(id="wordle-attempts")
+        # Message (validation / success info)
+        yield Label("", id="wordle-message")
+        # Controls at the bottom (input + Guess on the right)
         with Horizontal(id="wordle-controls"):
             yield Input(placeholder="enter 5-letter word", id="wordle-input")
-            yield Button("Guess!", id="wordle-guess", variant="success")
+            yield Button("Guess", id="wordle-guess", variant="success")
             yield Button("Play Again", id="wordle-restart", variant="default", disabled=True)
-        yield Label("", id="wordle-message")
-        yield ScrollableContainer(id="wordle-attempts")
+            yield Button("Restart", id="wordle-reset", variant="default")
+        # Stats panel below controls
+        yield Label("Number of tries: 0 out of 6", id="wordle-stats")
 
     def on_mount(self) -> None:
         self._reset_game()
@@ -28,6 +35,7 @@ class WordleGamePanel(Static):
         except Exception:
             self.secret_word = "apple"
         self.attempts = []
+        self.max_tries = 6
         try:
             self.query_one("#wordle-input", Input).value = ""
             self.query_one("#wordle-input", Input).disabled = False
@@ -41,6 +49,8 @@ class WordleGamePanel(Static):
             cont.remove_children()
         except Exception:
             pass
+        # Update stats
+        self._update_stats()
 
     def _validate_guess(self, word: str) -> tuple[bool, str]:
         w = (word or "").strip().lower()
@@ -73,6 +83,14 @@ class WordleGamePanel(Static):
             cont.scroll_end(animate=False)
         except Exception:
             pass
+        self._update_stats()
+
+    def _update_stats(self) -> None:
+        try:
+            stats = self.query_one("#wordle-stats", Label)
+            stats.update(f"Number of tries: {len(self.attempts)} out of {getattr(self, 'max_tries', 6)}")
+        except Exception:
+            pass
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "wordle-guess":
@@ -91,10 +109,20 @@ class WordleGamePanel(Static):
                 self.query_one("#wordle-guess", Button).disabled = True
                 self.query_one("#wordle-restart", Button).disabled = False
             else:
+                # Check attempts cap
+                if len(self.attempts) >= getattr(self, 'max_tries', 6):
+                    self.query_one("#wordle-message", Label).update(f"No more tries. The word was: {self.secret_word.upper()}")
+                    inp.disabled = True
+                    self.query_one("#wordle-guess", Button).disabled = True
+                    self.query_one("#wordle-restart", Button).disabled = False
+                    return
                 # Clear input for next attempt
                 inp.value = ""
                 self.query_one("#wordle-message", Label).update("")
         elif event.button.id == "wordle-restart":
+            self._reset_game()
+        elif event.button.id == "wordle-reset":
+            # Always allow manual restart
             self._reset_game()
 
     def on_input_submitted(self, event: Input.Submitted) -> None:

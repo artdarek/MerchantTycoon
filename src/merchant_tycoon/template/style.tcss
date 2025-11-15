@@ -660,6 +660,8 @@ PhonePanel {
 
 /* Wordle styles */
 #wordle-controls { height: auto; content-align: left middle; }
+#wordle-controls Input { width: 1fr; }
+#wordle-controls Button { margin-left: 1; }
 #wordle-attempts { height: 1fr; }
 .wordle-row { height: auto; align-horizontal: center; content-align: center middle; margin: 0 0 1 0; }
 .wordle-box {
@@ -674,6 +676,15 @@ PhonePanel {
 .wordle-box.correct { background: #4ea59a; color: #ffffff; }
 .wordle-box.present { background: #d16a66; color: #ffffff; }
 .wordle-box.absent  { background: #2f3543; color: #9aa3b2; }
+
+/* Wordle stats panel */
+#wordle-stats {
+    height: auto;
+    margin-top: 1;
+    padding: 0 1;
+    background: #2f3543;  /* dimmed background */
+    border: solid #3f4557;
+}
 
 /* Match bank action buttons sizing and spacing */
 #lotto-buy-btn { margin-right: 1; }
