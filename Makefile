@@ -161,24 +161,38 @@ build-macos:  ## Build standalone macOS executable and .app bundle
 	@echo "To install:"
 	@echo "  cp -r \"dist/Merchant Tycoon.app\" /Applications/"
 
-rebase:  ## Rebase main onto develop (fetch, checkout main, rebase develop, optional force-push, back to develop)
-	@echo "Fetching latest refs..." && \
-	git fetch && \
-	echo "Checking out main..." && \
-	git checkout main && \
-	echo "Rebasing main onto develop..." && \
-	git rebase develop && \
-	echo "" && \
-	echo "About to force-push 'main' to its upstream." && \
-	echo "This is destructive and will overwrite remote history." && \
-	printf "Proceed with 'git push -f'? [y/N]: " && read ans && \
-	if [ "$$ans" = "y" ] || [ "$$ans" = "Y" ]; then \
-		echo "Force pushing main..." && git push -f; \
-	else \
-		echo "Skipped force push."; \
-	fi && \
-	echo "Switching back to develop..." && \
-	git checkout develop
+rebase:  ## Menu: [r] rebase main onto develop and force-push to origin, [x] quit
+	@echo "Rebase Options:" && \
+	echo "  [r] Rebase main onto develop and push to origin" && \
+	echo "  [x] Quit" && \
+	printf "Enter choice: " && read ans && \
+	case "$$ans" in \
+		[Rr]) \
+			echo "Fetching latest refs..." && \
+			git fetch && \
+			echo "Checking out main..." && \
+			git checkout main && \
+			echo "Rebasing main onto develop..." && \
+			git rebase develop && \
+			echo "" && \
+			echo "About to force-push 'main' to origin." && \
+			echo "WARNING: This will overwrite remote history for origin/main." && \
+			printf "Proceed with 'git push -f origin main'? [y/N]: " && read confirm && \
+			if [ "$$confirm" = "y" ] || [ "$$confirm" = "Y" ]; then \
+				echo "Force pushing main to origin..." && git push -f origin main; \
+			else \
+				echo "Skipped force push to origin."; \
+			fi && \
+			echo "Switching back to develop..." && \
+			git checkout develop; \
+			;; \
+		[Xx]) \
+			echo "Quit."; \
+			;; \
+		*) \
+			echo "Quit."; \
+			;; \
+	esac
 
 build-clean:  ## Clean build artifacts (build, dist, *.spec)
 	@echo "Cleaning build artifacts..."
