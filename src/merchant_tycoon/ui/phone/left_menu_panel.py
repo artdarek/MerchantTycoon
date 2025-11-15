@@ -1,6 +1,6 @@
 from textual.app import ComposeResult
 from textual.widgets import Static, Button, Label
-from textual.containers import Vertical
+from textual.containers import Vertical, Horizontal
 
 from merchant_tycoon.engine import GameEngine
 
@@ -12,10 +12,28 @@ class LeftMenuPanel(Static):
 
     def compose(self) -> ComposeResult:
         yield Label("📱 APPS", classes="panel-title")
-        with Vertical(id="phone-menu"):
-            for key, label in self.engine.phone_service.get_available_apps():
-                btn = Button(label, id=f"phone-menu-{key}")
-                yield btn
+        # Grid: 3 boxes per row
+        apps = list(self.engine.phone_service.get_available_apps())
+        # Map simple emojis per app
+        icons = {
+            "whatsup": "📨",
+            "wordle": "🧩",
+            "camera": "📷",
+        }
+        rows = [apps[i:i+3] for i in range(0, len(apps), 3)]
+        with Vertical(id="phone-menu-grid"):
+            for row in rows:
+                with Horizontal(classes="app-row"):
+                    for key, label in row:
+                        with Static(classes="app-card"):
+                            icon = icons.get(key, "📱")
+                            # Put icon and name inside the same button; icon clickable.
+                            # Add one empty line between icon and name.
+                            btn_label = f"{icon}\n\n{label}"
+                            yield Button(btn_label, id=f"phone-menu-{key}", classes="app-btn")
+                    # If fewer than 3, fill with empty cards for layout consistency
+                    for _ in range(3 - len(row)):
+                        yield Static(classes="app-card")
 
     def update_menu(self) -> None:
         active = self.engine.phone_service.get_active_app()

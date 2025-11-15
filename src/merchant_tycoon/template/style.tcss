@@ -650,8 +650,42 @@ PhonePanel {
 #phone-left-col { width: 1fr; height: 1fr; border: solid #3f4557; padding: 0 1; margin: 0; }
 #phone-right-col { width: 2fr; height: 1fr; border: solid #3f4557; padding: 0 1; margin: 0; }
 
-#phone-menu { height: 1fr; }
+#phone-menu-grid { height: auto; }
 #phone-screen { height: 1fr; }
+
+/* Apps grid styles */
+#phone-left-col LeftMenuPanel Button {
+    background: transparent;
+    border: none;
+    text-align: center;
+    margin: 0;              /* ensure no default outer margins */
+}
+#phone-left-col LeftMenuPanel Button Label {
+    margin: 0;              /* no inner label margins */
+    padding-left: 0;        /* no horizontal padding inside label */
+    padding-right: 0;
+}
+#phone-left-col LeftMenuPanel Button:hover {
+    background: #3a4151;   /* subtle grey on hover */
+}
+.app-row { height: auto; min-height: 0; content-align: left top; }
+.app-row > Static.app-card { width: 1fr; }
+.app-card { padding: 0; margin: 0 1; align: center middle; border: solid #3f4557; height: auto; min-height: 0; }
+.app-btn {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    height: auto;
+    min-height: 3;        /* keep tiles compact */
+    text-align: center;
+    content-align: center middle;
+    padding: 1;           /* top/bottom/left/right = 1 */
+    margin: 0;            /* no outer margin */
+}
+.app-btn:hover,
+.app-btn:focus {
+    background: #3a4151;   /* subtle hover highlight */
+}
 
 #whatsup-content { height: 1fr; }
 
