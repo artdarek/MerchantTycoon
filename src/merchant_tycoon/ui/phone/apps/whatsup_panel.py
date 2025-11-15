@@ -9,7 +9,8 @@ class WhatsUpPanel(Static):
     """Displays messenger logs similarly to the Newspaper modal style."""
 
     def compose(self) -> ComposeResult:
-        # Full-height scrollable list identical to Newspaper modal content area
+        # Title with icon and full-height scrollable list (like Newspaper)
+        yield Label("📨 WHATSUP", classes="panel-title")
         yield ScrollableContainer(id="whatsup-content")
 
     def on_mount(self) -> None:
