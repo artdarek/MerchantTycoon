@@ -10,17 +10,18 @@ class PhoneService:
     """
 
     def __init__(self):
-        self._active_app: str = "whatsup"
+        self._active_app: str = "home"
 
     def get_active_app(self) -> str:
-        return self._active_app or "whatsup"
+        return self._active_app or "home"
 
     def set_active_app(self, app_key: str) -> None:
-        self._active_app = str(app_key or "whatsup").lower()
+        self._active_app = str(app_key or "home").lower()
 
     def get_available_apps(self) -> list[tuple[str, str]]:
         """Return list of available (key, label) pairs in menu order."""
         return [
+            ("home", "Home"),
             ("whatsup", "WhatsUp"),
             ("camera", "Camera"),
             ("wordle", "Wordle"),

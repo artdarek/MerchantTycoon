@@ -16,6 +16,7 @@ class LeftMenuPanel(Static):
         apps = list(self.engine.phone_service.get_available_apps())
         # Map simple emojis per app
         icons = {
+            "home": "🏠",
             "whatsup": "📨",
             "wordle": "🧩",
             "camera": "📷",

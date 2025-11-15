@@ -6,6 +6,7 @@ from merchant_tycoon.engine import GameEngine
 from merchant_tycoon.ui.phone.apps.whatsup_panel import WhatsUpPanel
 from merchant_tycoon.ui.phone.apps.wordle_game_panel import WordleGamePanel
 from merchant_tycoon.ui.phone.apps.camera_panel import CameraPanel
+from merchant_tycoon.ui.phone.apps.home_panel import HomePanel
 
 
 class ScreenPanel(Static):
@@ -32,7 +33,10 @@ class ScreenPanel(Static):
             pass
 
         panel: Static
-        if active == "whatsup":
+        if active == "home":
+            panel = HomePanel()
+            container.mount(panel)
+        elif active == "whatsup":
             panel = WhatsUpPanel()
             container.mount(panel)
             try:

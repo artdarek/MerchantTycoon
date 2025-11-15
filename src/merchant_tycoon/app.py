@@ -71,6 +71,7 @@ from merchant_tycoon.ui.lotto.panels import (
 )
 from merchant_tycoon.ui.lotto.modals import WinnerModal
 from merchant_tycoon.ui.phone.phone_panel import PhonePanel
+from merchant_tycoon.ui.phone.apps.whatsup_panel import WhatsUpPanel
 
 
 class MerchantTycoon(App):
@@ -385,6 +386,13 @@ class MerchantTycoon(App):
         try:
             if getattr(self, "global_actions_bar", None):
                 self.global_actions_bar.update_info()
+        except Exception:
+            pass
+        # Ensure WhatsUp (Phone -> messenger view) stays in sync with new messages
+        try:
+            whatsup = self.query_one(WhatsUpPanel)
+            if whatsup:
+                whatsup.refresh_messages()
         except Exception:
             pass
 

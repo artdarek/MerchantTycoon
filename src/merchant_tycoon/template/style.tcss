@@ -689,6 +689,13 @@ PhonePanel {
 
 #whatsup-content { height: 1fr; }
 #camera-ascii { height: 1fr; content-align: center middle; }
+#home-ascii { height: 1fr; content-align: center middle; align: center middle; }
+#home-ascii .home-box {
+    text-align: left;
+    padding: 0;        /* keep tight to ASCII art */
+    width: auto;       /* fit content width */
+    min-width: 0;
+}
 
 /* Placeholder style */
 #wordle-placeholder { text-align: center; content-align: center middle; height: 1fr; text-style: bold; color: #9aa3b2; }

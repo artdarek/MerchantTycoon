@@ -26,7 +26,7 @@ class PhonePanel(Static):
     def on_mount(self) -> None:
         # Ensure default app selected
         if not self.engine.phone_service.get_active_app():
-            self.engine.phone_service.set_active_app("whatsup")
+            self.engine.phone_service.set_active_app("home")
         self.refresh_phone()
 
     def refresh_phone(self) -> None:
