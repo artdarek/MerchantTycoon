@@ -5,9 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on Keep a Changelog, and this project adheres to
 Semantic Versioning.
 
-## [Unreleased]
+## [1.4.0]
 
-## [1.4.0] - 2025-11-14
+### Added
+- Phone tab (shortcut `5`) with the following apps:
+  - Home: centered ASCII home screen with smooth glow/pulse animation.
+  - WhatsUp: live messenger feed (same rendering as Newspaper modal) that keeps up‑to‑date as new messages arrive.
+  - Camera (Gallery): centered, scrollable ASCII picture; scroll starts near the middle for best framing.
+  - Wordle Game: lightweight, playable 5‑letter word game with per‑letter coloring and restart.
+- Phone apps menu redesigned as a 3‑column grid with emoji icons and hover highlighting.
+- Wordle improvements:
+  - Guess input moved to the bottom; added Guess / Play Again / Restart buttons.
+  - Gameplay stats panel (tries used/limit).
+  - Duplicate‑letter logic fixed (excess duplicates above target count are grey).
+  - Settings (see `phone_settings.py`): `wordle_max_tries` (default 10), `wordle_validate_in_dictionary` (default False).
+  - Repository for words + curated list expanded to 500+ common 5‑letter words.
+- Lotto: Owned Tickets table shows a Wins column (per‑ticket win count).
+
+### Changed
+- WhatsUp panel now shows a title and auto‑refreshes when messages are added (via global refresh).
+- Camera/WhatsUp panels fill SCREEN height and are horizontally/vertically centered where appropriate.
+- Various UI polish: consistent button sizing/padding in Wordle, Lotto panels, and Phone grid tiles.
+
+
+## [1.3.0] - 2025-11-14
 
 ### Added
 - Lotto UI tab with four panels:

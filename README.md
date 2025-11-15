@@ -143,7 +143,7 @@ make clean
 
 ### Controls
 
-The game has **4 tabs** (Goods, Investments, Bank, Lotto) with context-sensitive controls:
+The game has **5 tabs** (Goods, Investments, Bank, Lotto, Phone) with context-sensitive controls:
 
 #### Global Controls (Always Available)
 | Key | Action | Description |
@@ -157,6 +157,7 @@ The game has **4 tabs** (Goods, Investments, Bank, Lotto) with context-sensitive
 | **F9** | Splash | Show splash screen |
 | **N** | Newspaper | View full message history in scrollable newspaper modal |
 | **C** | Cargo | Extend cargo capacity by +1 slot (pricing per config) |
+| **1/2/3/4/5** | Tabs | Switch to Goods / Investments / Bank / Lotto / Phone |
 | **1/2/3/4** | Tabs | Switch to Goods / Investments / Bank / Lotto |
 
 #### 📦 Goods Tab Controls
@@ -305,6 +306,24 @@ The game features **31 unique products** across 4 main categories:
 - **Withdraw** anytime without penalties
 - Bank balance is protected from random events
 - Lower risk, lower reward compared to goods trading or investments
+
+#### 📱 Phone Tab
+- Home (default): centered ASCII “home screen” with a subtle glow/pulse animation.
+- WhatsUp: live messenger feed, identical styling to the Newspaper modal; stays up-to-date as messages arrive.
+- Camera: Gallery app showing an ASCII picture (scrollable and centered within the screen).
+- Wordle Game: a simple Wordle-style mini-game.
+  - Enter a 5-letter word and press “Guess”.
+  - Coloring per letter:
+    - Green = correct letter at correct position
+    - Orange/Red = letter exists elsewhere in the word
+    - Grey = letter not in the word (duplicates beyond count are grey)
+  - Limited tries (default 10) and a restart button.
+  - Optional dictionary validation (on/off) and tries are configurable (see Settings below).
+
+##### Wordle Settings
+- File: `src/merchant_tycoon/config/phone_settings.py`
+  - `wordle_max_tries` (default: 10)
+  - `wordle_validate_in_dictionary` (default: False)
 
 #### 🎲 Random Events System
 Travel between cities triggers random events that can affect your journey. Each city has unique event probability and risk profile.
