@@ -9,4 +9,3 @@ class PhoneSettings:
     wordle_max_tries: int = 10
     # If True, only allow guesses present in the dictionary list
     wordle_validate_in_dictionary: bool = False
-

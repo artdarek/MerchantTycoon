@@ -15,4 +15,3 @@ class WordleRepository:
             return random.choice(WORDLE_WORDS)
         except Exception:
             return "apple"
-
