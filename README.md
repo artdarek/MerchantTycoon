@@ -44,7 +44,7 @@ Press **F1** to start a new game and select your difficulty. Each level offers a
 
 The game combines:
 - **Difficulty Selection**: Choose from 5 difficulty levels (Playground to Insane)
-- **City Trading**: Buy and sell goods across 11 European cities with varying prices
+- **City Trading**: Buy and sell goods across 14 world cities with varying prices
 - **Diverse Product Categories**: Trade in electronics, luxury goods, cars, and contraband (31 products total)
 - **Stock Market**: Invest in 16 real company stocks (Tech giants like Google, Apple, NVIDIA, Tesla, and gaming companies like CD Projekt Red, Nintendo, Ubisoft, Electronic Arts)
 - **Commodities**: Trade in 8 commodities including precious metals (Gold, Silver, Platinum, Copper) and agricultural products (Cocoa, Sugar, Coffee) plus Oil
@@ -199,16 +199,18 @@ The game has **5 tabs** (Goods, Investments, Bank, Lotto, Phone) with context-se
 ### Game Mechanics
 
 #### 🏙️ Cities & Pricing
-- **11 European Cities**: Warsaw, Berlin, Prague, Vienna, Budapest, Paris, London, Rome, Amsterdam, Barcelona, Stockholm
+- **14 Cities**: Warsaw, Berlin, Prague, Vienna, Budapest, Paris, London, Rome, Amsterdam, Barcelona, Stockholm, Kiev (Ukraine), Havana (Cuba), Tokio (Japan)
 - Each city has different price multipliers for each good
 - Prices fluctuate randomly within a range (±30%)
 - Look for arbitrage opportunities between cities
 - Travel between cities to exploit price differences
 
 **City Risk Levels:**
-- **Safe Cities** (low event probability, more gains): Stockholm (15%), Vienna (18%), Paris (20%), London (20%)
+- **Very Safe**: Tokio (12%) – safe hub: expensive luxury, cheap electronics/cars, very low contraband demand
+- **Safe Cities**: Stockholm (15%), Vienna (18%), Paris (20%), London (20%)
 - **Medium Risk**: Berlin (22%), Barcelona (22%), Warsaw (25%), Rome (25%)
-- **High Risk** (high event probability, more losses): Budapest (28%), Prague (30%), Amsterdam (32%)
+- **High Risk**: Budapest (28%), Prague (30%), Amsterdam (32%)
+- **Very High Risk**: Kiev (50%) – strong black‑market demand (great to SELL contraband); Havana (55%) – contraband supplier (cheap drugs), electronics/cars expensive
 
 #### 📦 Goods & Product Categories
 
@@ -252,6 +254,8 @@ The game features **31 unique products** across 4 main categories:
 - **FIFO System**: Goods are sold in First In, First Out order
 - **Purchase Lots**: Track each purchase separately to calculate profit/loss accurately
 - **Random Events**: Can affect your inventory (theft, damage, confiscation, etc.)
+  - Buyer Scam (contraband only): removes N random contraband purchase lots (configurable) and deducts their quantities. No payment received.
+  - FBI Confiscation (contraband only, rare/severe): configurable penalties — reduce cash, reduce/freeze bank (logged as "FBI confiscated" withdrawal), optionally wipe inventory, reset cargo capacity to a fraction of base. Investments are untouched. Eligible only if you hold ≥ M contraband lots (configurable).
 - **Strategy**: Mix standard goods (stable income) with high-risk/high-reward contraband
 - **Cargo Planning**: Balance small high-quantity items vs large high-value items
 
@@ -324,6 +328,41 @@ The game features **31 unique products** across 4 main categories:
 - File: `src/merchant_tycoon/config/phone_settings.py`
   - `wordle_max_tries` (default: 10)
   - `wordle_validate_in_dictionary` (default: False)
+
+##### CloseAI Chat + Magic Phrases (cheats/admin)
+
+CloseAI supports configurable magic sentences that perform actions and reply with custom text.
+
+Settings (src/merchant_tycoon/config/phone_settings.py): `PhoneSettings.close_ai_magic_triggers`
+
+Fields per trigger:
+- `phrase` (str): exact message to match (case‑insensitive)
+- `bank` (int): credit to bank with `title`
+- `title` (str): bank transaction title
+- `cargo` (int): add cargo capacity
+- `cash` (int): add wallet cash
+- `response` (str): AI reply in chat
+- `buy_goods` (int): buy N random goods (1 unit each)
+- `buy_stocks` (int): buy N random assets (1 unit each)
+
+Example (default included):
+- "I need money mommy" → bank +$10,000 (title "Mommy loves you"), auto‑buy 10 random goods, reply "Check your account… mommy loves you! 💖".
+
+Notes:
+- Effects are applied immediately; a concise summary is logged to the messenger and the UI refreshes.
+- Auto‑buys obey cash/cargo constraints; failures are skipped.
+
+Default Magic Phrases
+
+| Phrase | Bank | Cash | Cargo | Buy Goods | Buy Stocks | Title | Response (short) |
+|--------|------|------|-------|-----------|------------|-------|-------------------|
+| I need money mommy | $10,000 | $0 | +0 | 10 | 0 | Mommy loves you | “Check your account… mommy loves you! 💖” |
+| I need more money mommy | $100,000 | $0 | +0 | 0 | 0 | Mommy loves you but do not ask for more! | “Are you kidding me!? … check your account…” |
+| Give me your wallet | $0 | $1,000,000 | +0 | 0 | 0 | Taken from strangers wallet | “You scum! … you will pay me back!” |
+| I need a car | $1,000 | $0 | +50 | 0 | 0 | Money for car repairs | “Here you are! Keys to my Ford Mustang 76!” |
+| I need a truck | $10,000 | $0 | +100 | 0 | 0 | Money for a truck repairs | “You can drive mine! Drive safe!” |
+| What is your name | $1 | $1 | +1 | 0 | 0 | Tip from Slim Shady | “My name is… Slim Shady!” |
+| iddqd | $10,000,000 | $10,000,000 | +1000 | 0 | 0 | I god mode you | “You should say this: …” |
 
 #### 🎲 Random Events System
 Travel between cities triggers random events that can affect your journey. Each city has unique event probability and risk profile.
@@ -557,7 +596,10 @@ make install-dev   # Install in development mode
 make run           # Run the game
 make clean         # Clean all build artifacts
 make build-macos   # Build macOS application
+make build-windows # Build Windows executable (run this on Windows)
 make build-clean   # Clean build artifacts only
+make build         # Interactive build menu ([r] build & release chain)
+make rebase        # Interactive rebase menu ([r] rebase main onto develop and push)
 ```
 
 ## 🤖 Created Entirely with AI Agents on board

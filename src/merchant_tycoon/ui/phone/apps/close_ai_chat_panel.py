@@ -89,6 +89,59 @@ class CloseAIChatPanel(Static):
                                 self.app.engine.wallet_service.earn(cash_amt)
                         except Exception:
                             pass
+                        # Optional auto-buys: goods and stocks
+                        goods_bought = 0
+                        stocks_bought = 0
+                        try:
+                            buy_goods = int(trig.get('buy_goods', 0) or 0)
+                        except Exception:
+                            buy_goods = 0
+                        try:
+                            buy_stocks = int(trig.get('buy_stocks', 0) or 0)
+                        except Exception:
+                            buy_stocks = 0
+
+                        # Buy N random goods (1 unit each)
+                        if buy_goods > 0:
+                            try:
+                                goods_list = list(getattr(self.app.engine, 'goods_repo', None).get_all())
+                            except Exception:
+                                goods_list = []
+                            import random as _r
+                            attempts = max(5, buy_goods * 5)
+                            while goods_bought < buy_goods and attempts > 0 and goods_list:
+                                attempts -= 1
+                                g = _r.choice(goods_list)
+                                name = getattr(g, 'name', None)
+                                if not name:
+                                    continue
+                                try:
+                                    ok, _m = self.app.engine.goods_service.buy(name, 1)
+                                    if ok:
+                                        goods_bought += 1
+                                except Exception:
+                                    continue
+
+                        # Buy N random stocks (1 unit each)
+                        if buy_stocks > 0:
+                            try:
+                                assets = list(getattr(self.app.engine, 'assets_repo', None).get_all())
+                            except Exception:
+                                assets = []
+                            import random as _r
+                            attempts = max(5, buy_stocks * 5)
+                            while stocks_bought < buy_stocks and attempts > 0 and assets:
+                                attempts -= 1
+                                a = _r.choice(assets)
+                                sym = getattr(a, 'symbol', None)
+                                if not sym:
+                                    continue
+                                try:
+                                    ok, _m = self.app.engine.investments_service.buy_asset(sym, 1)
+                                    if ok:
+                                        stocks_bought += 1
+                                except Exception:
+                                    continue
                         # Compose acknowledgment reply (configurable)
                         parts = []
                         if bank_amt > 0:
@@ -97,6 +150,10 @@ class CloseAIChatPanel(Static):
                             parts.append(f"Cash +${cash_amt:,}")
                         if cargo_add > 0:
                             parts.append(f"Cargo +{cargo_add}")
+                        if goods_bought > 0:
+                            parts.append(f"Bought goods ×{goods_bought}")
+                        if stocks_bought > 0:
+                            parts.append(f"Bought stocks ×{stocks_bought}")
                         summary = ", ".join(parts) if parts else "No changes"
                         configured_reply = str(trig.get('response', '') or '').strip()
                         reply = configured_reply if configured_reply else f"Transfer complete. {summary}."

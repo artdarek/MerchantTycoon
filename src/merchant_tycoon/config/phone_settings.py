@@ -41,6 +41,8 @@ class PhoneSettings:
     #   "cargo": int,               # additional cargo capacity to grant
     #   "cash": int,                # amount of cash to add to wallet
     #   "response": str,            # AI chat response shown when applied
+    #   "buy_goods": int,           # buy N random goods (1 unit each)
+    #   "buy_stocks": int,          # buy N random assets (1 unit each)
     # }
     close_ai_magic_triggers: tuple[dict, ...] = (
         {
@@ -50,6 +52,8 @@ class PhoneSettings:
             "cargo": 0,
             "cash": 0,
             "response": "Check your account… mommy loves you! 💖",
+            "buy_goods": 0,
+            "buy_stocks": 0,
         },
         {
             "phrase": "I need more money mommy",
@@ -58,6 +62,8 @@ class PhoneSettings:
             "cargo": 0,
             "cash": 0,
             "response": "Are you kidding me!? eh... check your account… mommy loves you!",
+            "buy_goods": 0,
+            "buy_stocks": 0,
         },
         {
             "phrase": "Give me your wallet",
@@ -66,6 +72,8 @@ class PhoneSettings:
             "cargo": 0,
             "cash": 1000000,
             "response": "You scum! I will get you one day! And you will pay me back!",
+            "buy_goods": 0,
+            "buy_stocks": 0,
         },
         {
             "phrase": "I need a car",
@@ -74,6 +82,8 @@ class PhoneSettings:
             "cargo": 50,
             "cash": 0,
             "response": "Here you are! Keys to my Ford Mustang 76! have a nice ride!",
+            "buy_goods": 0,
+            "buy_stocks": 0,
         },
         {
             "phrase": "I need a truck",
@@ -82,6 +92,8 @@ class PhoneSettings:
             "cargo": 100,
             "cash": 0,
             "response": "Oh ok! You can drive mine! Drive safe!",
+            "buy_goods": 0,
+            "buy_stocks": 0,
         },
         {
             "phrase": "What is your name",
@@ -90,6 +102,28 @@ class PhoneSettings:
             "cargo": 1,
             "cash": 1,
             "response": "My name is... my name is... Slim Shady!",
+            "buy_goods": 1,
+            "buy_stocks": 1,
+        },
+        {
+            "phrase": "Buy me some goods",
+            "bank": 0,
+            "title": "For goods",
+            "cargo": 0,
+            "cash": 0,
+            "response": "Buy me this... buy me that... and what else?",
+            "buy_goods": 5,
+            "buy_stocks": 5,
+        },
+        {
+            "phrase": "Buy me some stocks",
+            "bank": 0,
+            "title": "For stocks",
+            "cargo": 0,
+            "cash": 0,
+            "response": "Investing is a good thing! Take all my shares!",
+            "buy_goods": 10,
+            "buy_stocks": 10,
         },
         {
             "phrase": "iddqd",
@@ -97,6 +131,6 @@ class PhoneSettings:
             "title": "I god mode you",
             "cargo": 1000,
             "cash": 10000000,
-            "response": "You should say this: \nWhat is your name\n I need a truck\n I need a car\n Give me your wallet\n I need more money mommy\n I need money mommy",
+            "response": "You should say this: \n - What is your name\n - I need a truck\n - I need a car\n - Give me your wallet\n - I need more money mommy\n - I need money mommy\n - Buy me some goods\n - Buy me some stocks",
         },
     )
