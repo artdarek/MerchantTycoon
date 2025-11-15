@@ -38,14 +38,15 @@ class CloseAIChatPanel(Static):
             chat = self.query_one("#closeai-chat", ScrollableContainer)
         except Exception:
             return
-        # Build a row with left/right alignment using a spacer
-        row = Horizontal(classes="chat-row")
+        # Build a row with left/right alignment using a spacer.
+        # Construct the row with children upfront to avoid mounting into an
+        # unmounted container which can raise a MountError in Textual.
         bubble = Static(text, classes=f"bubble {role}")
         spacer = Static(classes="spacer")
         if role == "ai":
-            row.mount(bubble, spacer)
+            row = Horizontal(bubble, spacer, classes="chat-row")
         else:
-            row.mount(spacer, bubble)
+            row = Horizontal(spacer, bubble, classes="chat-row")
         chat.mount(row)
 
     def on_button_pressed(self, event: Button.Pressed) -> None:

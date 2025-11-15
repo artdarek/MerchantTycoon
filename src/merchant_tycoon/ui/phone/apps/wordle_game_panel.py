@@ -83,7 +83,6 @@ class WordleGamePanel(Static):
         Pass 1: mark greens and build remaining counts for secret.
         Pass 2: mark reds only up to remaining counts, else grey.
         """
-        row = Horizontal(classes="wordle-row")
         secret = (self.secret_word or "")[:5]
         guess = (guess or "")[:5]
 
@@ -110,12 +109,13 @@ class WordleGamePanel(Static):
             else:
                 marks[i] = "absent"
 
-        # Build UI boxes
+        # Build UI boxes first, then construct row with children to avoid
+        # mounting into an unmounted container which can raise MountError.
+        boxes: list[Static] = []
         for i, ch in enumerate(guess):
             cls = marks[i] if i < len(marks) else "absent"
-            box = Static(ch.upper(), classes=f"wordle-box {cls}")
-            row.mount(box)
-        return row
+            boxes.append(Static(ch.upper(), classes=f"wordle-box {cls}"))
+        return Horizontal(*boxes, classes="wordle-row")
 
     def _append_attempt(self, guess: str) -> None:
         try:
