@@ -93,12 +93,13 @@ format:  ## Format code (placeholder)
 	@echo "Formatting not configured yet"
 	@echo "Consider adding: ruff format src/"
 
-build:  ## Interactive build menu (choose platform or clean)
+build:  ## Interactive build menu (choose platform, chain steps, or clean)
 	@echo "Build Options:"
 	@echo "  [m] Build for macOS"
 	@echo "  [i] Create iconset (build/icon.iconset)"
 	@echo "  [a] Apply iconset to .app"
 	@echo "  [v] Versionize macOS app (dist/version/MerchantTycoon-{version})"
+	@echo "  [r] Build & release (m + i + a + v)"
 	@echo "  [x] Delete old build"
 	@echo "  [q] Quit (default)"
 	@printf "Enter choice: "; read ans; \
@@ -113,6 +114,13 @@ build:  ## Interactive build menu (choose platform or clean)
 			$(MAKE) build-iconset-apply; \
 			;; \
 		[Vv]) \
+			$(MAKE) build-version; \
+			;; \
+		[Rr]) \
+			echo "Running full build & release pipeline..."; \
+			$(MAKE) build-macos && \
+			$(MAKE) build-iconset && \
+			$(MAKE) build-iconset-apply && \
 			$(MAKE) build-version; \
 			;; \
 		[Xx]) \
