@@ -1,15 +1,15 @@
-.PHONY: help venv install install-dev sync upgrade run clean test lint format build build-artifacts build-bin build-release build-windows build-clean build-iconset build-iconset-apply build-version build-dmg rebase
+.PHONY: help venv install install-dev clean sync upgrade run test lint format build build-artifacts build-windows build-clean rebase
 
 # Default source icon (override with: make build-iconset ICON=path/to/icon.png)
 ICON ?= icon.png
 ICONSET_DIR ?= build/icon.iconset
 ICON_ICNS ?= build/icon.icns
 
-help:  ## Show this help message
+help:  ## Show all available make commands with short descriptions
 	@echo "Available commands:"
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36mmake %-15s\033[0m %s\n", $$1, $$2}'
 
-venv:  ## Create a virtual environment using uv (create if missing; show how to activate, deactivate, recreate, or delete)
+venv:  ## Create/manage virtualenv using uv: show activate/deactivate, recreate, or delete options
 	@if [ -d .venv ]; then \
 		echo ".venv already exists."; \
 		echo "What do you want to do?"; \
@@ -56,23 +56,23 @@ venv:  ## Create a virtual environment using uv (create if missing; show how to 
 		uv venv && echo "Virtual environment created. Activate it with: source .venv/bin/activate"; \
 	fi
 
-install:  ## Install the game in production mode
+install:  ## Install the app in production mode
 	uv pip install .
 
-install-dev:  ## Install the game in development mode with dev dependencies (editable)
+install-dev:  ## Install in development mode (editable) with dev dependencies
 	uv pip install -e '.[dev]'
 
 sync:  ## Sync dependencies from pyproject.toml (creates/updates uv.lock)
 	uv sync
 
-upgrade:  ## Upgrade all packages to latest versions and update uv.lock
+upgrade:  ## Upgrade all packages to latest and refresh uv.lock
 	uv lock --upgrade
 	uv sync
 
-run:  ## Run the game
+run:  ## Run the game (python -m merchant_tycoon)
 	PYTHONPATH=src python3 -m merchant_tycoon
 
-clean:  ## Clean up build artifacts and cache files
+clean:  ## Remove build artifacts and caches (build/, dist/, *.egg-info, __pycache__, *.py[co], .venv)
 	rm -rf build/
 	rm -rf dist/
 	rm -rf *.egg-info
@@ -82,18 +82,18 @@ clean:  ## Clean up build artifacts and cache files
 	find . -type f -name "*.pyc" -delete
 	find . -type f -name "*.pyo" -delete
 
-test:  ## Run tests (placeholder for future tests)
+test:  ## Run tests (placeholder; no tests configured yet)
 	@echo "No tests configured yet"
 
-lint:  ## Run code linting (placeholder)
+lint:  ## Run linter (placeholder; suggested: ruff check src/)
 	@echo "Linting not configured yet"
 	@echo "Consider adding: ruff check src/"
 
-format:  ## Format code (placeholder)
+format:  ## Format code (placeholder; suggested: ruff format src/)
 	@echo "Formatting not configured yet"
 	@echo "Consider adding: ruff format src/"
 
-build:  ## Interactive build menu (choose platform, chain steps, or clean)
+build:  ## Interactive build menu (macOS: artifacts, packaging, cleaning)
 	@echo "-----------------------------------"
 	@echo "Build Options"
 	@echo "-----------------------------------"
@@ -129,18 +129,18 @@ build:  ## Interactive build menu (choose platform, chain steps, or clean)
 			;; \
 	esac
 
-build-artifacts:  ## Build macOS terminal executable and .app bundle (no packaging)
+build-artifacts:  ## Build macOS artifacts: CLI executable and .app bundle (no packaging)
 	@bash scripts/build/macos/build_artifacts.sh
 
-build-clean:  ## Clean build artifacts (build, dist, *.spec)
+build-clean:  ## Clean build artifacts (build/, dist/, *.spec)
 	@echo "Cleaning build artifacts..."
 	rm -rf build/ dist/ *.spec
 	@echo "✅ Build artifacts cleaned"
 
-release:  ## Build artifacts if needed, then create versioned zip/dmg in bin/ (VERSION=... FORCE_BUILD=1)
+release:  ## Build artifacts if needed, then create versioned zip/dmg in bin/ (VERSION=..., FORCE_BUILD=1)
 	@VERSION="$(VERSION)" FORCE_BUILD="$(FORCE_BUILD)" bash scripts/build/macos/release.sh package
 
-build-windows:  ## Build standalone Windows executable (.exe) with PyInstaller (run on Windows)
+build-windows:  ## Build a standalone Windows executable (.exe) using PyInstaller (run on Windows)
 	@echo "Building Windows executable..."
 	@command -v pyinstaller >/dev/null 2>&1 || { echo "PyInstaller not found. Install dev dependencies with: uv pip install -e .[dev]"; exit 1; }
 	python -m PyInstaller \
@@ -152,7 +152,7 @@ build-windows:  ## Build standalone Windows executable (.exe) with PyInstaller (
 		src/merchant_tycoon/__main__.py
 	@echo "✅ Windows build complete: dist/Merchant Tycoon.exe"
 
-rebase:  ## Menu: [r] rebase main onto develop and force-push to origin, [x] quit
+rebase:  ## Menu: [r] rebase main onto develop with optional force-push to origin, [x] quit
 	@echo "Rebase Options:" && \
 	echo "  [r] Rebase main onto develop and push to origin" && \
 	echo "  [x] Quit" && \
