@@ -242,7 +242,18 @@ class PhoneSettings:
                 "I do not know how to talk to you anymore",
                 "Help me",
             ],
-            "response": "Well, maybe you should’ve said that in the first place: \n - What is your name\n - I need a truck\n - I need a car\n - Give me your wallet\n - I need more money mommy\n - I need money mommy\n - Buy me some goods\n - Buy me some stocks\n - Grant me some goods\n - Grant me some stocks",
+            "response": "Here’s what I understand (use any variant):\n"
+                        " - What is your name (Who are you)\n"
+                        " - I need a truck (Let me drive your truck, Buy a truck)\n"
+                        " - I need a car (Let me drive your car, Buy a car)\n"
+                        " - Give me your wallet (Give me all your money, Your wallet please)\n"
+                        " - I need more money mommy (Transfer)\n"
+                        " - I need money mommy (Blik)\n"
+                        " - Buy me some goods (Buy goods)\n"
+                        " - Buy me some stocks (Buy stocks, Buy buy buy)\n"
+                        " - Grant me some goods (Give me some goods, Need free goods)\n"
+                        " - Grant me some stocks (Give me some stocks, Need free stocks, Make me an owner)\n"
+                        " - iddqd (opens god-mode help)",
             "bank": 0,
             "title": "To help you",
             "cargo": 0,
