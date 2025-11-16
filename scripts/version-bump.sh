@@ -102,6 +102,10 @@ mv "$tmpfile" "$PYPROJECT"
 
 echo "Bumped version: $CURRENT_VER -> $NEW_VER"
 
+# Print suggested commit command for convenience
+echo "Suggested commit command:"
+echo "  git add pyproject.toml && git commit -m \"chore(): Version bump to $NEW_VER\""
+
 if [[ "$CREATE_TAG" == "1" ]]; then
   if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
     tag="v$NEW_VER"
@@ -117,4 +121,3 @@ if [[ "$CREATE_TAG" == "1" ]]; then
 fi
 
 echo "Done."
-
