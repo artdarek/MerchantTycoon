@@ -1,4 +1,4 @@
-.PHONY: help venv install install-dev clean sync upgrade run test lint format build build-artifacts build-windows build-clean rebase version version-major version-minor version-patch version-commit version-commit-push
+.PHONY: help venv install install-dev clean sync upgrade run test lint format build build-artifacts build-windows build-clean release rebase version version-major version-minor version-patch version-commit version-commit-push
 
 # Default source icon (override with: make build-iconset ICON=path/to/icon.png)
 ICON ?= icon.png
@@ -197,7 +197,7 @@ version-major:  ## bumps major version in pyproject.toml
 	bash scripts/version-bump.sh --major
 
 version-commit:  ## Commit only pyproject version bump
-		bash scripts/version-bump-commit.sh;
+	bash scripts/version-bump-commit.sh;
 
 version-commit-push:  ## Commit pyproject version bump and push to origin
 	bash scripts/version-bump-commit.sh --push;

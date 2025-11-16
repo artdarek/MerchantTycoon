@@ -14,6 +14,7 @@ The Makefile is designed to streamline local development, dependency management,
 - Interactive build menu: `make build`
 - Package macOS release: `make release`
 - Clean build artifacts: `make build-clean` or `make clean`
+ - Interactive version menu: `make version`
 
 ## Requirements
 
@@ -121,6 +122,7 @@ Tip: After a dev install, you can also run via the console script `merchant-tyco
   - Purpose: Build artifacts if needed, then package versioned archives for distribution.
   - Command: `VERSION="$(VERSION)" FORCE_BUILD="$(FORCE_BUILD)" bash scripts/build/macos/release.sh package`
   - Outputs: Versioned `.zip` and/or `.dmg` in `bin/`.
+  - Naming: ZIP output is `bin/merchant-tycoon-macos-{version}.zip` (includes the `.app`, CLI executable, and the DMG if present). If a DMG exists in `dist/`, a versioned DMG is also created in `bin/`.
   - Options:
     - `VERSION`: Override the version (otherwise derived by the script).
     - `FORCE_BUILD=1`: Force rebuilding artifacts even if they already exist.
@@ -146,6 +148,56 @@ Tip: After a dev install, you can also run via the console script `merchant-tyco
     5. Switch back to `develop`
   - Warning: Force-pushing rewrites the remote history for `origin/main`. Use with care.
 
+### 7) Versioning
+
+- `version`
+  - Purpose: Interactive version menu to bump or commit version changes.
+  - Options in the menu:
+    - `[p]` Bump PATCH (X.Y.Z -> X.Y.(Z+1))
+    - `[m]` Bump MINOR (X.Y.Z -> X.(Y+1).0)
+    - `[M]` Bump MAJOR ((X+1).0.0)
+    - `[c]` Commit only the current pyproject version change
+    - `[C]` Commit and push the current pyproject version change
+  - Behavior: After completing a selected action, the menu is shown again until you quit.
+
+- `version-patch`
+  - Purpose: Bump patch version in `pyproject.toml`.
+  - Command: `bash scripts/version-bump.sh --patch`
+  - Notes:
+    - Only updates `project.version` (format must be `X.Y.Z`).
+    - Does not commit or tag; prints a suggested commit command.
+
+- `version-minor`
+  - Purpose: Bump minor version in `pyproject.toml`.
+  - Command: `bash scripts/version-bump.sh --minor`
+  - Notes: Same behavior as patch bump (no commit, no tag by default).
+
+- `version-major`
+  - Purpose: Bump major version in `pyproject.toml`.
+  - Command: `bash scripts/version-bump.sh --major`
+  - Notes: Same behavior as patch/minor (no commit, no tag by default).
+
+- `version-commit`
+  - Purpose: Commit only the version change in `pyproject.toml`.
+  - Command: `bash scripts/version-bump-commit.sh`
+  - Behavior:
+    - Unstages all files, then stages only `pyproject.toml`.
+    - Commit message: `chore(): Version bump to vX.Y.Z`.
+    - Does not push.
+
+- `version-commit-push`
+  - Purpose: Commit the version change in `pyproject.toml` and push to the remote.
+  - Command: `bash scripts/version-bump-commit.sh --push`
+  - Behavior:
+    - Pushes to the current branch. If no upstream is set, pushes to `origin <branch>` and sets upstream.
+
+Tips and advanced usage:
+- Typical flows:
+  - Interactive: `make version` → choose `[p|m|M]` → choose `[c|C]`.
+  - Non-interactive: `make version-patch && make version-commit-push`.
+- Tagging releases: the bump script supports `--create-tag` when called directly, e.g.
+  `bash scripts/version-bump.sh --patch --create-tag` (Make targets do not tag by default).
+
 ---
 
 ## Variables & Options
@@ -159,8 +211,10 @@ Tip: After a dev install, you can also run via the console script `merchant-tyco
 - `FORCE_BUILD` (used by `release`)
   - Forces rebuilding even if artifacts already exist. Example: `make release FORCE_BUILD=1`.
 
+ 
+
 - Icon variables (honored by build scripts when passed via env/Make):
-  - `ICON` — source PNG for iconset generation (ideally 1024×1024)
+  - `ICON` — source PNG for iconset generation (default `icon.png`, ideally 1024×1024)
   - `ICONSET_DIR` — output `.iconset` directory (default `build/icon.iconset`)
   - `ICON_ICNS` — output `.icns` file (default `build/icon.icns`)
   - Example: `make build-artifacts ICON=docs/icon/my.png ICONSET_DIR=build/my.iconset ICON_ICNS=build/my.icns`
@@ -190,6 +244,16 @@ Tip: After a dev install, you can also run via the console script `merchant-tyco
 - Build Windows executable (on Windows):
   - `uv pip install -e '.[dev]'`
   - `make build-windows`
+
+- Version bump on develop, then rebase main and push:
+  - Ensure you're on `develop` and working tree is clean.
+  - Bump version: `make version-patch` (or `version-minor` / `version-major`).
+  - Commit and push the bump: `make version-commit-push`.
+  - Rebase `main` onto `develop` and push `main`:
+    - `make rebase` → choose `[r]` → confirm force-push when prompted.
+  - Notes:
+    - The repository uses `main` (not `master`).
+    - The `rebase` target checks out `main`, rebases onto `develop`, optionally force-pushes `origin/main`, then switches back to `develop`.
 
 ---
 
