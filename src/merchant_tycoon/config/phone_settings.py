@@ -35,7 +35,7 @@ class PhoneSettings:
     # Special Close AI triggers: list of magic sentences and their effects.
     # Each entry:
     # {
-    #   "phrase": str,              # exact message to trigger on (case-insensitive, trimmed)
+    #   "phrase": str | list[str],  # exact message(s) to trigger on (case-insensitive, trimmed)
     #   "bank": int,                # amount to credit to bank
     #   "title": str,               # bank transaction title
     #   "cargo": int,               # additional cargo capacity to grant
@@ -51,7 +51,10 @@ class PhoneSettings:
     #   "buy_stocks_size": int,       # quantity per asset buy
     close_ai_magic_triggers: tuple[dict, ...] = (
         {
-            "phrase": "I need money mommy",
+            "phrase": [
+                "I need money mommy",
+                "Blik"
+            ],
             "response": "Check your account…\nmommy loves you! 💖",
             "bank": 10000,
             "title": "Mommy loves you",
@@ -67,7 +70,10 @@ class PhoneSettings:
             "buy_stocks_size": 0,
         },
         {
-            "phrase": "I need more money mommy",
+            "phrase": [
+                "I need more money mommy",
+                "Transfer"
+            ],
             "response": "Are you kidding me!? eh...\ncheck your account…\nmommy loves you!",
             "bank": 100000,
             "title": "Mommy loves you but do not ask for more!",
@@ -83,7 +89,11 @@ class PhoneSettings:
             "buy_stocks_size": 0,
         },
         {
-            "phrase": "Give me your wallet",
+            "phrase": [
+                "Give me your wallet",
+                "Give me all your money",
+                "Your wallet please",
+            ],
             "response": "You scum!\nI will get you one day!\nAnd you will pay me back!",
             "bank": 0,
             "title": "Taken from strangers wallet",
@@ -99,7 +109,11 @@ class PhoneSettings:
             "buy_stocks_size": 0,
         },
         {
-            "phrase": "I need a car",
+            "phrase": [
+                "I need a car",
+                "Let me drive your car",
+                "Buy a car",
+            ],
             "response": "Here you are! Keys to my Ford Mustang 76!\nhave a nice ride!",
             "bank": 1000,
             "title": "Money for car repairs",
@@ -115,7 +129,11 @@ class PhoneSettings:
             "buy_stocks_size": 0,
         },
         {
-            "phrase": "I need a truck",
+            "phrase": [
+                "I need a truck",
+                "Let me drive your truck",
+                "Buy a truck",
+            ],
             "response": "Oh ok! You can drive mine!\n...and drive safe!",
             "bank": 10000,
             "title": "Money for a truck repairs",
@@ -131,7 +149,7 @@ class PhoneSettings:
             "buy_stocks_size": 0,
         },
         {
-            "phrase": "What is your name",
+            "phrase": ["What is your name", "Who are you"],
             "response": "My name is... my name is... \n...Slim Shady!",
             "bank": 1,
             "title": "Tip from Slim Shady",
@@ -143,7 +161,10 @@ class PhoneSettings:
             "grant_stocks_size": 1,
         },
         {
-            "phrase": "Buy me some goods",
+            "phrase": [
+                "Buy me some goods",
+                "Buy goods",
+            ],
             "response": "Buy me this... buy me that... and what else?",
             "bank": 0,
             "title": "For goods",
@@ -159,7 +180,7 @@ class PhoneSettings:
             "buy_stocks_size": 0,
         },
         {
-            "phrase": "Buy me some stocks",
+            "phrase": ["Buy me some stocks", "Buy stocks" "Buy buy buy"],
             "response": "Investing is a good thing! Take all my shares!",
             "bank": 0,
             "title": "For stocks",
@@ -175,7 +196,11 @@ class PhoneSettings:
             "buy_stocks_size": 10,
         },
         {
-            "phrase": "Grant me some goods",
+            "phrase": [
+                "Grant me some goods",
+                "Give me some goods",
+                "Need free goods",
+            ],
             "response": "As you wish! Distributing free goods…",
             "bank": 0,
             "title": "Free goods",
@@ -191,7 +216,12 @@ class PhoneSettings:
             "buy_stocks_size": 0,
         },
         {
-            "phrase": "Grant me some stocks",
+            "phrase": [
+                "Grant me some stocks",
+                "Give me some stocks",
+                "Need free stocks",
+                "Make me an owner",
+            ],
             "response": "Granting you shiny new assets!",
             "bank": 0,
             "title": "Free stocks",
@@ -207,7 +237,11 @@ class PhoneSettings:
             "buy_stocks_size": 0,
         },
         {
-            "phrase": "I am not sure how to talk to you anymore",
+            "phrase": [
+                "I am not sure how to talk to you anymore",
+                "I do not know how to talk to you anymore",
+                "Help me",
+            ],
             "response": "Well, maybe you should’ve said that in the first place: \n - What is your name\n - I need a truck\n - I need a car\n - Give me your wallet\n - I need more money mommy\n - I need money mommy\n - Buy me some goods\n - Buy me some stocks\n - Grant me some goods\n - Grant me some stocks",
             "bank": 0,
             "title": "To help you",

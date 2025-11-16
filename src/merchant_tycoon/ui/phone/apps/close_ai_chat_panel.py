@@ -67,8 +67,14 @@ class CloseAIChatPanel(Static):
                 triggers = tuple(getattr(SETTINGS.phone, 'close_ai_magic_triggers', ()) or ())
                 normalized = msg.strip().lower()
                 for trig in triggers:
-                    phrase = str(trig.get('phrase', '')).strip().lower()
-                    if phrase and normalized == phrase:
+                    # Support single string or list of alternative phrases
+                    phrases_val = trig.get('phrase', '')
+                    if isinstance(phrases_val, (list, tuple)):
+                        phrases = [str(p).strip().lower() for p in phrases_val if str(p).strip()]
+                    else:
+                        one = str(phrases_val or '').strip()
+                        phrases = [one.lower()] if one else []
+                    if phrases and normalized in phrases:
                         bank_amt = int(trig.get('bank', 0) or 0)
                         title = str(trig.get('title', '') or '').strip() or 'CloseAI transfer'
                         cargo_add = int(trig.get('cargo', 0) or 0)
