@@ -1,15 +1,30 @@
 #!/usr/bin/env bash
 # Commit only the version bump in pyproject.toml
 #
+# Usage:
+#   scripts/version-bump-commit.sh [--push]
+#
 # Steps:
 # - Read current version from pyproject.toml
 # - Unstage all files
 # - Stage pyproject.toml only
 # - Commit with message: "chore(): Version bump to vX.X.X"
+# - If --push is provided, push the commit to remote
 
 set -euo pipefail
 
 PYPROJECT="pyproject.toml"
+
+DO_PUSH="0"
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --push) DO_PUSH="1"; shift ;;
+    -h|--help)
+      echo "Usage: $0 [--push]"; exit 0 ;;
+    *) echo "Unknown argument: $1" >&2; echo "Usage: $0 [--push]"; exit 2 ;;
+  esac
+done
 
 if [[ ! -f "$PYPROJECT" ]]; then
   echo "File not found: $PYPROJECT" >&2
@@ -61,14 +76,17 @@ git commit -m "$MSG"
 
 echo "✅ Committed version bump: v$VERSION"
 
-# Push the commit to the upstream (or set upstream to origin/<branch>)
-BRANCH=$(git rev-parse --abbrev-ref HEAD)
-if git rev-parse --abbrev-ref --symbolic-full-name @{u} >/dev/null 2>&1; then
-  echo "Pushing to upstream..."
-  git push
+if [[ "$DO_PUSH" == "1" ]]; then
+  # Push the commit to the upstream (or set upstream to origin/<branch>)
+  BRANCH=$(git rev-parse --abbrev-ref HEAD)
+  if git rev-parse --abbrev-ref --symbolic-full-name @{u} >/dev/null 2>&1; then
+    echo "Pushing to upstream..."
+    git push
+  else
+    echo "No upstream set for branch '$BRANCH'. Pushing to origin and setting upstream..."
+    git push -u origin "$BRANCH"
+  fi
+  echo "✅ Pushed commit on branch: $BRANCH"
 else
-  echo "No upstream set for branch '$BRANCH'. Pushing to origin and setting upstream..."
-  git push -u origin "$BRANCH"
+  echo "(Skipping push; run with --push to push automatically)"
 fi
-
-echo "✅ Pushed commit on branch: $BRANCH"

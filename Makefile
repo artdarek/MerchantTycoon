@@ -164,6 +164,10 @@ version-minor:  ## Version: bumps minor version in pyproject.toml
 version-major:  ## Version: bumps major version in pyproject.toml
 	bash scripts/version-bump.sh --major
 
+version-commit:
+	bash scripts/version-bump-commit.sh --push
+
+
 rebase:  ## Menu: [r] rebase main onto develop with optional force-push to origin, [x] quit
 	@echo "Rebase Options:" && \
 	echo "  [r] Rebase main onto develop and push to origin" && \
