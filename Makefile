@@ -94,12 +94,17 @@ format:  ## Format code (placeholder)
 	@echo "Consider adding: ruff format src/"
 
 build:  ## Interactive build menu (choose platform, chain steps, or clean)
-	@echo "Build Options:"
+	@echo "-----------------------------------"
+	@echo "Build Options"
+	@echo "-----------------------------------"
+	@echo "MacOS:"
 	@echo "  [m] Build for macOS"
 	@echo "  [i] Create iconset (build/icon.iconset)"
 	@echo "  [a] Apply iconset to .app"
 	@echo "  [v] Versionize macOS app (dist/version/MerchantTycoon-{version})"
 	@echo "  [r] Build & release (m + i + a + v)"
+	@echo "-----------------------------------"
+	@echo "General:"
 	@echo "  [x] Delete old build"
 	@echo "  [q] Quit (default)"
 	@printf "Enter choice: "; read ans; \
