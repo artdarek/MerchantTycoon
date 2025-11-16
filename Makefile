@@ -1,4 +1,4 @@
-.PHONY: help venv install install-dev clean sync upgrade run test lint format build build-artifacts build-windows build-clean rebase
+.PHONY: help venv install install-dev clean sync upgrade run test lint format build build-artifacts build-windows build-clean rebase version version-major version-minor version-patch version-commit version-commit-push
 
 # Default source icon (override with: make build-iconset ICON=path/to/icon.png)
 ICON ?= icon.png
@@ -152,21 +152,55 @@ build-windows:  ## Build a standalone Windows executable (.exe) using PyInstalle
 		src/merchant_tycoon/__main__.py
 	@echo "✅ Windows build complete: dist/Merchant Tycoon.exe"
 
-version:  ## Version: bumps patch version in pyproject.toml
-	bash scripts/version-bump.sh
+version:  ## Interactive version menu: choose patch/minor/major bump or commit-only
+	@echo "-----------------------------------" && \
+	echo "Version Options" && \
+	echo "-----------------------------------" && \
+	echo "  [p] Bump PATCH (X.Y.Z -> X.Y.(Z+1))" && \
+	echo "  [m] Bump MINOR (X.Y.Z -> X.(Y+1).0)" && \
+	echo "  [M] Bump MAJOR ((X+1).0.0)" && \
+	echo "  [c] Commit current pyproject version only" && \
+	echo "  [C] Commit current pyproject version and push" && \
+	echo "  [q] Quit (default)" && \
+	printf "Enter choice: "; read ans; \
+	case "$$ans" in \
+		[pP]) \
+			$(MAKE) version-patch && \
+			$(MAKE) version; \
+			;; \
+		[m]) \
+			$(MAKE) version-minor && \
+			$(MAKE) version; \
+			;; \
+		[M]) \
+			$(MAKE) version-major && \
+			$(MAKE) version; \
+			;; \
+		[c]) \
+			$(MAKE) version-commit && \
+			$(MAKE) version; \
+			;; \
+		[C]) \
+			$(MAKE) version-commit-push && \
+			$(MAKE) version; \
+			;; \
+		*) echo "Quit." ;; \
+	esac
 
-version-patch:  ## Version: bumps patch version in pyproject.toml
+version-patch:  ## bumps patch version in pyproject.toml
 	bash scripts/version-bump.sh --patch
 
-version-minor:  ## Version: bumps minor version in pyproject.toml
+version-minor:  ## bumps minor version in pyproject.toml
 	bash scripts/version-bump.sh --minor
 
-version-major:  ## Version: bumps major version in pyproject.toml
+version-major:  ## bumps major version in pyproject.toml
 	bash scripts/version-bump.sh --major
 
-version-commit:
-	bash scripts/version-bump-commit.sh --push
+version-commit:  ## Commit only pyproject version bump
+		bash scripts/version-bump-commit.sh;
 
+version-commit-push:  ## Commit pyproject version bump and push to origin
+	bash scripts/version-bump-commit.sh --push;
 
 rebase:  ## Menu: [r] rebase main onto develop with optional force-push to origin, [x] quit
 	@echo "Rebase Options:" && \
