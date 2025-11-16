@@ -1,4 +1,4 @@
-name: Auto Tag Patch from PyProject on Main Push
+name: Tag Release from pyproject.toml
 
 on:
   push:
@@ -8,11 +8,12 @@ permissions:
   contents: write
 
 concurrency:
-  group: auto-tag-main
+  group: tag-release-pyproject-main
   cancel-in-progress: false
 
 jobs:
-  tag_patch:
+  tag_from_pyproject:
+    name: Create tag from pyproject version
     runs-on: ubuntu-latest
     steps:
       - name: Checkout with tags
@@ -25,7 +26,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-      - name: Compute next patch tag from pyproject
+      - name: Read version from pyproject.toml
         id: compute
         shell: bash
         run: |
@@ -33,33 +34,17 @@ jobs:
           # Ensure all tags are available
           git fetch --tags --force --prune
 
-          # Read version from pyproject using grep/sed (avoid heredoc for YAML safety)
+          # Read version from pyproject (exact), default to 0.0.0 if not found
           PY_VER=$(grep -E '^version\s*=\s*"[0-9]+\.[0-9]+\.[0-9]+"' pyproject.toml | head -n1 | sed -E 's/.*"([0-9]+\.[0-9]+\.[0-9]+)".*/\1/')
           if [[ -z "$PY_VER" ]]; then PY_VER="0.0.0"; fi
-          echo "pyproject version: ${PY_VER}"
-          IFS='.' read -r PY_MAJ PY_MIN PY_PAT <<< "${PY_VER}"
+          TAG="v${PY_VER}"
+          echo "pyproject version: ${PY_VER} -> tag ${TAG}"
+          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
 
-          # Find latest tag for this major.minor
-          pattern="v${PY_MAJ}.${PY_MIN}.*"
-          latest_for_series=$(git tag -l "$pattern" | sort -V | tail -n1 || true)
-          if [[ -z "$latest_for_series" ]]; then
-            base_patch=$PY_PAT
-          else
-            base=${latest_for_series#v}
-            IFS='.' read -r _ _ last_patch <<< "$base"
-            base_patch=$last_patch
-          fi
-          next_patch=$((base_patch+1))
-          new_tag="v${PY_MAJ}.${PY_MIN}.${next_patch}"
-
-          echo "series_latest=${latest_for_series}" >> "$GITHUB_OUTPUT"
-          echo "new=${new_tag}" >> "$GITHUB_OUTPUT"
-          echo "Next tag will be: $new_tag"
-
-      - name: Create and push tag
+      - name: Create and push tag (if missing)
         if: always()
         env:
-          NEW_TAG: ${{ steps.compute.outputs.new }}
+          NEW_TAG: ${{ steps.compute.outputs.tag }}
         shell: bash
         run: |
           set -euo pipefail
