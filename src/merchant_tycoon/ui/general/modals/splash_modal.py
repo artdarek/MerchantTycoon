@@ -104,7 +104,8 @@ class SplashModal(ModalScreen):
 
     def on_mount(self) -> None:
         # Auto-dismiss after 10 seconds
-        self.set_timer(10.0, self.dismiss)
+        # Use a synchronous wrapper to avoid awaiting `dismiss` from a handler
+        self.set_timer(10.0, self.action_dismiss)
         # Start blinking with a constant 0.5s interval
         try:
             self._art_index = 0

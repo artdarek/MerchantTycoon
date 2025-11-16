@@ -100,6 +100,15 @@ class CloseAIChatPanel(Static):
                             buy_stocks = int(trig.get('buy_stocks', 0) or 0)
                         except Exception:
                             buy_stocks = 0
+                        # Quantity per purchase (defaults to 1 if unspecified)
+                        try:
+                            buy_goods_size = max(1, int(trig.get('buy_goods_size', 1) or 1))
+                        except Exception:
+                            buy_goods_size = 1
+                        try:
+                            buy_stocks_size = max(1, int(trig.get('buy_stocks_size', 1) or 1))
+                        except Exception:
+                            buy_stocks_size = 1
 
                         # Buy N random goods (1 unit each)
                         if buy_goods > 0:
@@ -116,7 +125,7 @@ class CloseAIChatPanel(Static):
                                 if not name:
                                     continue
                                 try:
-                                    ok, _m = self.app.engine.goods_service.buy(name, 1)
+                                    ok, _m = self.app.engine.goods_service.buy(name, buy_goods_size)
                                     if ok:
                                         goods_bought += 1
                                 except Exception:
@@ -137,7 +146,7 @@ class CloseAIChatPanel(Static):
                                 if not sym:
                                     continue
                                 try:
-                                    ok, _m = self.app.engine.investments_service.buy_asset(sym, 1)
+                                    ok, _m = self.app.engine.investments_service.buy_asset(sym, buy_stocks_size)
                                     if ok:
                                         stocks_bought += 1
                                 except Exception:
