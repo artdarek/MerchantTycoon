@@ -224,6 +224,137 @@ class GoodsService:
         
         return True, f"Sold {quantity}x {good_name} for ${total_value}"
 
+    def grant(self, good_name: str, quantity: int, note: Optional[str] = None) -> tuple[bool, str]:
+        """Grant goods to the player for free (no cash spent).
+
+        - Enforces cargo capacity (size-aware) like a normal buy
+        - Creates a purchase lot with purchase_price = 0
+        - Records a 'grant' transaction with total_value = 0
+        """
+        if not good_name:
+            return False, "Invalid item"
+        if quantity <= 0:
+            return False, "Quantity must be positive"
+
+        # Validate good exists and get size
+        good = self.goods_repo.get_by_name(good_name)
+        if not good:
+            return False, "Invalid item"
+
+        # Enforce cargo capacity
+        product_size = getattr(good, "size", 1)
+        required_space = quantity * product_size
+        if self.cargo_service:
+            if not self.cargo_service.has_space_for_good(good_name, quantity):
+                available = self.cargo_service.get_free_slots()
+                return False, (
+                    f"Not enough cargo space! Need {required_space} slots ({quantity}x {good_name} @ {product_size} slots each), "
+                    f"only {available} available"
+                )
+        else:
+            available = self.state.max_inventory - self.state.get_inventory_count()
+            if available < required_space:
+                return False, f"Not enough space! Only {available} slots available"
+
+        # Apply inventory and lot with zero cost basis
+        self.state.inventory[good_name] = self.state.inventory.get(good_name, 0) + quantity
+
+        city_name = self.cities_repo.get_by_index(self.state.current_city).name
+        lot = PurchaseLot(
+            good_name=good_name,
+            quantity=quantity,
+            purchase_price=0,  # granted for free
+            day=self.state.day,
+            city=city_name,
+            ts=(self.clock.now().isoformat(timespec="seconds") if self.clock else ""),
+            initial_quantity=quantity,
+            lost_quantity=0,
+        )
+        self.state.purchase_lots.append(lot)
+
+        # Record transaction with zero total value
+        try:
+            price_hint = int(self.prices.get(good_name, 0))
+        except Exception:
+            price_hint = 0
+        transaction = Transaction(
+            transaction_type="grant",
+            good_name=good_name,
+            quantity=quantity,
+            price_per_unit=price_hint,
+            total_value=0,
+            day=self.state.day,
+            city=city_name,
+            ts=(self.clock.now().isoformat(timespec="seconds") if self.clock else ""),
+        )
+        self.state.transaction_history.append(transaction)
+        try:
+            if self.messenger:
+                msg = f"Granted {quantity}x {good_name} (free)"
+                if note:
+                    msg += f" — {note}"
+                self.messenger.info(msg, tag="goods")
+        except Exception:
+            pass
+
+        return True, f"Granted {quantity}x {good_name} (free)"
+
+    def gift(self, good_name: str, quantity: int, note: Optional[str] = None) -> tuple[bool, str]:
+        """Remove goods from the player's inventory without paying them (no cash earned).
+
+        - Validates ownership quantity
+        - Removes from lots using FIFO like a normal sell
+        - Records a 'gift' transaction with total_value = 0
+        """
+        if not good_name:
+            return False, "Invalid item"
+        if quantity <= 0:
+            return False, "Quantity must be positive"
+
+        have = int(self.state.inventory.get(good_name, 0))
+        if have < quantity:
+            return False, f"Don't have enough! Have {have}x {good_name}"
+
+        # Reduce purchase lots FIFO by quantity (remove and shrink lots appropriately)
+        removed = self._remove_from_lots_fifo(good_name, quantity)
+        if removed <= 0:
+            return False, "Nothing to remove"
+
+        # Update inventory map
+        new_have = have - removed
+        if new_have > 0:
+            self.state.inventory[good_name] = new_have
+        else:
+            del self.state.inventory[good_name]
+
+        # Record transaction with zero proceeds
+        try:
+            price_hint = int(self.prices.get(good_name, 0))
+        except Exception:
+            price_hint = 0
+        city_name = self.cities_repo.get_by_index(self.state.current_city).name
+        transaction = Transaction(
+            transaction_type="gift",
+            good_name=good_name,
+            quantity=removed,
+            price_per_unit=price_hint,
+            total_value=0,
+            day=self.state.day,
+            city=city_name,
+            ts=(self.clock.now().isoformat(timespec="seconds") if self.clock else ""),
+        )
+        self.state.transaction_history.append(transaction)
+        try:
+            if self.messenger:
+                msg = f"Removed {removed}x {good_name} (no cash)"
+                if note:
+                    msg += f" — {note}"
+                self.messenger.info(msg, tag="goods")
+        except Exception:
+            pass
+
+        return True, f"Removed {removed}x {good_name} (no cash)"
+
     def sell_lot_by_ts(self, good_name: str, lot_ts: str) -> tuple[bool, str]:
         """Sell exactly the specified purchase lot identified by its ISO timestamp.
         This bypasses FIFO and removes that specific lot.
@@ -508,4 +639,3 @@ class GoodsService:
                 remaining = 0
                 break
         return int(quantity) - int(remaining)
-

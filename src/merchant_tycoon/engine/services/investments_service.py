@@ -154,6 +154,93 @@ class InvestmentsService:
         )
         return True, f"Sold {quantity}x {symbol} for ${proceeds:,} (after fee)"
 
+    def grant_asset(self, symbol: str, quantity: int, note: Optional[str] = None) -> tuple[bool, str]:
+        """Grant assets (stocks/commodities) to the player for free.
+
+        - Skips wallet/fees
+        - Adds to portfolio and appends an InvestmentLot with purchase_price = 0
+        - Logs an informational message via messenger
+        """
+        # Validate asset exists
+        asset = self.assets_repo.get_by_symbol(symbol)
+        if not asset:
+            return False, "Invalid asset"
+        if quantity <= 0:
+            return False, "Quantity must be positive"
+
+        # Update holdings
+        self.state.portfolio[symbol] = self.state.portfolio.get(symbol, 0) + quantity
+
+        # Append zero-cost lot
+        lot = InvestmentLot(
+            asset_symbol=symbol,
+            quantity=quantity,
+            purchase_price=0,  # granted for free
+            day=self.state.day,
+            ts=self.clock.now().isoformat(timespec="seconds"),
+        )
+        self.state.investment_lots.append(lot)
+
+        try:
+            msg = f"Granted {quantity}x {symbol} (free)"
+            if note:
+                msg += f" — {note}"
+            self.messenger.info(msg, tag="investments")
+        except Exception:
+            pass
+
+        return True, f"Granted {quantity}x {symbol} (free)"
+
+    def gift_asset(self, symbol: str, quantity: int, note: Optional[str] = None) -> tuple[bool, str]:
+        """Remove assets from the player's portfolio without paying them.
+
+        - Validates ownership and quantity
+        - Removes from investment lots using FIFO logic
+        - Skips wallet/fees and logs an informational message
+        """
+        have = int(self.state.portfolio.get(symbol, 0))
+        if have < quantity:
+            return False, f"Don't have enough! Have {have}x {symbol}"
+        if quantity <= 0:
+            return False, "Quantity must be positive"
+
+        remaining = quantity
+        lots_to_remove = []
+        for i, lot in enumerate(self.state.investment_lots):
+            if lot.asset_symbol != symbol or remaining <= 0:
+                continue
+            if lot.quantity <= remaining:
+                remaining -= lot.quantity
+                lots_to_remove.append(i)
+            else:
+                lot.quantity -= remaining
+                remaining = 0
+                break
+        for i in reversed(lots_to_remove):
+            try:
+                self.state.investment_lots.pop(i)
+            except Exception:
+                pass
+
+        removed = quantity - remaining
+        if removed <= 0:
+            return False, "Nothing to remove"
+
+        # Update portfolio (no cash earned)
+        self.state.portfolio[symbol] = max(0, have - removed)
+        if self.state.portfolio[symbol] == 0:
+            del self.state.portfolio[symbol]
+
+        try:
+            msg = f"Removed {removed}x {symbol} (no cash)"
+            if note:
+                msg += f" — {note}"
+            self.messenger.info(msg, tag="investments")
+        except Exception:
+            pass
+
+        return True, f"Removed {removed}x {symbol} (no cash)"
+
     def sell_asset_from_lot(self, symbol: str, lot_ts: str, quantity: int) -> tuple[bool, str]:
         """Sell a specific quantity from a selected investment lot (identified by ts).
 
@@ -354,4 +441,3 @@ class InvestmentsService:
 
         # Return: (has_dividends, modal_message)
         return True, modal_message
-

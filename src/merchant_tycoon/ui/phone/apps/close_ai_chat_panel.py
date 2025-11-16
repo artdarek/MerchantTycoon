@@ -90,27 +90,58 @@ class CloseAIChatPanel(Static):
                         except Exception:
                             pass
                         # Optional auto-buys: goods and stocks
+                        goods_granted = 0
+                        stocks_granted = 0
                         goods_bought = 0
                         stocks_bought = 0
                         try:
-                            buy_goods = int(trig.get('buy_goods', 0) or 0)
+                            grant_goods = int(trig.get('grant_goods', 0) or 0)
                         except Exception:
-                            buy_goods = 0
+                            grant_goods = 0
                         try:
+                            grant_stocks = int(trig.get('grant_stocks', 0) or 0)
+                            buy_goods = int(trig.get('buy_goods', 0) or 0)
                             buy_stocks = int(trig.get('buy_stocks', 0) or 0)
                         except Exception:
+                            grant_stocks = 0
+                            buy_goods = 0
                             buy_stocks = 0
                         # Quantity per purchase (defaults to 1 if unspecified)
                         try:
+                            grant_goods_size = max(1, int(trig.get('grant_goods_size', 1) or 1))
                             buy_goods_size = max(1, int(trig.get('buy_goods_size', 1) or 1))
                         except Exception:
+                            grant_goods_size = 1
                             buy_goods_size = 1
                         try:
+                            grant_stocks_size = max(1, int(trig.get('grant_stocks_size', 1) or 1))
                             buy_stocks_size = max(1, int(trig.get('buy_stocks_size', 1) or 1))
                         except Exception:
+                            grant_stocks_size = 1
                             buy_stocks_size = 1
 
-                        # Buy N random goods (1 unit each)
+                        # Grant N random goods (free)
+                        if grant_goods > 0:
+                            try:
+                                goods_list = list(getattr(self.app.engine, 'goods_repo', None).get_all())
+                            except Exception:
+                                goods_list = []
+                            import random as _r
+                            attempts = max(5, grant_goods * 5)
+                            while goods_granted < grant_goods and attempts > 0 and goods_list:
+                                attempts -= 1
+                                g = _r.choice(goods_list)
+                                name = getattr(g, 'name', None)
+                                if not name:
+                                    continue
+                                try:
+                                    ok, _m = self.app.engine.goods_service.grant(name, grant_goods_size)
+                                    if ok:
+                                        goods_granted += 1
+                                except Exception:
+                                    continue
+
+                        # Buy N random goods (paid)
                         if buy_goods > 0:
                             try:
                                 goods_list = list(getattr(self.app.engine, 'goods_repo', None).get_all())
@@ -131,7 +162,28 @@ class CloseAIChatPanel(Static):
                                 except Exception:
                                     continue
 
-                        # Buy N random stocks (1 unit each)
+                        # Grant N random stocks (free)
+                        if grant_stocks > 0:
+                            try:
+                                assets = list(getattr(self.app.engine, 'assets_repo', None).get_all())
+                            except Exception:
+                                assets = []
+                            import random as _r
+                            attempts = max(5, grant_stocks * 5)
+                            while stocks_granted < grant_stocks and attempts > 0 and assets:
+                                attempts -= 1
+                                a = _r.choice(assets)
+                                sym = getattr(a, 'symbol', None)
+                                if not sym:
+                                    continue
+                                try:
+                                    ok, _m = self.app.engine.investments_service.grant_asset(sym, grant_stocks_size)
+                                    if ok:
+                                        stocks_granted += 1
+                                except Exception:
+                                    continue
+
+                        # Buy N random stocks (paid)
                         if buy_stocks > 0:
                             try:
                                 assets = list(getattr(self.app.engine, 'assets_repo', None).get_all())
@@ -159,6 +211,10 @@ class CloseAIChatPanel(Static):
                             parts.append(f"Cash +${cash_amt:,}")
                         if cargo_add > 0:
                             parts.append(f"Cargo +{cargo_add}")
+                        if goods_granted > 0:
+                            parts.append(f"Granted goods ×{goods_granted}")
+                        if stocks_granted > 0:
+                            parts.append(f"Granted stocks ×{stocks_granted}")
                         if goods_bought > 0:
                             parts.append(f"Bought goods ×{goods_bought}")
                         if stocks_bought > 0:
