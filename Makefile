@@ -152,6 +152,18 @@ build-windows:  ## Build a standalone Windows executable (.exe) using PyInstalle
 		src/merchant_tycoon/__main__.py
 	@echo "✅ Windows build complete: dist/Merchant Tycoon.exe"
 
+version:  ## Version: bumps patch version in pyproject.toml
+	bash scripts/version-bump.sh
+
+version-patch:  ## Version: bumps patch version in pyproject.toml
+	bash scripts/version-bump.sh --patch
+
+version-minor:  ## Version: bumps minor version in pyproject.toml
+	bash scripts/version-bump.sh --minor
+
+version-major:  ## Version: bumps major version in pyproject.toml
+	bash scripts/version-bump.sh --major
+
 rebase:  ## Menu: [r] rebase main onto develop with optional force-push to origin, [x] quit
 	@echo "Rebase Options:" && \
 	echo "  [r] Rebase main onto develop and push to origin" && \
