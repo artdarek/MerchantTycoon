@@ -24,7 +24,8 @@ class TicketActionsModal(ModalScreen):
         """
         super().__init__()
         self.ticket_numbers = ticket_numbers
-        self.is_active = is_active
+        # Avoid clashing with ModalScreen.read-only `is_active` property
+        self.ticket_active = is_active
         self.on_toggle = on_toggle
         self.on_remove = on_remove
 
@@ -44,12 +45,12 @@ class TicketActionsModal(ModalScreen):
             yield Label(f"Numbers: {numbers_str}")
 
             # Show status
-            status = "✅ Active" if self.is_active else "❌ Inactive"
+            status = "✅ Active" if self.ticket_active else "❌ Inactive"
             yield Label(f"Status: {status}")
 
             with Horizontal(id="modal-buttons"):
                 # Toggle button (changes based on current state)
-                if self.is_active:
+                if self.ticket_active:
                     yield Button("Deactivate", variant="warning", id="toggle-btn")
                 else:
                     yield Button("Activate", variant="success", id="toggle-btn")
