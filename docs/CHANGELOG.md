@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on Keep a Changelog, and this project adheres to
 Semantic Versioning.
 
+## [1.5.0]
+
+### Added
+- CloseAI Chat enhancements (Phone tab):
+  - Support for free grants and paid buys via triggers:
+    - Free: `grant_goods`, `grant_goods_size`, `grant_stocks`, `grant_stocks_size`
+    - Paid: `buy_goods`, `buy_goods_size`, `buy_stocks`, `buy_stocks_size`
+  - `phrase` accepts a single string or a list of alternative phrases (case‑insensitive).
+  - New phrases: “Grant me some goods”, “Grant me some stocks” (with several aliases).
+  - Expanded “iddqd” response with a full command list and notes.
+- GoodsService: explicit `grant` (add zero‑cost lots) and `gift` (remove via FIFO without cash) helpers.
+- InvestmentsService: explicit `grant_asset` and `gift_asset` helpers.
+- README updates documenting the new CloseAI trigger schema and free helpers in services.
+
 ## [1.4.0]
 
 ### Added
@@ -78,5 +92,6 @@ Semantic Versioning.
   tickets until further renewals/wins occur. Data is tracked going forward.
 - No schema version bump required; lotto payload is optional in v2 saves.
 
-[Unreleased]: https://github.com/artdarek/MerchantTycoon/compare/v1.4.0...HEAD
+[Unreleased]: https://github.com/artdarek/MerchantTycoon/compare/v1.5.0...HEAD
+[1.5.0]: https://github.com/artdarek/MerchantTycoon/compare/v1.4.0...v1.5.0
 [1.4.0]: https://github.com/artdarek/MerchantTycoon/compare/v1.3.0...v1.4.0

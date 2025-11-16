@@ -351,38 +351,33 @@ The game features **31 unique products** across 4 main categories:
 
 ##### CloseAI Chat + Magic Phrases (cheats/admin)
 
-CloseAI supports configurable magic sentences that perform actions and reply with custom text.
+CloseAI supports configurable magic phrases that perform actions and reply with custom text.
 
-Settings (src/merchant_tycoon/config/phone_settings.py): `PhoneSettings.close_ai_magic_triggers`
+- Config: `src/merchant_tycoon/config/phone_settings.py` → `PhoneSettings.close_ai_magic_triggers`
+- Matching: case‑insensitive; `phrase` accepts a string or a list of alternative strings
 
 Fields per trigger:
-- `phrase` (str): exact message to match (case‑insensitive)
-- `bank` (int): credit to bank with `title`
-- `title` (str): bank transaction title
-- `cargo` (int): add cargo capacity
-- `cash` (int): add wallet cash
-- `response` (str): AI reply in chat
-- `buy_goods` (int): buy N random goods (1 unit each)
-- `buy_stocks` (int): buy N random assets (1 unit each)
+- `phrase` (str | list[str])
+- `bank` (int), `title` (str) — credit to bank with label
+- `cargo` (int) — increase cargo capacity
+- `cash` (int) — add wallet cash
+- `response` (str) — AI reply in chat
+- Paid buys (spend cash): `buy_goods`, `buy_goods_size`, `buy_stocks`, `buy_stocks_size`
+- Free grants (no cash): `grant_goods`, `grant_goods_size`, `grant_stocks`, `grant_stocks_size`
 
-Example (default included):
-- "I need money mommy" → bank +$10,000 (title "Mommy loves you"), auto‑buy 10 random goods, reply "Check your account… mommy loves you! 💖".
+Examples (phrases and alternatives):
+- Buy goods (paid): “Buy me some goods” (also “Buy goods”)
+- Buy stocks (paid): “Buy me some stocks” (also “Buy stocks”, “Buy buy buy”)
+- Grant goods (free): “Grant me some goods” (also “Give me some goods”, “Need free goods”)
+- Grant stocks (free): “Grant me some stocks” (also “Give me some stocks”, “Need free stocks”, “Make me an owner”)
+- Money/bank: “I need money mommy” (also “Blik”), “I need more money mommy” (also “Transfer”)
+- Misc: “Give me your wallet” (also “Give me all your money”, “Your wallet please”), “What is your name” (also “Who are you”)
+- Help: “I am not sure how to talk to you anymore” (also “I do not know how to talk to you anymore”, “Help me”)
+- God‑mode help: “iddqd”
 
-Notes:
-- Effects are applied immediately; a concise summary is logged to the messenger and the UI refreshes.
-- Auto‑buys obey cash/cargo constraints; failures are skipped.
-
-Default Magic Phrases
-
-| Phrase | Bank | Cash | Cargo | Buy Goods | Buy Stocks | Title | Response (short) |
-|--------|------|------|-------|-----------|------------|-------|-------------------|
-| I need money mommy | $10,000 | $0 | +0 | 10 | 0 | Mommy loves you | “Check your account… mommy loves you! 💖” |
-| I need more money mommy | $100,000 | $0 | +0 | 0 | 0 | Mommy loves you but do not ask for more! | “Are you kidding me!? … check your account…” |
-| Give me your wallet | $0 | $1,000,000 | +0 | 0 | 0 | Taken from strangers wallet | “You scum! … you will pay me back!” |
-| I need a car | $1,000 | $0 | +50 | 0 | 0 | Money for car repairs | “Here you are! Keys to my Ford Mustang 76!” |
-| I need a truck | $10,000 | $0 | +100 | 0 | 0 | Money for a truck repairs | “You can drive mine! Drive safe!” |
-| What is your name | $1 | $1 | +1 | 0 | 0 | Tip from Slim Shady | “My name is… Slim Shady!” |
-| iddqd | $10,000,000 | $10,000,000 | +1000 | 0 | 0 | I god mode you | “You should say this: …” |
+Notes
+- Actions apply immediately; a summary is logged and visible panels refresh.
+- Buys respect cash/cargo constraints; failures are skipped. Grants enforce cargo space but don’t spend cash.
 
 #### 🎲 Random Events System
 Travel between cities triggers random events that can affect your journey. Each city has unique event probability and risk profile.
@@ -557,6 +552,8 @@ The game follows a clean, modular architecture with separated concerns:
 - **GameEngine**: Main game orchestration
 - **GameState**: Game state management
 - **Services**: Business logic (GoodsService, InvestmentsService, BankService, TravelService, etc.)
+  - GoodsService: `buy`, `sell`, plus free helpers `grant` (add zero‑cost lots) and `gift` (remove via FIFO without cash)
+  - InvestmentsService: `buy_asset`, `sell_asset`, plus free helpers `grant_asset` and `gift_asset`
 
 **UI Layer** (`src/merchant_tycoon/ui/`)
 - **Textual-based TUI**: Modular panels and screens
