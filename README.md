@@ -590,8 +590,8 @@ make run
 Build a standalone macOS .app bundle:
 
 ```bash
-# Build both executable and .app bundle
-make build-macos
+# Build artifacts (executable + .app bundle)
+make build-macos-artifacts
 
 # Clean build artifacts
 make build-clean
@@ -601,7 +601,15 @@ This creates:
 - `dist/Merchant Tycoon` - Terminal executable (~13.5 MB)
 - `dist/Merchant Tycoon.app` - Double-clickable macOS app
 
-For detailed build instructions, see [BUILD.md](docs/BUILD.md).
+To package a versioned zip in `bin/`:
+
+```bash
+make build-bin            # uses latest tag or pyproject version for filename
+# or override
+make build-bin VERSION=1.5.1
+```
+
+For detailed build and packaging instructions, see [BUILD.md](docs/BUILD.md). For a full overview of helper scripts, see [SCRIPTS.md](docs/SCRIPTS.md).
 
 ### Available Make Commands
 
@@ -612,10 +620,15 @@ make sync          # Install dependencies from uv.lock
 make install-dev   # Install in development mode
 make run           # Run the game
 make clean         # Clean all build artifacts
-make build-macos   # Build macOS application
+make build-macos-artifacts   # Build macOS executable + .app
+make build-macos            # Same as above, explicit two-step
+make build-iconset          # Generate .iconset from PNG
+make build-iconset-apply    # Convert/apply icon to .app
+make build-bin              # Package dist/ into bin/merchant-tycoon-macos-{version}.zip
+make build-dmg              # Create DMG in dist/ from built .app
 make build-windows # Build Windows executable (run this on Windows)
 make build-clean   # Clean build artifacts only
-make build         # Interactive build menu ([r] build & release chain)
+make build         # Interactive build menu ([m] artifacts, [b] package bin, [v] versionize)
 make rebase        # Interactive rebase menu ([r] rebase main onto develop and push)
 ```
 

@@ -12,9 +12,11 @@ make build
 
 You’ll see options like:
 
-- [m] Build for macOS (PyInstaller + .app wrapper)
+- [m] Build artifacts (executable + .app)
 - [i] Create iconset (build/icon.iconset)
 - [a] Apply iconset to .app (set AppIcon.icns)
+- [b] Package bin zip (bin/merchant-tycoon-macos-{version}.zip)
+- [d] Create DMG (dist/Merchant Tycoon.dmg)
 - [v] Versionize macOS app (dist/version/MerchantTycoon-{version}-{n} + zip)
 - [x] Delete old build (clean)
 
@@ -22,7 +24,7 @@ Common flows:
 
 1) Build the app:
 ```bash
-make build   # then press m
+make build   # then press m (or: make build-macos-artifacts)
 ```
 
 2) Generate and apply an app icon (optional):
@@ -34,6 +36,16 @@ make build   # then press a
 3) Create a versioned bundle and a matching zip archive:
 ```bash
 make build   # then press v
+```
+
+4) Package a release zip (bin/merchant-tycoon-macos-{version}.zip):
+```bash
+make build   # then press b (or: make build-bin)
+```
+
+5) Create a DMG installer (dist/Merchant Tycoon.dmg):
+```bash
+make build   # then press d (or: make build-dmg)
 ```
 
 After (1), you’ll have:
@@ -120,7 +132,7 @@ This creates: `dist/Merchant Tycoon` (~13.5 MB standalone executable)
 Since this is a TUI app, we need a wrapper that opens Terminal and runs the executable:
 
 ```bash
-./scripts/build/create_app_bundle.sh
+./scripts/build/macos/create_app_bundle.sh
 ```
 
 This creates a proper macOS .app bundle at `dist/Merchant Tycoon.app` that:
@@ -233,6 +245,36 @@ cd ..
 ```
 
 The versioned zip includes both the terminal executable and the .app bundle.
+
+### Packaging Releases (ZIP + DMG)
+
+You can produce versioned release artifacts under `bin/` using the Make targets and scripts:
+
+- `make build-bin` — creates `bin/merchant-tycoon-macos-{version}.zip`
+  - Detects version (override with `VERSION=...`).
+  - Ensures artifacts exist (builds if missing when using `make build-release`).
+  - Includes `dist/Merchant Tycoon.app`, the terminal executable, and the DMG if present.
+
+- `make build-dmg` — creates `dist/Merchant Tycoon.dmg` (unversioned, matches artifacts)
+  - Uses `create-dmg` (install with `brew install create-dmg`).
+  - DMG is also created automatically during `build-artifacts` if `create-dmg` is available.
+
+- `make build-release` — orchestrates build + package
+  - Builds artifacts if needed, creates the versioned ZIP in `bin/`, and if a DMG exists in `dist/`, also creates a versioned DMG in `bin/`.
+
+Version detection order (for release zip/DMG names):
+- `VERSION` env override
+- Latest git tag by version (leading `v` stripped)
+- `pyproject.toml` version
+- Fallback `0.0.0`
+
+Related scripts:
+- `scripts/build/macos/build_artifacts.sh`
+- `scripts/build/macos/release_as_zip.sh`
+- `scripts/build/macos/create_app_dmg.sh`
+- `scripts/build/macos/release_as_dmg.sh`
+- `scripts/build/macos/release.sh`
+- `scripts/build/detect_version.sh`
 
 ## App Icon (Optional)
 
@@ -367,6 +409,22 @@ The bundle includes:
 
 ## Build System Files
 
-- **Makefile** - Contains `build`, `build-macos` and `build-clean` targets
-- **scripts/build/create_app_bundle.sh** - Script that creates the .app bundle wrapper
-- **setup_py2app.py** - Alternative py2app setup (not recommended)
+- Make targets:
+  - `build` — interactive menu
+  - `build-macos-artifacts` — build executable + .app (applies iconset if available; attempts to generate if missing)
+  - `build-macos` — same as above, explicit two-step build
+  - `build-iconset` / `build-iconset-apply` — icon generation and application
+  - `build-bin` — package dist/ into `bin/merchant-tycoon-macos-{version}.zip`
+  - `build-clean` — clean build artifacts
+- Scripts (macOS):
+  - `scripts/build/macos/create_app_executable.sh`
+  - `scripts/build/macos/create_app_bundle.sh`
+  - `scripts/build/macos/build_artifacts.sh`
+  - `scripts/build/macos/iconset_generate.sh`
+  - `scripts/build/macos/iconset_apply.sh`
+  - `scripts/build/macos/release_as_zip.sh`
+  - `scripts/build/macos/release.sh`
+- Generic helper:
+  - `scripts/build/detect_version.sh` — shared version detector
+- Alternative (not recommended):
+  - `setup_py2app.py` — legacy py2app script
