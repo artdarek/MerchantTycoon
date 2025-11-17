@@ -104,8 +104,16 @@ class GameEngine:
             self.cargo_service,
             self.wallet_service,
         )
-        # Savegame service (persistence)
-        self.savegame_service = SavegameService(self)
+        # Savegame service (persistence) – inject exact dependencies
+        self.savegame_service = SavegameService(
+            self.state,
+            self.prices,
+            self.previous_prices,
+            self.asset_prices,
+            self.previous_asset_prices,
+            self.bank_service,
+            self.messenger,
+        )
 
         # Provide references for cross-service credit capacity computation
         try:
@@ -229,6 +237,18 @@ class GameEngine:
             self.state.price_history.clear()
         except Exception:
             self.state.price_history = {}
+
+        # Rebind savegame service dependencies to the new state/dicts
+        try:
+            self.savegame_service.state = self.state
+            self.savegame_service.prices = self.prices
+            self.savegame_service.previous_prices = self.previous_prices
+            self.savegame_service.asset_prices = self.asset_prices
+            self.savegame_service.previous_asset_prices = self.previous_asset_prices
+            self.savegame_service.bank_service = self.bank_service
+            self.savegame_service.messenger = self.messenger
+        except Exception:
+            pass
 
     # ---------- Global operations ----------
 

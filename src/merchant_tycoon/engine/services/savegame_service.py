@@ -16,7 +16,10 @@ from merchant_tycoon.domain.model.lotto_win_history import LottoWinHistory
 from merchant_tycoon.config import SETTINGS
 
 if TYPE_CHECKING:
-    from merchant_tycoon.engine.game_engine import GameEngine
+    # Imported only for type checking; avoids runtime cycles
+    from merchant_tycoon.engine.game_state import GameState
+    from merchant_tycoon.engine.services.bank_service import BankService
+    from merchant_tycoon.engine.services.messenger_service import MessengerService
 
 
 SCHEMA_VERSION = 2
@@ -29,8 +32,24 @@ class SavegameService:
     the previous module-level functions from `merchant_tycoon.savegame`.
     """
 
-    def __init__(self, engine: "GameEngine"):
-        self.engine = engine
+    def __init__(
+        self,
+        state: "GameState",
+        prices: Dict[str, int],
+        previous_prices: Dict[str, int],
+        asset_prices: Dict[str, int],
+        previous_asset_prices: Dict[str, int],
+        bank_service: "BankService",
+        messenger: "MessengerService",
+    ):
+        # Core state and services (injected to avoid engine dependency)
+        self.state = state
+        self.prices = prices
+        self.previous_prices = previous_prices
+        self.asset_prices = asset_prices
+        self.previous_asset_prices = previous_asset_prices
+        self.bank_service = bank_service
+        self.messenger = messenger
 
     # ---------- Public API (service methods) ----------
     @staticmethod
@@ -53,8 +72,7 @@ class SavegameService:
             save_dir.mkdir(parents=True, exist_ok=True)
             path = self.get_save_path()
 
-            engine = self.engine
-            state = engine.state
+            state = self.state
             bank = state.bank
 
             # Convert bank transactions to dicts (include calendar date if present)
@@ -72,7 +90,7 @@ class SavegameService:
 
             # Persist messages from messenger/state only under state.messages
             try:
-                msgs = engine.messenger.get_entries(limit=int(SETTINGS.saveui.messages_save_limit))
+                msgs = self.messenger.get_entries(limit=int(SETTINGS.saveui.messages_save_limit))
             except Exception:
                 msgs = getattr(state, 'messages', []) or []
 
@@ -93,7 +111,7 @@ class SavegameService:
                     # Loans list (multi-loan support).
                     "loans": self._loans_to_dicts(state.loans),
                     # Current global loan rate offer (APR)
-                    "loan_rate_annual": float(getattr(engine.bank_service, "loan_apr_today", 0.10)),
+                    "loan_rate_annual": float(getattr(self.bank_service, "loan_apr_today", 0.10)),
                     # Bank section (APR only)
                     "bank": {
                         "balance": bank.balance,
@@ -114,10 +132,10 @@ class SavegameService:
                     },
                 },
                 "prices": {
-                    "goods": dict(engine.prices),
-                    "goods_prev": dict(engine.previous_prices),
-                    "assets": dict(engine.asset_prices),
-                    "assets_prev": dict(engine.previous_asset_prices),
+                    "goods": dict(self.prices),
+                    "goods_prev": dict(self.previous_prices),
+                    "assets": dict(self.asset_prices),
+                    "assets_prev": dict(self.previous_asset_prices),
                     # Optional rolling history of last N prices per item (goods and assets share the map)
                     "goods_hist": {
                         k: list(v[-int(SETTINGS.pricing.history_window):])
@@ -145,8 +163,7 @@ class SavegameService:
             # Strictly require current schema version
             if int(data.get("schema_version", -1)) != SCHEMA_VERSION:
                 return False
-            engine = self.engine
-            state = engine.state
+            state = self.state
             s = data.get("state") or {}
 
             # Restore basic fields
@@ -213,7 +230,7 @@ class SavegameService:
 
             # Backward compatibility for debt (aggregate from loans)
             try:
-                state.debt = engine.bank_service._sync_total_debt()
+                state.debt = self.bank_service._sync_total_debt()
             except Exception:
                 pass
 
@@ -223,40 +240,40 @@ class SavegameService:
                 goods = prices.get("goods") or {}
                 if isinstance(goods, dict):
                     try:
-                        engine.prices.clear()
-                        engine.prices.update({str(k): int(v) for k, v in goods.items()})
+                        self.prices.clear()
+                        self.prices.update({str(k): int(v) for k, v in goods.items()})
                     except Exception:
-                        engine.prices = {str(k): int(v) for k, v in goods.items()}
+                        self.prices = {str(k): int(v) for k, v in goods.items()}
             except Exception:
                 pass
             try:
                 goods_prev = prices.get("goods_prev") or {}
                 if isinstance(goods_prev, dict):
                     try:
-                        engine.previous_prices.clear()
-                        engine.previous_prices.update({str(k): int(v) for k, v in goods_prev.items()})
+                        self.previous_prices.clear()
+                        self.previous_prices.update({str(k): int(v) for k, v in goods_prev.items()})
                     except Exception:
-                        engine.previous_prices = {str(k): int(v) for k, v in goods_prev.items()}
+                        self.previous_prices = {str(k): int(v) for k, v in goods_prev.items()}
             except Exception:
                 pass
             try:
                 assets = prices.get("assets") or {}
                 if isinstance(assets, dict):
                     try:
-                        engine.asset_prices.clear()
-                        engine.asset_prices.update({str(k): int(v) for k, v in assets.items()})
+                        self.asset_prices.clear()
+                        self.asset_prices.update({str(k): int(v) for k, v in assets.items()})
                     except Exception:
-                        engine.asset_prices = {str(k): int(v) for k, v in assets.items()}
+                        self.asset_prices = {str(k): int(v) for k, v in assets.items()}
             except Exception:
                 pass
             try:
                 assets_prev = prices.get("assets_prev") or {}
                 if isinstance(assets_prev, dict):
                     try:
-                        engine.previous_asset_prices.clear()
-                        engine.previous_asset_prices.update({str(k): int(v) for k, v in assets_prev.items()})
+                        self.previous_asset_prices.clear()
+                        self.previous_asset_prices.update({str(k): int(v) for k, v in assets_prev.items()})
                     except Exception:
-                        engine.previous_asset_prices = {str(k): int(v) for k, v in assets_prev.items()}
+                        self.previous_asset_prices = {str(k): int(v) for k, v in assets_prev.items()}
             except Exception:
                 pass
             # Restore goods price history (optional)
@@ -322,8 +339,8 @@ class SavegameService:
 
             # Restore today's loan offer (APR)
             try:
-                engine.bank_service.loan_apr_today = float(
-                    s.get("loan_rate_annual", getattr(engine.bank_service, "loan_apr_today", 0.10))
+                self.bank_service.loan_apr_today = float(
+                    s.get("loan_rate_annual", getattr(self.bank_service, "loan_apr_today", 0.10))
                 )
             except Exception:
                 pass
@@ -331,7 +348,7 @@ class SavegameService:
             # Restore messages under state
             try:
                 msgs = s.get("messages") or []
-                engine.messenger.set_entries(msgs)
+                self.messenger.set_entries(msgs)
             except Exception:
                 pass
 
