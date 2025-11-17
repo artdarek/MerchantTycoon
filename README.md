@@ -611,6 +611,10 @@ make build-bin VERSION=1.5.1
 
 For detailed build and packaging instructions, see [BUILD.md](docs/BUILD.md). For a full overview of helper scripts, see [SCRIPTS.md](docs/SCRIPTS.md).
 
+### 💿 DMG Installer (macOS)
+![Merchant Tycoon – DMG Installer](docs/images/application-dmg.png)
+*Drag‑and‑drop installer created by `make build` command*
+
 ### Available Make Commands
 
 ```bash
