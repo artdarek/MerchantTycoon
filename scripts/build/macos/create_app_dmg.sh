@@ -18,9 +18,9 @@ APP_NAME=${APP_NAME:-"Merchant Tycoon"}
 DIST_DIR=${DIST_DIR:-dist}
 VOLNAME=${VOLNAME:-"${APP_NAME}"}
 WINDOW_POS=${WINDOW_POS:-"200 120"}
-WINDOW_SIZE=${WINDOW_SIZE:-"800 400"}
+WINDOW_SIZE=${WINDOW_SIZE:-"900 650"}
 ICON_SIZE=${ICON_SIZE:-100}
-APP_LINK_POS=${APP_LINK_POS:-"600 185"}
+APP_LINK_POS=${APP_LINK_POS:-"670 450"}
 
 APP_BUNDLE="${DIST_DIR}/${APP_NAME}.app"
 OUT_DIR=${OUT_DIR:-dist}
@@ -58,7 +58,9 @@ create-dmg \
   --window-pos ${WIN_X} ${WIN_Y} \
   --window-size ${WIN_W} ${WIN_H} \
   --icon-size ${ICON_SIZE} \
+  --icon "$(basename "${APP_BUNDLE}")" ${LINK_X} $((LINK_Y - 300)) \
   --app-drop-link ${LINK_X} ${LINK_Y} \
+  --background "docs/dmg/bg.png" \
   "${DMG_PATH}" \
   "${APP_BUNDLE}"
 
