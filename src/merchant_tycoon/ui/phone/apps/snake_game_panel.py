@@ -53,12 +53,13 @@ class SnakeGamePanel(Static):
 
     def compose(self) -> ComposeResult:
         yield Label("🐍 SNAKE", classes="panel-title")
+        # Score line above the gameplay area, right-aligned via CSS
+        yield Label("", id="snake-score")
         yield Static("", id="snake-board")
         with Horizontal(id="snake-controls"):
             yield Button("Start", id="snake-start", variant="success")
             yield Button("Pause", id="snake-pause", variant="warning")
             yield Button("Restart", id="snake-restart", variant="error")
-        yield Label("Score: 0 | Reward: 0 x $100", id="snake-score")
 
     def on_mount(self) -> None:
         # Compute initial board size from allocated space, then start a new game
@@ -347,8 +348,9 @@ class SnakeGamePanel(Static):
             bonus_amt, super_amt = 100, 1000
         try:
             self.query_one("#snake-board", Static).update(board_text)
+            # Use dot separators and right-aligned score line
             self.query_one("#snake-score", Label).update(
-                f"Score: {self.score} | Reward: {self.rewards} x ${bonus_amt} • Super: {self.super_rewards} x ${super_amt}"
+                f"Score: {self.score} • Bonus: {self.rewards} x ${bonus_amt} • Super bonus: {self.super_rewards} x ${super_amt}"
             )
         except Exception:
             pass
