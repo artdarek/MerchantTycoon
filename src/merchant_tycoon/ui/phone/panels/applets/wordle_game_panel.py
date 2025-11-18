@@ -1,13 +1,13 @@
 from textual.app import ComposeResult
 from textual.widgets import Static, Label, Input, Button
 from textual.containers import Horizontal, ScrollableContainer
-from merchant_tycoon.engine.applets.wordle_service import WordleService
+from merchant_tycoon.engine.applets.wordle_applet import WordleApplet
 
 
 class WordleGamePanel(Static):
     def __init__(self):
         super().__init__()
-        self.service: WordleService | None = None
+        self.service: WordleApplet | None = None
 
     def compose(self) -> ComposeResult:
         # Title at top
@@ -29,7 +29,7 @@ class WordleGamePanel(Static):
     def on_mount(self) -> None:
         # Bind service from engine and reset
         try:
-            self.service = getattr(self.app.engine, "wordle_service", None)
+            self.service = getattr(self.app.engine, "wordle_applet", None)
         except Exception:
             self.service = None
         self._reset_game()
@@ -38,7 +38,7 @@ class WordleGamePanel(Static):
     def _reset_game(self) -> None:
         if self.service is None:
             try:
-                self.service = WordleService()
+                self.service = WordleApplet()
             except Exception:
                 self.service = None
         if self.service:

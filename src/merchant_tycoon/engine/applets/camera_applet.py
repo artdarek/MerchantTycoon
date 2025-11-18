@@ -1,6 +1,4 @@
-from textual.app import ComposeResult
-from textual.widgets import Static, Label
-from textual.containers import ScrollableContainer
+from __future__ import annotations
 
 
 ASCII_IMAGE = """
@@ -60,33 +58,17 @@ ASCII_IMAGE = """
 """
 
 
-class CameraPanel(Static):
-    def compose(self) -> ComposeResult:
-        yield Label("📷 CAMERA", classes="panel-title")
-        with ScrollableContainer(id="camera-ascii"):
-            yield Static(ASCII_IMAGE)
+class CameraApplet:
+    """Utility service for Camera applet.
 
-    def on_mount(self) -> None:
-        # Center scroll approximately in the middle after layout
-        def _center():
-            try:
-                cont = self.query_one("#camera-ascii", ScrollableContainer)
-                vh = getattr(cont.virtual_size, "height", 0) or 0
-                ph = getattr(cont.size, "height", 0) or 0
-                target_y = max(0, (vh - ph) // 2)
-                try:
-                    cont.scroll_to(y=target_y, animate=False)
-                except Exception:
-                    # Fallback to scroll_end/home if precise center unavailable
-                    if target_y > 0:
-                        cont.scroll_end(animate=False)
-                    else:
-                        cont.scroll_home(animate=False)
-            except Exception:
-                pass
+    Provides ASCII and helps compute initial scroll centering.
+    """
 
-        # Delay a tick to ensure virtual_size is computed
-        try:
-            self.set_timer(0.05, _center)
-        except Exception:
-            _center()
+    def get_ascii(self) -> str:
+        return ASCII_IMAGE
+
+    @staticmethod
+    def compute_center_y(virtual_height: int, viewport_height: int) -> int:
+        vh = max(0, int(virtual_height or 0))
+        ph = max(0, int(viewport_height or 0))
+        return max(0, (vh - ph) // 2)

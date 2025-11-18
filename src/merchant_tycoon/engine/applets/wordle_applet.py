@@ -18,7 +18,7 @@ class GuessResult:
     message: str = ""
 
 
-class WordleService:
+class WordleApplet:
     """Pure Wordle game logic with minimal state.
 
     UI communicates only via this service. The service does not import Textual

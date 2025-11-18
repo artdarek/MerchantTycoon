@@ -14,9 +14,12 @@ from merchant_tycoon.engine.services.clock_service import ClockService
 from merchant_tycoon.engine.services.messenger_service import MessengerService
 from merchant_tycoon.engine.services.lotto_service import LottoService
 from merchant_tycoon.engine.services.phone_service import PhoneService
-from merchant_tycoon.engine.applets.wordle_service import WordleService
-from merchant_tycoon.engine.applets.snake_service import SnakeService
-from merchant_tycoon.engine.applets.close_ai_service import CloseAIService
+from merchant_tycoon.engine.applets.wordle_applet import WordleApplet
+from merchant_tycoon.engine.applets.snake_applet import SnakeApplet
+from merchant_tycoon.engine.applets.close_ai_applet import CloseAIApplet
+from merchant_tycoon.engine.applets.home_applet import HomeApplet
+from merchant_tycoon.engine.applets.camera_applet import CameraApplet
+from merchant_tycoon.engine.applets.whatsup_applet import WhatsUpApplet
 from merchant_tycoon.repositories import (
     GoodsRepository,
     CitiesRepository,
@@ -101,8 +104,8 @@ class GameEngine:
             _val = bool(getattr(_S.phone, 'wordle_validate_in_dictionary', True))
         except Exception:
             _max, _val = 10, True
-        self.wordle_service = WordleService(self.wordle_repo, max_tries=_max, validate_in_dictionary=_val)
-        self.wordle_service.reset()
+        self.wordle_applet = WordleApplet(self.wordle_repo, max_tries=_max, validate_in_dictionary=_val)
+        self.wordle_applet.reset()
 
         # Snake service
         try:
@@ -114,7 +117,7 @@ class GameEngine:
             _speed_step = float(getattr(_S.phone, 'snake_super_bonus_speed_step', 0.2))
         except Exception:
             _bonus_amt, _bonus_growth, _super_amt, _super_growth, _speed_step = 100, 2, 1000, 3, 0.2
-        self.snake_service = SnakeService(
+        self.snake_applet = SnakeApplet(
             width=24,
             height=14,
             wallet_service=self.wallet_service,
@@ -132,7 +135,7 @@ class GameEngine:
             _settings = _S
         except Exception:  # pragma: no cover
             _settings = object()
-        self.closeai_service = CloseAIService(
+        self.closeai_applet = CloseAIApplet(
             settings=_settings,
             history=self.phone_service.closeai_history,
             bank_service=self.bank_service,
@@ -143,6 +146,10 @@ class GameEngine:
             assets_repo=self.assets_repo,
             goods_repo=self.goods_repo,
         )
+        # Non-game applets
+        self.home_applet = HomeApplet()
+        self.camera_applet = CameraApplet()
+        self.whatsup_applet = WhatsUpApplet(self.messenger)
         # Event service for travel random encounters
         self.travel_events_service = TravelEventsService(self.assets_repo, self.goods_repo)
         # Day-advance service (daily tick independent of travel details)

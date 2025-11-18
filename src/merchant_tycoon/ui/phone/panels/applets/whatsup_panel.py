@@ -3,6 +3,7 @@ from textual.app import ComposeResult
 from textual.containers import ScrollableContainer
 from textual.widgets import Static, Label
 from rich.text import Text
+from merchant_tycoon.engine.applets.whatsup_applet import WhatsUpApplet
 
 
 class WhatsUpPanel(Static):
@@ -29,7 +30,8 @@ class WhatsUpPanel(Static):
             pass
 
         try:
-            entries = self.app.engine.messenger.get_entries()
+            svc: WhatsUpApplet | None = getattr(self.app.engine, 'whatsup_applet', None)
+            entries = list(svc.get_entries()) if svc else []
         except Exception:
             entries = []
 

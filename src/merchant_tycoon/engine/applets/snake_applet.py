@@ -11,7 +11,7 @@ class Point:
     y: int
 
 
-class SnakeService:
+class SnakeApplet:
     """Core Snake game logic independent of UI framework.
 
     Handles movement, collisions, spawning food/bonuses and scoring.

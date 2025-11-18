@@ -4,7 +4,7 @@ import random
 from typing import List, Optional, Sequence, Tuple
 
 
-class CloseAIService:
+class CloseAIApplet:
     """Chat logic for CloseAI app (triggers, canned replies, history).
 
     Applies in-game effects via injected services (bank, wallet, goods, investments, messenger).

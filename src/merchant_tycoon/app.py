@@ -70,8 +70,8 @@ from merchant_tycoon.ui.lotto.panels import (
     LottoDrawStripPanel,
 )
 from merchant_tycoon.ui.lotto.modals import WinnerModal
-from merchant_tycoon.ui.phone.phone_panel import PhonePanel
-from merchant_tycoon.ui.phone.apps.whatsup_panel import WhatsUpPanel
+from merchant_tycoon.ui.phone.panels.phone_panel import PhonePanel
+from merchant_tycoon.ui.phone.panels.applets.whatsup_panel import WhatsUpPanel
 
 
 class MerchantTycoon(App):

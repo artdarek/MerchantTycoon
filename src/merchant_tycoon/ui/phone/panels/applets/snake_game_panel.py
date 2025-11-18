@@ -4,7 +4,7 @@ from textual.app import ComposeResult
 from textual.reactive import reactive
 from textual.widgets import Static, Label, Button
 from textual.containers import Horizontal
-from merchant_tycoon.engine.applets.snake_service import SnakeService
+from merchant_tycoon.engine.applets.snake_applet import SnakeApplet
 
 
 class SnakeGamePanel(Static):
@@ -27,7 +27,7 @@ class SnakeGamePanel(Static):
     def __init__(self):
         super().__init__()
         self._timer = None
-        self.service: SnakeService | None = None
+        self.service: SnakeApplet | None = None
 
     def compose(self) -> ComposeResult:
         yield Label("🐍 SNAKE", classes="panel-title")
@@ -42,7 +42,7 @@ class SnakeGamePanel(Static):
     def on_mount(self) -> None:
         # Bind service from engine
         try:
-            self.service = getattr(self.app.engine, 'snake_service', None)
+            self.service = getattr(self.app.engine, 'snake_applet', None)
         except Exception:
             self.service = None
         self._update_board_dimensions()
@@ -54,7 +54,7 @@ class SnakeGamePanel(Static):
     def _new_game(self) -> None:
         if self.service is None:
             # create a local service as fallback
-            self.service = SnakeService(width=self.width, height=self.height)
+            self.service = SnakeApplet(width=self.width, height=self.height)
         else:
             self.service.resize(self.width, self.height)
         self.service.new_game()

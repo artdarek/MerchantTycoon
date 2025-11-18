@@ -3,8 +3,8 @@ from textual.containers import Horizontal
 from textual.widgets import Static
 
 from merchant_tycoon.engine import GameEngine
-from merchant_tycoon.ui.phone.left_menu_panel import LeftMenuPanel
-from merchant_tycoon.ui.phone.screen_panel import ScreenPanel
+from merchant_tycoon.ui.phone.panels.left_menu_panel import LeftMenuPanel
+from merchant_tycoon.ui.phone.panels.screen_panel import ScreenPanel
 
 
 class PhonePanel(Static):

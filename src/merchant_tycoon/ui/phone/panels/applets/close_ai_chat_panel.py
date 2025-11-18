@@ -3,13 +3,13 @@ from textual.app import ComposeResult
 from textual.widgets import Static, Label, Input, Button
 from textual.containers import Horizontal, ScrollableContainer
 from merchant_tycoon.config import SETTINGS
-from merchant_tycoon.engine.applets.close_ai_service import CloseAIService
+from merchant_tycoon.engine.applets.close_ai_applet import CloseAIApplet
 
 
 class CloseAIChatPanel(Static):
     def __init__(self):
         super().__init__()
-        self.service: CloseAIService | None = None
+        self.service: CloseAIApplet | None = None
 
     def compose(self) -> ComposeResult:
         yield Label("💬 CloseAI Chat", classes="panel-title")
@@ -21,7 +21,7 @@ class CloseAIChatPanel(Static):
     def on_mount(self) -> None:
         # Bind service and render any existing session history
         try:
-            self.service: CloseAIService | None = getattr(self.app.engine, 'closeai_service', None)
+            self.service: CloseAIApplet | None = getattr(self.app.engine, 'closeai_applet', None)
         except Exception:
             self.service = None
         try:
@@ -65,10 +65,10 @@ class CloseAIChatPanel(Static):
             self._append_bubble("user", msg)
             reply = ""
             try:
-                svc: CloseAIService | None = getattr(self, 'service', None)
+                svc: CloseAIApplet | None = getattr(self, 'service', None)
                 if svc is None:
                     # fallback: use engine service if available
-                    svc = getattr(self.app.engine, 'closeai_service', None)
+                    svc = getattr(self.app.engine, 'closeai_applet', None)
                     self.service = svc
                 if svc is not None:
                     reply = svc.process_message(msg)
