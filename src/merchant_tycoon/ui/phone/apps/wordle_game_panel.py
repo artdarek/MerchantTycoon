@@ -1,13 +1,13 @@
 from textual.app import ComposeResult
 from textual.widgets import Static, Label, Input, Button
 from textual.containers import Horizontal, ScrollableContainer
+from merchant_tycoon.engine.applets.wordle_service import WordleService
 
 
 class WordleGamePanel(Static):
     def __init__(self):
         super().__init__()
-        self.secret_word: str = ""
-        self.attempts: list[str] = []
+        self.service: WordleService | None = None
 
     def compose(self) -> ComposeResult:
         # Title at top
@@ -27,15 +27,29 @@ class WordleGamePanel(Static):
         yield Label("", id="wordle-stats")
 
     def on_mount(self) -> None:
+        # Bind service from engine and reset
+        try:
+            self.service = getattr(self.app.engine, "wordle_service", None)
+        except Exception:
+            self.service = None
         self._reset_game()
 
     # --- game logic ---
     def _reset_game(self) -> None:
-        try:
-            self.secret_word = self.app.engine.wordle_repo.get_random()
-        except Exception:
-            self.secret_word = "apple"
-        self.attempts = []
+        if self.service is None:
+            try:
+                self.service = WordleService()
+            except Exception:
+                self.service = None
+        if self.service:
+            try:
+                # Refresh settings in case they changed (optional)
+                from merchant_tycoon.config import SETTINGS
+                self.service.max_tries = int(getattr(SETTINGS.phone, 'wordle_max_tries', 10))
+                self.service.validate_in_dictionary = bool(getattr(SETTINGS.phone, 'wordle_validate_in_dictionary', True))
+            except Exception:
+                pass
+            self.service.reset()
         # Load max tries from settings (default 10)
         try:
             from merchant_tycoon.config import SETTINGS
@@ -58,32 +72,13 @@ class WordleGamePanel(Static):
         # Update stats
         self._update_stats()
 
-    def _validate_guess(self, word: str) -> tuple[bool, str]:
-        w = (word or "").strip().lower()
-        if len(w) != 5 or not w.isalpha():
-            return False, "Word must be exactly 5 letters (a-z)!"
-        # Optionally validate against dictionary
-        try:
-            from merchant_tycoon.config import SETTINGS
-            validate = bool(getattr(SETTINGS.phone, 'wordle_validate_in_dictionary', True))
-        except Exception:
-            validate = True
-        if validate:
-            try:
-                words = set(self.app.engine.wordle_repo.get_all())
-            except Exception:
-                words = set()
-            if w not in words:
-                return False, "Word not in dictionary!"
-        return True, w
-
     def _render_attempt(self, guess: str) -> Horizontal:
         """Render guess using Wordle two-pass rules for duplicates.
 
         Pass 1: mark greens and build remaining counts for secret.
         Pass 2: mark reds only up to remaining counts, else grey.
         """
-        secret = (self.secret_word or "")[:5]
+        secret = (self.service.secret if self.service else "")[:5]
         guess = (guess or "")[:5]
 
         # Build counts of letters in secret
@@ -133,30 +128,35 @@ class WordleGamePanel(Static):
     def _update_stats(self) -> None:
         try:
             stats = self.query_one("#wordle-stats", Label)
-            stats.update(f"Number of tries: {len(self.attempts)} out of {getattr(self, 'max_tries', 10)}")
+            attempts = len(self.service.attempts) if self.service else 0
+            max_tries = getattr(self.service, 'max_tries', getattr(self, 'max_tries', 10)) if self.service else getattr(self, 'max_tries', 10)
+            stats.update(f"Number of tries: {attempts} out of {max_tries}")
         except Exception:
             pass
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "wordle-guess":
             inp = self.query_one("#wordle-input", Input)
-            ok, val = self._validate_guess(inp.value)
+            # Validate via service
+            if not self.service:
+                self.query_one("#wordle-message", Label).update("Service unavailable")
+                return
+            ok, val = self.service.validate_guess(inp.value)
             if not ok:
                 self.query_one("#wordle-message", Label).update(val)
                 return
-            # It's valid
-            word = val
-            self.attempts.append(word)
-            self._append_attempt(word)
-            if word == self.secret_word:
+            # Apply guess and render
+            result = self.service.make_guess(val)
+            self._append_attempt(val)
+            if result.is_correct:
                 self.query_one("#wordle-message", Label).update("🎉 Correct! You guessed the word!")
                 inp.disabled = True
                 self.query_one("#wordle-guess", Button).disabled = True
                 self.query_one("#wordle-restart", Button).disabled = False
             else:
                 # Check attempts cap
-                if len(self.attempts) >= getattr(self, 'max_tries', 10):
-                    self.query_one("#wordle-message", Label).update(f"No more tries. The word was: {self.secret_word.upper()}")
+                if result.attempts_used >= getattr(self.service, 'max_tries', 10):
+                    self.query_one("#wordle-message", Label).update(result.message or "No more tries.")
                     inp.disabled = True
                     self.query_one("#wordle-guess", Button).disabled = True
                     self.query_one("#wordle-restart", Button).disabled = False

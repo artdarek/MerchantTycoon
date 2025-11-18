@@ -14,6 +14,9 @@ from merchant_tycoon.engine.services.clock_service import ClockService
 from merchant_tycoon.engine.services.messenger_service import MessengerService
 from merchant_tycoon.engine.services.lotto_service import LottoService
 from merchant_tycoon.engine.services.phone_service import PhoneService
+from merchant_tycoon.engine.applets.wordle_service import WordleService
+from merchant_tycoon.engine.applets.snake_service import SnakeService
+from merchant_tycoon.engine.applets.close_ai_service import CloseAIService
 from merchant_tycoon.repositories import (
     GoodsRepository,
     CitiesRepository,
@@ -91,6 +94,55 @@ class GameEngine:
         )
         # Phone service
         self.phone_service = PhoneService()
+        # Mini-app services
+        try:
+            from merchant_tycoon.config import SETTINGS as _S
+            _max = int(getattr(_S.phone, 'wordle_max_tries', 10))
+            _val = bool(getattr(_S.phone, 'wordle_validate_in_dictionary', True))
+        except Exception:
+            _max, _val = 10, True
+        self.wordle_service = WordleService(self.wordle_repo, max_tries=_max, validate_in_dictionary=_val)
+        self.wordle_service.reset()
+
+        # Snake service
+        try:
+            from merchant_tycoon.config import SETTINGS as _S
+            _bonus_amt = int(getattr(_S.phone, 'snake_bonus_amount', 100))
+            _bonus_growth = int(getattr(_S.phone, 'snake_bonus_growth', 2))
+            _super_amt = int(getattr(_S.phone, 'snake_super_bonus_amount', 1000))
+            _super_growth = int(getattr(_S.phone, 'snake_super_bonus_growth', 3))
+            _speed_step = float(getattr(_S.phone, 'snake_super_bonus_speed_step', 0.2))
+        except Exception:
+            _bonus_amt, _bonus_growth, _super_amt, _super_growth, _speed_step = 100, 2, 1000, 3, 0.2
+        self.snake_service = SnakeService(
+            width=24,
+            height=14,
+            wallet_service=self.wallet_service,
+            messenger=self.messenger,
+            bonus_amount=_bonus_amt,
+            bonus_growth=_bonus_growth,
+            super_bonus_amount=_super_amt,
+            super_bonus_growth=_super_growth,
+            super_bonus_speed_step=_speed_step,
+        )
+
+        # CloseAI service (share history list with PhoneService)
+        try:
+            from merchant_tycoon.config import SETTINGS as _S
+            _settings = _S
+        except Exception:  # pragma: no cover
+            _settings = object()
+        self.closeai_service = CloseAIService(
+            settings=_settings,
+            history=self.phone_service.closeai_history,
+            bank_service=self.bank_service,
+            wallet_service=self.wallet_service,
+            goods_service=self.goods_service,
+            investments_service=self.investments_service,
+            messenger=self.messenger,
+            assets_repo=self.assets_repo,
+            goods_repo=self.goods_repo,
+        )
         # Event service for travel random encounters
         self.travel_events_service = TravelEventsService(self.assets_repo, self.goods_repo)
         # Day-advance service (daily tick independent of travel details)

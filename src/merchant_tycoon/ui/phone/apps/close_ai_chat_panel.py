@@ -3,11 +3,13 @@ from textual.app import ComposeResult
 from textual.widgets import Static, Label, Input, Button
 from textual.containers import Horizontal, ScrollableContainer
 from merchant_tycoon.config import SETTINGS
+from merchant_tycoon.engine.applets.close_ai_service import CloseAIService
 
 
 class CloseAIChatPanel(Static):
     def __init__(self):
         super().__init__()
+        self.service: CloseAIService | None = None
 
     def compose(self) -> ComposeResult:
         yield Label("💬 CloseAI Chat", classes="panel-title")
@@ -17,9 +19,13 @@ class CloseAIChatPanel(Static):
             yield Button("Send", id="closeai-send", variant="success")
 
     def on_mount(self) -> None:
-        # Render any existing session history from service
+        # Bind service and render any existing session history
         try:
-            history = list(self.app.engine.phone_service.closeai_history)
+            self.service: CloseAIService | None = getattr(self.app.engine, 'closeai_service', None)
+        except Exception:
+            self.service = None
+        try:
+            history = list(self.service.history) if self.service else []
         except Exception:
             history = []
         for role, text in history:
@@ -55,209 +61,34 @@ class CloseAIChatPanel(Static):
             msg = (inp.value or "").strip()
             if not msg:
                 return
-            # Append user message
+            # Use service to process chat and apply effects
             self._append_bubble("user", msg)
+            reply = ""
             try:
-                self.app.engine.phone_service.closeai_history.append(("user", msg))
-            except Exception:
-                pass
-            # Check for special magic triggers (case-insensitive)
-            handled = False
-            try:
-                triggers = tuple(getattr(SETTINGS.phone, 'close_ai_magic_triggers', ()) or ())
-                normalized = msg.strip().lower()
-                for trig in triggers:
-                    # Support single string or list of alternative phrases
-                    phrases_val = trig.get('phrase', '')
-                    if isinstance(phrases_val, (list, tuple)):
-                        phrases = [str(p).strip().lower() for p in phrases_val if str(p).strip()]
-                    else:
-                        one = str(phrases_val or '').strip()
-                        phrases = [one.lower()] if one else []
-                    if phrases and normalized in phrases:
-                        bank_amt = int(trig.get('bank', 0) or 0)
-                        title = str(trig.get('title', '') or '').strip() or 'CloseAI transfer'
-                        cargo_add = int(trig.get('cargo', 0) or 0)
-                        cash_amt = int(trig.get('cash', 0) or 0)
-                        # Apply effects
-                        try:
-                            if bank_amt > 0 and hasattr(self.app.engine, 'bank_service'):
-                                self.app.engine.bank_service.credit(bank_amt, tx_type='deposit', title=title)
-                        except Exception:
-                            pass
-                        try:
-                            if cargo_add > 0:
-                                self.app.engine.state.max_inventory = max(0, int(self.app.engine.state.max_inventory) + cargo_add)
-                        except Exception:
-                            pass
-                        try:
-                            if cash_amt > 0 and hasattr(self.app.engine, 'wallet_service'):
-                                self.app.engine.wallet_service.earn(cash_amt)
-                        except Exception:
-                            pass
-                        # Optional auto-buys: goods and stocks
-                        goods_granted = 0
-                        stocks_granted = 0
-                        goods_bought = 0
-                        stocks_bought = 0
-                        try:
-                            grant_goods = int(trig.get('grant_goods', 0) or 0)
-                        except Exception:
-                            grant_goods = 0
-                        try:
-                            grant_stocks = int(trig.get('grant_stocks', 0) or 0)
-                            buy_goods = int(trig.get('buy_goods', 0) or 0)
-                            buy_stocks = int(trig.get('buy_stocks', 0) or 0)
-                        except Exception:
-                            grant_stocks = 0
-                            buy_goods = 0
-                            buy_stocks = 0
-                        # Quantity per purchase (defaults to 1 if unspecified)
-                        try:
-                            grant_goods_size = max(1, int(trig.get('grant_goods_size', 1) or 1))
-                            buy_goods_size = max(1, int(trig.get('buy_goods_size', 1) or 1))
-                        except Exception:
-                            grant_goods_size = 1
-                            buy_goods_size = 1
-                        try:
-                            grant_stocks_size = max(1, int(trig.get('grant_stocks_size', 1) or 1))
-                            buy_stocks_size = max(1, int(trig.get('buy_stocks_size', 1) or 1))
-                        except Exception:
-                            grant_stocks_size = 1
-                            buy_stocks_size = 1
-
-                        # Grant N random goods (free)
-                        if grant_goods > 0:
-                            try:
-                                goods_list = list(getattr(self.app.engine, 'goods_repo', None).get_all())
-                            except Exception:
-                                goods_list = []
-                            import random as _r
-                            attempts = max(5, grant_goods * 5)
-                            while goods_granted < grant_goods and attempts > 0 and goods_list:
-                                attempts -= 1
-                                g = _r.choice(goods_list)
-                                name = getattr(g, 'name', None)
-                                if not name:
-                                    continue
-                                try:
-                                    ok, _m = self.app.engine.goods_service.grant(name, grant_goods_size)
-                                    if ok:
-                                        goods_granted += 1
-                                except Exception:
-                                    continue
-
-                        # Buy N random goods (paid)
-                        if buy_goods > 0:
-                            try:
-                                goods_list = list(getattr(self.app.engine, 'goods_repo', None).get_all())
-                            except Exception:
-                                goods_list = []
-                            import random as _r
-                            attempts = max(5, buy_goods * 5)
-                            while goods_bought < buy_goods and attempts > 0 and goods_list:
-                                attempts -= 1
-                                g = _r.choice(goods_list)
-                                name = getattr(g, 'name', None)
-                                if not name:
-                                    continue
-                                try:
-                                    ok, _m = self.app.engine.goods_service.buy(name, buy_goods_size)
-                                    if ok:
-                                        goods_bought += 1
-                                except Exception:
-                                    continue
-
-                        # Grant N random stocks (free)
-                        if grant_stocks > 0:
-                            try:
-                                assets = list(getattr(self.app.engine, 'assets_repo', None).get_all())
-                            except Exception:
-                                assets = []
-                            import random as _r
-                            attempts = max(5, grant_stocks * 5)
-                            while stocks_granted < grant_stocks and attempts > 0 and assets:
-                                attempts -= 1
-                                a = _r.choice(assets)
-                                sym = getattr(a, 'symbol', None)
-                                if not sym:
-                                    continue
-                                try:
-                                    ok, _m = self.app.engine.investments_service.grant_asset(sym, grant_stocks_size)
-                                    if ok:
-                                        stocks_granted += 1
-                                except Exception:
-                                    continue
-
-                        # Buy N random stocks (paid)
-                        if buy_stocks > 0:
-                            try:
-                                assets = list(getattr(self.app.engine, 'assets_repo', None).get_all())
-                            except Exception:
-                                assets = []
-                            import random as _r
-                            attempts = max(5, buy_stocks * 5)
-                            while stocks_bought < buy_stocks and attempts > 0 and assets:
-                                attempts -= 1
-                                a = _r.choice(assets)
-                                sym = getattr(a, 'symbol', None)
-                                if not sym:
-                                    continue
-                                try:
-                                    ok, _m = self.app.engine.investments_service.buy_asset(sym, buy_stocks_size)
-                                    if ok:
-                                        stocks_bought += 1
-                                except Exception:
-                                    continue
-                        # Compose acknowledgment reply (configurable)
-                        parts = []
-                        if bank_amt > 0:
-                            parts.append(f"Bank +${bank_amt:,} ({title})")
-                        if cash_amt > 0:
-                            parts.append(f"Cash +${cash_amt:,}")
-                        if cargo_add > 0:
-                            parts.append(f"Cargo +{cargo_add}")
-                        if goods_granted > 0:
-                            parts.append(f"Granted goods ×{goods_granted}")
-                        if stocks_granted > 0:
-                            parts.append(f"Granted stocks ×{stocks_granted}")
-                        if goods_bought > 0:
-                            parts.append(f"Bought goods ×{goods_bought}")
-                        if stocks_bought > 0:
-                            parts.append(f"Bought stocks ×{stocks_bought}")
-                        summary = ", ".join(parts) if parts else "No changes"
-                        configured_reply = str(trig.get('response', '') or '').strip()
-                        reply = configured_reply if configured_reply else f"Transfer complete. {summary}."
-                        self._append_bubble("ai", reply)
-                        try:
-                            self.app.engine.phone_service.closeai_history.append(("ai", reply))
-                        except Exception:
-                            pass
-                        # Log to messenger and refresh visible panels
-                        try:
-                            self.app.engine.messenger.info(f"CloseAI magic: {summary}", tag="phone")
-                        except Exception:
-                            pass
-                        try:
+                svc: CloseAIService | None = getattr(self, 'service', None)
+                if svc is None:
+                    # fallback: use engine service if available
+                    svc = getattr(self.app.engine, 'closeai_service', None)
+                    self.service = svc
+                if svc is not None:
+                    reply = svc.process_message(msg)
+                    # If chat applied any game effects, refresh global UI state
+                    try:
+                        if svc.consume_ui_dirty() and hasattr(self.app, 'refresh_all'):
                             self.app.refresh_all()
-                        except Exception:
-                            pass
-                        handled = True
-                        break
+                    except Exception:
+                        pass
+                else:
+                    # last resort: canned reply
+                    pool = list(getattr(SETTINGS.phone, 'close_ai_responses', ()))
+                    reply = random.choice(pool) if pool else "Beep boop. Proceeding confidently with uncertainty."
             except Exception:
-                pass
-            # Fallback: normal canned reply
-            if not handled:
                 try:
                     pool = list(getattr(SETTINGS.phone, 'close_ai_responses', ()))
                     reply = random.choice(pool) if pool else "Beep boop. Proceeding confidently with uncertainty."
                 except Exception:
                     reply = "Beep boop. Proceeding confidently with uncertainty."
-                self._append_bubble("ai", reply)
-                try:
-                    self.app.engine.phone_service.closeai_history.append(("ai", reply))
-                except Exception:
-                    pass
+            self._append_bubble("ai", reply)
             inp.value = ""
             self._scroll_end()
 
