@@ -32,6 +32,14 @@ class PhoneSettings:
         "I have no notes. Mostly because I wasn’t listening.",
         "Processing… processing… okay, let’s just roll with it.",
     )
+    # Snake game rewards (configurable)
+    snake_bonus_amount: int = 10          # '$' pickup reward
+    snake_super_bonus_amount: int = 100   # 'B' pickup reward
+    # Snake growth per pickup (tail units added)
+    snake_bonus_growth: int = 2            # growth after '$'
+    snake_super_bonus_growth: int = 3      # growth after 'B'
+    # Snake speed increase per 'B' collected (added to step budget per tick)
+    snake_super_bonus_speed_step: float = 0.05
     # Special Close AI triggers: list of magic sentences and their effects.
     # Each entry:
     # {
