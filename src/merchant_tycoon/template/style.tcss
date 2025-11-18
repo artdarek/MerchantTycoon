@@ -745,6 +745,11 @@ PhonePanel {
     border: solid #3f4557;
 }
 
+/* Snake styles */
+#snake-board { width: 1fr; height: 1fr; border: solid #3f4557; padding: 1; background: #2f3543; text-style: bold; }
+#snake-controls { height: auto; content-align: left middle; }
+#snake-controls Button { margin-right: 1; height: 3; padding: 0 1; }
+
 /* Match bank action buttons sizing and spacing */
 #lotto-buy-btn { margin-right: 1; }
 #lotto-buy-btn, #lotto-lucky-btn { height: 3; padding: 0 1; }

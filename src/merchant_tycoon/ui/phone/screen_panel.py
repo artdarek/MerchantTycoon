@@ -5,6 +5,7 @@ from textual.containers import Container
 from merchant_tycoon.engine import GameEngine
 from merchant_tycoon.ui.phone.apps.whatsup_panel import WhatsUpPanel
 from merchant_tycoon.ui.phone.apps.wordle_game_panel import WordleGamePanel
+from merchant_tycoon.ui.phone.apps.snake_game_panel import SnakeGamePanel
 from merchant_tycoon.ui.phone.apps.camera_panel import CameraPanel
 from merchant_tycoon.ui.phone.apps.home_panel import HomePanel
 from merchant_tycoon.ui.phone.apps.close_ai_chat_panel import CloseAIChatPanel
@@ -52,6 +53,9 @@ class ScreenPanel(Static):
             container.mount(panel)
         elif active == "wordle":
             panel = WordleGamePanel()
+            container.mount(panel)
+        elif active == "snake":
+            panel = SnakeGamePanel()
             container.mount(panel)
         else:
             panel = Static(f"Unknown app: {active}")

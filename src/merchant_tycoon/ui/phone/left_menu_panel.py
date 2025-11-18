@@ -21,6 +21,7 @@ class LeftMenuPanel(Static):
             "closeai": "💬",
             "wordle": "🧩",
             "camera": "📷",
+            "snake": "🐍",
         }
         rows = [apps[i:i+3] for i in range(0, len(apps), 3)]
         with Vertical(id="phone-menu-grid"):

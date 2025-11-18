@@ -27,4 +27,5 @@ class PhoneService:
             ("closeai", "CloseAI"),
             ("camera", "Camera"),
             ("wordle", "Wordle"),
+            ("snake", "Snake"),
         ]
