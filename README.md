@@ -44,6 +44,10 @@ A terminal-based trading game where you buy low, sell high, travel between citie
 ![Merchant Tycoon - Phone Wordle](docs/images/phone-wordle.png)
 *Mini Wordle game with configurable tries and dictionary*
 
+### 📱 Phone - Snake
+![Merchant Tycoon - Phone Snake](docs/images/phone-snake.png)
+*Classic Snake mini-game with bonuses and configurable rewards/speed*
+
 ## 📖 About The Game
 
 **Merchant Tycoon** is a terminal-based economic simulation game inspired by classic trading games. Choose your difficulty level and become a wealthy merchant tycoon through strategic trading and smart investments.
@@ -348,6 +352,25 @@ The game features **31 unique products** across 4 main categories:
 - File: `src/merchant_tycoon/config/phone_settings.py`
   - `wordle_max_tries` (default: 10)
   - `wordle_validate_in_dictionary` (default: False)
+
+##### Snake Settings
+- `snake_bonus_amount` (default: 100)
+  - Cash credited to wallet for each `$` pickup
+- `snake_bonus_growth` (default: 2)
+  - Tail units added after `$` pickup
+- `snake_super_bonus_amount` (default: 1000)
+  - Cash credited to wallet for each `B` pickup
+- `snake_super_bonus_growth` (default: 3)
+  - Tail units added after `B` pickup
+- `snake_super_bonus_speed_step` (default: 0.2)
+  - Additional movement speed added per `B` pickup (cumulative)
+
+Snake Controls:
+- Arrows or H/J/K/L — steer
+- S — start/resume (after Game Over, starts a new game)
+- P — pause
+- Space — pause/unpause toggle
+- R — restart
 
 ##### CloseAI Chat + Magic Phrases (cheats/admin)
 
