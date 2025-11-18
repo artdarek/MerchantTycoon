@@ -7,6 +7,7 @@ from merchant_tycoon.engine.services.goods_service import GoodsService
 from merchant_tycoon.engine.services.goods_cargo_service import GoodsCargoService
 from merchant_tycoon.engine.services.investments_service import InvestmentsService
 from merchant_tycoon.engine.services.travel_service import TravelService
+from merchant_tycoon.engine.services.day_advance_service import DayAdvanceService
 from merchant_tycoon.engine.services.travel_events_service import TravelEventsService
 from merchant_tycoon.engine.services.savegame_service import SavegameService
 from merchant_tycoon.engine.services.clock_service import ClockService
@@ -92,6 +93,13 @@ class GameEngine:
         self.phone_service = PhoneService()
         # Event service for travel random encounters
         self.travel_events_service = TravelEventsService(self.assets_repo, self.goods_repo)
+        # Day-advance service (daily tick independent of travel details)
+        self.day_advance_service = DayAdvanceService(
+            self.clock_service,
+            self.bank_service,
+            self.investments_service,
+            self.goods_service,
+        )
         self.travel_service = TravelService(
             self.state,
             self.bank_service,
@@ -99,7 +107,7 @@ class GameEngine:
             self.investments_service,
             self.travel_events_service,
             self.cities_repo,
-            self.clock_service,
+            self.day_advance_service,
             self.messenger,
             self.cargo_service,
             self.wallet_service,

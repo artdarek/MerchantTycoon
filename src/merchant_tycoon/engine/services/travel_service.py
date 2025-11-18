@@ -9,7 +9,7 @@ if TYPE_CHECKING:
     from merchant_tycoon.engine.services.investments_service import InvestmentsService
     from merchant_tycoon.engine.services.travel_events_service import TravelEventsService
     from merchant_tycoon.engine.services.goods_cargo_service import GoodsCargoService
-    from merchant_tycoon.engine.services.clock_service import ClockService
+    from merchant_tycoon.engine.services.day_advance_service import DayAdvanceService
     from merchant_tycoon.engine.services.messenger_service import MessengerService
     from merchant_tycoon.engine.services.wallet_service import WalletService
     from merchant_tycoon.engine.services.lotto_service import LottoService
@@ -27,7 +27,7 @@ class TravelService:
         investments_service: "InvestmentsService",
         events_service: "TravelEventsService",
         cities_repository: "CitiesRepository",
-        clock_service: "ClockService",
+        day_advance_service: "DayAdvanceService",
         messenger_service: "MessengerService",
         cargo_service: "GoodsCargoService",
         wallet_service: "WalletService",
@@ -38,7 +38,7 @@ class TravelService:
         self.investments_service = investments_service
         self.events_service = events_service
         self.cities_repo = cities_repository
-        self.clock_service = clock_service
+        self.day_service = day_advance_service
         self.messenger = messenger_service
         self.cargo_service = cargo_service
         self.wallet = wallet_service
@@ -76,32 +76,11 @@ class TravelService:
         if not self.wallet.spend(travel_fee):
             return False, "Payment failed", [], None
 
-        # Proceed with travel: change city and advance day
+        # Proceed with travel: change city
         self.state.current_city = city_index
-        self.clock_service.advance_day()
 
-        # Randomize daily interest rates for this new day (1%–20%)
-        try:
-            self.bank_service.randomize_daily_rates()
-        except Exception:
-            pass
-
-        # Apply per-loan interest using each loan's APR/365 with fractional carry
-        self.bank_service.accrue_loan_interest()
-
-        # Accrue bank interest for the day advance (daily compounding)
-        self.bank_service.accrue_bank_interest()
-
-        # Increment holding days for investment lots (for dividend eligibility)
-        try:
-            self.investments_service.increment_lot_holding_days()
-        except Exception:
-            pass
-
-        # Generate new prices for goods and assets FIRST
-        # (so events can show accurate before/after prices)
-        self.goods_service.generate_prices()
-        self.investments_service.generate_asset_prices()
+        # Advance the day and apply daily effects (interest, prices, holdings)
+        self.day_service.advance_day()
 
         # Random events (can set price modifiers and show current prices)
         try:
