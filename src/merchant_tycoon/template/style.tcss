@@ -746,7 +746,7 @@ PhonePanel {
 }
 
 /* Snake styles */
-#snake-board { width: 1fr; height: 1fr; border: solid #3f4557; padding: 1; background: #2f3543; text-style: bold; margin: 0 0 1 0; }
+#snake-board { width: 1fr; height: 1fr; border: solid #3f4557; padding: 0; background: #2f3543; text-style: bold; margin: 0 0 1 0; }
 #snake-controls { height: auto; content-align: left middle; }
 #snake-controls Button { margin-right: 1; height: 3; padding: 0 1; }
 #snake-score { height: auto; text-align: right; margin: 0 0 1 0; }
