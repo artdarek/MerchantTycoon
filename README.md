@@ -20,6 +20,16 @@ A terminal-based trading game where you buy low, sell high, travel between citie
 ![Merchant Tycoon - Investments Screen](docs/images/investments.png)
 *Stock market and commodities trading with portfolio tracking and profit/loss analysis*
 
+#### Investment Trading Unlock
+- Trading in the Investments tab is locked until you reach a minimum wealth threshold.
+- Wealth = cash + bank balance + current portfolio value (based on current asset prices).
+- Threshold is configurable via `SETTINGS.investments.min_wealth_to_unlock_trading`.
+- The game tracks your peak wealth; once `peak_wealth ≥ threshold`, investments unlock permanently for this save.
+- UI behavior:
+  - Before unlock, attempting to Buy shows an “Investments Locked” modal with current wealth, peak wealth, required threshold, and progress.
+  - When you unlock, a success message is logged in the messenger and a modal confirms the unlock, showing both current and required wealth.
+- The unlock state and peak wealth are saved/loaded with your game.
+
 ### 🏦 Bank & Loans
 ![Merchant Tycoon - Bank Screen](docs/images/bank.png)
 *Banking interface for managing loans and financial operations*
