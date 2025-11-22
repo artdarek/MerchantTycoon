@@ -427,7 +427,7 @@ TicketActionsModal #modal-buttons Button {
 }
 
 /* Alert and Event modal styles */
-AlertModal, EventModal {
+EventModal, InvestmentsLockedModal {
     align: center middle;
     background: transparent;   /* keep app visible under alerts */
 }

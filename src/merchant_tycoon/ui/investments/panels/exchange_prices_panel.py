@@ -177,11 +177,10 @@ class ExchangePricesPanel(Static):
             )
 
             try:
-                from merchant_tycoon.ui.general.modals.alert_modal import AlertModal
-                self.app.push_screen(AlertModal(
+                from merchant_tycoon.ui.investments.modals import InvestmentsLockedModal
+                self.app.push_screen(InvestmentsLockedModal(
                     title="🔒 Investments Locked",
                     message=message,
-                    is_positive=False
                 ))
             except Exception:
                 pass

@@ -51,8 +51,6 @@ class ModalQueue:
                     self._queue.append(("events", message))
                 return self
 
-            # (no other list types handled here; callers should format message text)
-
         # Default: simple event modal
         self._queue.append(("simple", {"message": message, "event_type": t, "title": title}))
         return self

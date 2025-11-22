@@ -104,6 +104,9 @@ class SavegameService:
                     "current_city": state.current_city,
                     "inventory": dict(state.inventory),
                     "max_inventory": state.max_inventory,
+                    # Investments unlock tracking
+                    "investments_unlocked": bool(getattr(state, "investments_unlocked", False)),
+                    "peak_wealth": int(getattr(state, "peak_wealth", 0)),
                     "purchase_lots": self._lots_to_dicts(state.purchase_lots),
                     "transaction_history": self._tx_to_dicts(state.transaction_history),
                     "portfolio": dict(state.portfolio),
@@ -186,6 +189,15 @@ class SavegameService:
                 pass
             try:
                 state.current_city = int(s.get("current_city", state.current_city))
+            except Exception:
+                pass
+            # Investments unlock status
+            try:
+                state.investments_unlocked = bool(s.get("investments_unlocked", getattr(state, "investments_unlocked", False)))
+            except Exception:
+                pass
+            try:
+                state.peak_wealth = int(s.get("peak_wealth", getattr(state, "peak_wealth", 0)))
             except Exception:
                 pass
             # Inventory and capacities

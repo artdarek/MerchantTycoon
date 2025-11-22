@@ -26,7 +26,7 @@ class TradeActionsPanel(Static):
     def on_button_pressed(self, event: Button.Pressed) -> None:
         # Import here to avoid top-level circular imports
         from merchant_tycoon.ui.investments.modals import BuyAssetModal, SellAssetModal
-        from merchant_tycoon.ui.general.modals.alert_modal import AlertModal
+        from merchant_tycoon.ui.investments.modals import InvestmentsLockedModal
 
         if event.button.id == "exchange-buy-btn":
             # Check if investments are unlocked (read-only, unlock happens during travel)
@@ -57,10 +57,9 @@ class TradeActionsPanel(Static):
                 )
 
                 try:
-                    self.app.push_screen(AlertModal(
+                    self.app.push_screen(InvestmentsLockedModal(
                         title="🔒 Investments Locked",
                         message=message,
-                        is_positive=False
                     ))
                 except Exception:
                     pass

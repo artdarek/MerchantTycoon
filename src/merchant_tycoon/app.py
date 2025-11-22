@@ -45,7 +45,6 @@ from merchant_tycoon.ui.general.modals import (
     HelpModal,
     AboutModal,
     SplashModal,
-    AlertModal,
     ConfirmModal,
     CargoExtendModal,
     EventModal,

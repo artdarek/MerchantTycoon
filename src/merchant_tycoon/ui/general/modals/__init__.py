@@ -1,5 +1,4 @@
 from merchant_tycoon.ui.general.modals.help_modal import HelpModal
-from merchant_tycoon.ui.general.modals.alert_modal import AlertModal
 from merchant_tycoon.ui.general.modals.confirm_modal import ConfirmModal
 from merchant_tycoon.ui.general.modals.input_modal import InputModal
 from merchant_tycoon.ui.general.modals.travel_modal import TravelModal
@@ -12,7 +11,6 @@ from merchant_tycoon.ui.general.modals.newspaper_modal import NewspaperModal
 
 __all__ = [
     "HelpModal",
-    "AlertModal",
     "ConfirmModal",
     "InputModal",
     "TravelModal",

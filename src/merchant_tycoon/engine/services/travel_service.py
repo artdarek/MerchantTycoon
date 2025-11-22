@@ -94,8 +94,15 @@ class TravelService:
             threshold = int(getattr(SETTINGS.investments, "min_wealth_to_unlock_trading", 0))
             just_unlocked = self.state.check_and_update_peak_wealth(current_wealth, threshold)
             if just_unlocked:
+                try:
+                    self.messenger.info(
+                        f"Investments unlocked at ${self.state.peak_wealth:,} wealth (required: ${threshold:,}).",
+                        tag="investments",
+                    )
+                except Exception:
+                    pass
                 investments_unlock_modal = (
-                    f"Congratulations! You've reached ${self.state.peak_wealth:,} total wealth.\n\n"
+                    f"Congratulations! You've reached ${self.state.peak_wealth:,} total wealth (required: ${threshold:,}).\n\n"
                     f"You can now trade stocks, commodities, and cryptocurrencies!\n\n"
                     f"Visit the INVESTMENTS tab to start trading."
                 )
