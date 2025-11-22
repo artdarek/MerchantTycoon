@@ -23,7 +23,7 @@ class InvestmentsPanel(Static):
         # Initialize columns once
         if not getattr(self, "_portfolio_table_initialized", False):
             table.clear(columns=True)
-            table.add_columns("Symbol", "Name", "Qty", "Price", "Value", "Avg Cost", "P/L", "P/L%", "Type")
+            table.add_columns("Symbol", "Name", "Qty", "Price/C", "Value/C", "Price/B/A", "Value/B", "P/L", "P/L%", "Type")
             try:
                 table.cursor_type = "row"
                 table.show_header = True
@@ -81,6 +81,7 @@ class InvestmentsPanel(Static):
                 f"${current_price:,}",
                 f"${current_value:,}",
                 f"${avg_purchase_price:,}",
+                f"${total_cost:,}",
                 pl_cell,
                 pl_pct_cell,
                 asset_type,

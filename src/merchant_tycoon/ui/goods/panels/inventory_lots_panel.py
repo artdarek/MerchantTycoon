@@ -47,9 +47,7 @@ class InventoryLotsPanel(Static):
         except Exception:
             pass
         table.add_columns(
-            "Date",
             "Product",
-            "Category",
             "Qty",
             "Qty/L",
             "Cost/L",
@@ -60,7 +58,9 @@ class InventoryLotsPanel(Static):
             "Value",
             "P/L",
             "P/L%",
+            "Category",
             "City",
+            "Date",
         )
 
         meta = {"rows": {}}
@@ -131,9 +131,7 @@ class InventoryLotsPanel(Static):
                 orig_cost = init_q * pp
 
                 row_key = table.add_row(
-                    date_only,
                     good_name,
-                    g_cat,
                     str(qty),
                     str(lost_q),
                     f"${lost_cost:,}",
@@ -144,7 +142,9 @@ class InventoryLotsPanel(Static):
                     f"${value_current:,}",
                     pl_cell,
                     pl_pct_cell,
+                    g_cat,
                     city,
+                    date_only,
                 )
                 try:
                     meta["rows"][row_key] = {"good": good_name, "qty": qty, "ts": ts}

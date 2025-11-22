@@ -25,15 +25,16 @@ class InventoryPanel(Static):
             table.clear(columns=True)
             table.add_columns(
                 "Product",
-                "Category",
                 "Qty",
                 "Qty/L",
                 "Cost/L",
-                "Price",
-                "Value",
-                "Avg Cost",
+                "Price/C",
+                "Value/C",
+                "Price/B/A",
+                "Value/B",
                 "P/L",
                 "P/L%",
+                "Category",
                 "Type",
             )
             try:
@@ -52,8 +53,8 @@ class InventoryPanel(Static):
         self._row_to_product = {}
 
         if not self.engine.state.inventory:
-            # Show a single informative row (11 columns)
-            table.add_row("(empty)", "", "", "", "", "", "", "", "", "", "")
+            # Show a single informative row (12 columns)
+            table.add_row("(empty)", "", "", "", "", "", "", "", "", "", "", "")
             return
 
         for good_name, quantity in sorted(self.engine.state.inventory.items()):
@@ -99,15 +100,16 @@ class InventoryPanel(Static):
 
             row_key = table.add_row(
                 good_name,
-                g_cat,
                 str(quantity),
                 str(int(lost_total)),
                 f"${int(lost_cost_total):,}",
                 f"${current_price:,}",
                 f"${current_value:,}",
                 f"${avg_cost:,}",
+                f"${total_cost:,}",
                 pl_cell,
                 pl_pct_cell,
+                g_cat,
                 g_type,
             )
             try:

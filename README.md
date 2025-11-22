@@ -476,6 +476,101 @@ The game uses a **tabbed interface** with three main tabs:
 - **Message Log** (Bottom): Game events, transactions, and system messages
 - **Global Actions Bar** (Very Top): New Game, Save, Load, Help, Quit
 
+## 📊 Understanding Table Columns
+
+Both GOODS (inventory) and INVESTMENTS (portfolio) tables use a consistent naming convention to help you understand your positions at a glance.
+
+### Column Naming Convention
+
+The column names use a specific pattern:
+- **`/B`** = Buy/Bought price or value (what you paid)
+- **`/C`** = Current price or value (market price now)
+- **`/A`** = Average (calculated across all lots)
+- **`/T`** or **Total** = Combined value across quantity
+
+### 📦 YOUR INVENTORY (Goods Tab) Columns
+
+| Column | Meaning | Description |
+|--------|---------|-------------|
+| **Product** | Product name | Name of the good you own |
+| **Category** | Product category | Electronics, luxury, cars, or contraband |
+| **Qty** | Quantity owned | Total units in your inventory |
+| **Qty/L** | Quantity lost | Units lost to events (theft, damage, etc.) |
+| **Cost/L** | Cost of lost goods | Dollar value of lost inventory |
+| **Price/C** | Current price | Market selling price per unit right now |
+| **Value/C** | Current total value | Current market value (Price/C × Qty) |
+| **Price/B/A** | Average buy price | Average price you paid per unit across all purchases |
+| **Value/B** | Total buy value | Total amount you spent buying this product (sum of all lots) |
+| **P/L** | Profit/Loss | Dollar difference (Value/C − Value/B) |
+| **P/L%** | Profit/Loss % | Percentage gain/loss ((Value/C − Value/B) ÷ Value/B × 100) |
+| **Type** | Product type | Standard, luxury, or contraband |
+
+**Example:**
+- You bought 10 TVs at $800 each = $8,000 total (**Value/B**)
+- You bought 5 more TVs at $1,000 each = $5,000 total
+- **Price/B/A** = $13,000 ÷ 15 = $867 (average price you paid)
+- Current market price = $1,200 (**Price/C**)
+- **Value/C** = $1,200 × 15 = $18,000
+- **P/L** = $18,000 − $13,000 = **+$5,000** (38.5% profit)
+
+### 💼 YOUR INVESTMENTS (Investments Tab) Columns
+
+| Column | Meaning | Description |
+|--------|---------|-------------|
+| **Symbol** | Asset symbol | Stock ticker (GOOGL, AAPL) or commodity/crypto code (BTC, GOLD) |
+| **Name** | Asset name | Full company/asset name |
+| **Qty** | Quantity owned | Number of shares/units you hold |
+| **Price/C** | Current price | Market price per share/unit right now |
+| **Value/C** | Current total value | Current market value (Price/C × Qty) |
+| **Price/B/A** | Average buy price | Average price you paid per share/unit across all purchases |
+| **Value/B** | Total buy value | Total amount you spent buying this asset (sum of all lots) |
+| **P/L** | Profit/Loss | Dollar difference (Value/C − Value/B) |
+| **P/L%** | Profit/Loss % | Percentage gain/loss ((Value/C − Value/B) ÷ Value/B × 100) |
+| **Type** | Asset type | Stock, commodity, or crypto |
+
+**Example:**
+- You bought 100 AAPL shares at $150 each = $15,000 total (**Value/B**)
+- You bought 50 more AAPL shares at $180 each = $9,000 total
+- **Price/B/A** = $24,000 ÷ 150 = $160 (average price you paid)
+- Current price = $200 (**Price/C**)
+- **Value/C** = $200 × 150 = $30,000
+- **P/L** = $30,000 − $24,000 = **+$6,000** (25% profit)
+
+### 🧾 INVESTMENT LOTS Panel Columns
+
+The INVESTMENT LOTS panel shows individual purchase lots (similar to PURCHASED LOTS for goods):
+
+| Column | Meaning | Description |
+|--------|---------|-------------|
+| **Symbol** | Asset symbol | Stock ticker or commodity/crypto code |
+| **Name** | Asset name | Full company/asset name |
+| **Date** | Purchase date | When you bought this lot (YYYY-MM-DD) |
+| **Qty** | Lot quantity | Number of shares/units in this specific purchase |
+| **Price/B** | Buy price | Price per unit when you bought this lot |
+| **Value/B** | Buy total value | Total cost of this lot (Price/B × Qty) |
+| **Price/C** | Current price | Current market price per unit |
+| **Value/C** | Current total value | Current value of this lot (Price/C × Qty) |
+| **P/L** | Profit/Loss | Dollar difference for this lot (Value/C − Value/B) |
+| **P/L%** | Profit/Loss % | Percentage gain/loss for this lot |
+| **Type** | Asset type | Stock, commodity, or crypto |
+| **Dividend** | Dividend paid | Total dividends received from this lot (stocks only) |
+
+**Example:**
+- Lot purchased on 2025-01-15: 50 NVDA shares at $250 (**Price/B**)
+- **Value/B** = $250 × 50 = $12,500 (what you paid)
+- Current price = $320 (**Price/C**)
+- **Value/C** = $320 × 50 = $16,000 (current value)
+- **P/L** = $16,000 − $12,500 = **+$3,500** (28% profit)
+- **Dividend** = $150 (received over time from this lot)
+
+### 💡 Quick Reference
+
+- **Want to know if you're profitable?** Look at **P/L** and **P/L%** columns (green = profit, red = loss)
+- **Want to see your average entry price?** Look at **Price/B/A** column
+- **Want to compare current vs buy price?** Compare **Price/C** vs **Price/B/A**
+- **Want to know total invested?** Look at **Value/B** column
+- **Want to know current worth?** Look at **Value/C** column
+
 ## 💡 Tips & Strategy
 
 ### For Beginners

@@ -52,7 +52,7 @@ class InvestmentsLotsPanel(Static):
             table.zebra_stripes = True
         except Exception:
             pass
-        table.add_columns("Symbol", "Name", "Date", "Qty", "Price", "Total", "P/L", "P/L%", "Type", "Dividend")
+        table.add_columns("Symbol", "Name", "Qty", "Price/B", "Value/B", "Price/C", "Value/C", "P/L", "P/L%", "Type", "Dividend", "Date")
 
         meta = {"rows": {}}
         self._tables[id(table)] = meta
@@ -73,7 +73,8 @@ class InvestmentsLotsPanel(Static):
             for lot in lots:
                 qty = int(getattr(lot, "quantity", 0))
                 pp = int(getattr(lot, "purchase_price", 0))
-                total = qty * pp
+                total_cost = qty * pp
+                total_value = qty * current_price
                 profit_per_unit = current_price - pp
                 lot_profit = profit_per_unit * qty
                 lot_profit_pct = (profit_per_unit / pp * 100) if pp > 0 else 0
@@ -100,14 +101,16 @@ class InvestmentsLotsPanel(Static):
                 row_key = table.add_row(
                     symbol,
                     asset_name,
-                    date_only,
                     str(qty),
                     f"${pp:,}",
-                    f"${total:,}",
+                    f"${total_cost:,}",
+                    f"${current_price:,}",
+                    f"${total_value:,}",
                     pl_cell,
                     pl_pct_cell,
                     asset_type,
                     dividend_cell,
+                    date_only,
                 )
                 try:
                     meta["rows"][row_key] = {"symbol": symbol, "qty": qty, "ts": ts}

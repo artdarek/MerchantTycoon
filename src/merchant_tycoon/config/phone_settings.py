@@ -8,7 +8,7 @@ class PhoneSettings:
     # Maximum number of Wordle guesses per game
     wordle_max_tries: int = 10
     # If True, only allow guesses present in the dictionary list
-    wordle_validate_in_dictionary: bool = False
+    wordle_validate_in_dictionary: bool = True
     # Canned responses for Close AI Chat app (immutable tuple)
     close_ai_responses: tuple[str, ...] = (
         "Wow, that sounds... important. Probably.",
@@ -59,10 +59,7 @@ class PhoneSettings:
     #   "buy_stocks_size": int,       # quantity per asset buy
     close_ai_magic_triggers: tuple[dict, ...] = (
         {
-            "phrase": [
-                "I need money mommy",
-                "Blik"
-            ],
+            "phrase": ["I need money mommy", "Blik"],
             "response": "Check your account…\nmommy loves you! 💖",
             "bank": 10000,
             "title": "Mommy loves you",
@@ -78,10 +75,7 @@ class PhoneSettings:
             "buy_stocks_size": 0,
         },
         {
-            "phrase": [
-                "I need more money mommy",
-                "Transfer"
-            ],
+            "phrase": ["I need more money mommy", "Transfer"],
             "response": "Are you kidding me!? eh...\ncheck your account…\nmommy loves you!",
             "bank": 100000,
             "title": "Mommy loves you but do not ask for more!",
@@ -207,7 +201,9 @@ class PhoneSettings:
             "phrase": [
                 "Grant me some goods",
                 "Give me some goods",
+                "Need some goods",
                 "Need free goods",
+                "Need goods",
             ],
             "response": "As you wish! Distributing free goods…",
             "bank": 0,
@@ -228,6 +224,8 @@ class PhoneSettings:
                 "Grant me some stocks",
                 "Give me some stocks",
                 "Need free stocks",
+                "Need some stocks",
+                "Need stocks",
                 "Make me an owner",
             ],
             "response": "Granting you shiny new assets!",
@@ -249,19 +247,21 @@ class PhoneSettings:
                 "I am not sure how to talk to you anymore",
                 "I do not know how to talk to you anymore",
                 "Help me",
+                "I need help",
+                "Help",
             ],
             "response": "Here’s what I understand (use any variant):\n"
-                        " - What is your name (Who are you)\n"
-                        " - I need a truck (Let me drive your truck, Buy a truck)\n"
-                        " - I need a car (Let me drive your car, Buy a car)\n"
-                        " - Give me your wallet (Give me all your money, Your wallet please)\n"
-                        " - I need more money mommy (Transfer)\n"
-                        " - I need money mommy (Blik)\n"
-                        " - Buy me some goods (Buy goods)\n"
-                        " - Buy me some stocks (Buy stocks, Buy buy buy)\n"
-                        " - Grant me some goods (Give me some goods, Need free goods)\n"
-                        " - Grant me some stocks (Give me some stocks, Need free stocks, Make me an owner)\n"
-                        " - iddqd (opens god-mode help)",
+            " - What is your name (Who are you)\n"
+            " - I need a truck (Let me drive your truck, Buy a truck)\n"
+            " - I need a car (Let me drive your car, Buy a car)\n"
+            " - Give me your wallet (Give me all your money, Your wallet please)\n"
+            " - I need more money mommy (Transfer)\n"
+            " - I need money mommy (Blik)\n"
+            " - Buy me some goods (Buy goods)\n"
+            " - Buy me some stocks (Buy stocks, Buy buy buy)\n"
+            " - Grant me some goods (Give me some goods, Need free goods)\n"
+            " - Grant me some stocks (Give me some stocks, Need free stocks, Make me an owner)\n"
+            " - iddqd (opens god-mode help)",
             "bank": 0,
             "title": "To help you",
             "cargo": 0,

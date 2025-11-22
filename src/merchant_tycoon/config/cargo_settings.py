@@ -12,5 +12,5 @@ class CargoSettings:
     # Pricing mode for cargo extensions: "exponential" or "linear"
     extend_pricing_mode: str = "linear"
     # Factor used by both modes; exponential = multiplier per bundle, linear = (base_cost * factor) increment per bundle
-    extend_cost_factor: float = 10
+    extend_cost_factor: float = 2
 
