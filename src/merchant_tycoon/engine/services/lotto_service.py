@@ -12,6 +12,7 @@ if TYPE_CHECKING:
     from merchant_tycoon.engine.game_state import GameState
     from merchant_tycoon.engine.services.messenger_service import MessengerService
     from merchant_tycoon.engine.services.wallet_service import WalletService
+    from merchant_tycoon.engine.modal_queue import ModalQueue
 
 
 class LottoService:
@@ -29,7 +30,8 @@ class LottoService:
         self,
         state: "GameState",
         messenger: "MessengerService",
-        wallet: "WalletService"
+        wallet: "WalletService",
+        modal_queue: "ModalQueue"
     ):
         """Initialize LottoService.
 
@@ -37,10 +39,12 @@ class LottoService:
             state: Game state containing lotto data
             messenger: Messenger service for logging
             wallet: Wallet service for payments
+            modal_queue: Modal queue for adding lotto winner modals
         """
         self.state = state
         self.messenger = messenger
         self.wallet = wallet
+        self.modal_queue = modal_queue
 
     def buy_ticket(self, numbers: List[int]) -> Tuple[bool, str]:
         """Purchase a new lottery ticket.
@@ -286,16 +290,16 @@ class LottoService:
 
         return wins
 
-    def process_daily_lotto(self) -> Tuple[Optional[LottoDraw], List[dict]]:
+    def process_daily_lotto(self) -> None:
         """Process complete daily lotto operations.
 
         Performs:
         1. Daily draw
         2. Charge renewal fees
         3. Evaluate winnings
+        4. Add lotto winners to modal queue if available
 
-        Returns:
-            Tuple of (draw, wins_list)
+        Lotto winners modal is added directly to modal_queue.
         """
         # Perform daily draw
         draw = self.perform_daily_draw()
@@ -306,7 +310,25 @@ class LottoService:
         # Evaluate winnings
         wins = self.evaluate_winnings(draw.numbers)
 
-        return draw, wins
+        # Add lotto winners summary to modal queue
+        if wins:
+            try:
+                total_payout = sum(int(w.get("payout", 0)) for w in wins)
+                win_count = len(wins)
+                if win_count == 1:
+                    summary = f"You had 1 winning ticket and received ${total_payout:,}.\n\n"
+                else:
+                    summary = f"You had {win_count} winning tickets and received ${total_payout:,}.\n\n"
+                lines = ["Winning Tickets:"]
+                for i, win in enumerate(wins, 1):
+                    numbers_str = ", ".join(str(n) for n in win.get("ticket", []))
+                    matched = int(win.get("matched", 0))
+                    payout = int(win.get("payout", 0))
+                    lines.append(f"#{i}: [{numbers_str}] - {matched} matches → ${payout:,}")
+                message = summary + "\n".join(lines)
+                self.modal_queue.add(message, "gain")
+            except Exception:
+                pass
 
     def get_active_ticket_count(self) -> int:
         """Get count of active tickets."""

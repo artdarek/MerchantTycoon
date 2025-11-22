@@ -63,13 +63,6 @@ class ContestWinEventHandler(BaseEventHandler):
         # Add cash to player
         context.state.cash += prize
 
-        # Log to messenger if available
-        if context.messenger:
-            context.messenger.info(
-                f"You won {place} place in {contest_name}! Prize: ${prize:,}.",
-                tag="event"
-            )
-
         return (
             f"🏆 CONTEST WIN! You won {place} place in {contest_name}! Prize: ${prize:,}",
             "gain"

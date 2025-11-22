@@ -137,7 +137,7 @@ class ExchangePricesPanel(Static):
             add_asset_row(crypto.name, crypto.symbol, crypto.asset_type)
 
     def on_data_table_row_selected(self, event: DataTable.RowSelected) -> None:
-        # Open BuyAsset modal with default = max affordable quantity
+        # Open BuyAsset modal with default = max affordable quantity (if unlocked)
         try:
             table = event.data_table
         except Exception:
@@ -147,6 +147,46 @@ class ExchangePricesPanel(Static):
         symbol = self._row_to_symbol.get(getattr(event, "row_key", None))
         if not symbol:
             return
+
+        # Check if investments are unlocked before allowing buy (read-only, unlock happens during travel)
+        from merchant_tycoon.config import SETTINGS
+        threshold = int(getattr(SETTINGS.investments, "min_wealth_to_unlock_trading", 0))
+        unlocked = getattr(self.engine.state, "investments_unlocked", False)
+
+        # Auto-unlock if threshold is 0
+        if threshold <= 0:
+            unlocked = True
+
+        if not unlocked:
+            # Show locked alert modal
+            try:
+                current_wealth = self.engine.state.calculate_total_wealth(self.engine.asset_prices)
+            except Exception:
+                current_wealth = 0
+            peak_wealth = int(getattr(self.engine.state, "peak_wealth", 0))
+            progress_pct = (peak_wealth / threshold * 100) if threshold > 0 else 0
+
+            message = (
+                f"Investment trading is currently locked.\n\n"
+                f"Required wealth: ${threshold:,}\n"
+                f"Current wealth: ${current_wealth:,}\n"
+                f"Peak wealth: ${peak_wealth:,}\n"
+                f"Progress: {progress_pct:.1f}%\n\n"
+                f"💡 Trade goods to build your wealth!\n"
+                f"Wealth = cash + bank + portfolio value"
+            )
+
+            try:
+                from merchant_tycoon.ui.investments.modals import InvestmentsLockedModal
+                self.app.push_screen(InvestmentsLockedModal(
+                    title="🔒 Investments Locked",
+                    message=message,
+                ))
+            except Exception:
+                pass
+            return
+
+        # Unlocked - proceed with buy modal
         price = int(self.engine.asset_prices.get(symbol, 0))
         cash = int(self.engine.state.cash)
         try:

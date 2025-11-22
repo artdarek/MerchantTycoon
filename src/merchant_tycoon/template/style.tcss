@@ -292,7 +292,7 @@ MessangerPanel {
 InputModal, TravelModal, BuyModal, SellModal, SellLotModal,
 BuyAssetModal, SellAssetModal, SellAssetLotModal, LoanRepayModal, HelpModal,
 ConfirmModal, AboutModal, CargoExtendModal, NewGameModal, NewspaperModal,
-BuyTicketModal, TicketActionsModal, WinnerModal {
+BuyTicketModal, TicketActionsModal {
     align: center middle;
     background: transparent;
 }
@@ -427,7 +427,7 @@ TicketActionsModal #modal-buttons Button {
 }
 
 /* Alert and Event modal styles */
-AlertModal, EventModal {
+EventModal, InvestmentsLockedModal {
     align: center middle;
     background: transparent;   /* keep app visible under alerts */
 }

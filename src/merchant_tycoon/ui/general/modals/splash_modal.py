@@ -95,7 +95,7 @@ class SplashModal(ModalScreen):
                 except Exception:
                     version = ""
                 if version:
-                    yield Label(f"Version: {version}")
+                    yield Label(f"\nVersion: {version}")
                 # Author line under version
                 yield Label("(C) Dariusz Przada", id="splash-author")
 

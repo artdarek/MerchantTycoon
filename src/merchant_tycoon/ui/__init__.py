@@ -18,7 +18,6 @@ from merchant_tycoon.ui.general.modals import (
     HelpModal,
     AboutModal,
     SplashModal,
-    AlertModal,
     ConfirmModal,
     CargoExtendModal,
 )
@@ -29,6 +28,7 @@ from merchant_tycoon.ui.goods.modals import (
 from merchant_tycoon.ui.investments.modals import (
     BuyAssetModal,
     SellAssetModal,
+    InvestmentsLockedModal,
 )
 
 __all__ = [
@@ -49,7 +49,7 @@ __all__ = [
     "SellModal",
     "BuyAssetModal",
     "SellAssetModal",
+    "InvestmentsLockedModal",
     "HelpModal",
-    "AlertModal",
     "ConfirmModal",
 ]
