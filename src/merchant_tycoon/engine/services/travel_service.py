@@ -40,9 +40,9 @@ class TravelService:
         self.events_service = events_service
         self.cities_repo = cities_repository
         self.day_service = day_advance_service
-        self.messenger = messenger_service
+        self.messenger_service = messenger_service
         self.cargo_service = cargo_service
-        self.wallet = wallet_service
+        self.wallet_service = wallet_service
         self.modal_queue_service = modal_queue_service
 
     def _calculate_travel_fee(self) -> int:
@@ -68,14 +68,14 @@ class TravelService:
 
         # Calculate and validate travel fee
         travel_fee = self._calculate_travel_fee()
-        if not self.wallet.can_afford(travel_fee):
+        if not self.wallet_service.can_afford(travel_fee):
             return False, (
                 f"Not enough cash to travel! Travel fee from {origin_city.name} to {destination_city.name} is ${travel_fee:,}. "
-                f"You have ${self.wallet.get_balance():,}."
+                f"You have ${self.wallet_service.get_balance():,}."
             )
 
         # Deduct travel fee
-        if not self.wallet.spend(travel_fee):
+        if not self.wallet_service.spend(travel_fee):
             return False, "Payment failed"
 
         # Proceed with travel: change city
@@ -95,7 +95,7 @@ class TravelService:
             just_unlocked = self.state.check_and_update_peak_wealth(current_wealth, threshold)
             if just_unlocked:
                 try:
-                    self.messenger.info(
+                    self.messenger_service.info(
                         f"Investments unlocked at ${self.state.peak_wealth:,} wealth (required: ${threshold:,}).",
                         tag="investments",
                     )
@@ -119,13 +119,13 @@ class TravelService:
                 bank_service=self.bank_service,
                 goods_service=self.goods_service,
                 investments_service=self.investments_service,
-                messenger=self.messenger,
+                messenger=self.messenger_service,
             )
         except Exception as e:
             events_list = []
             # Log exception for debugging (can help catch event handler issues)
             try:
-                self.messenger.error(f"EXCEPTION in travel events: {type(e).__name__}: {e}", tag="debug")
+                self.messenger_service.error(f"EXCEPTION in travel events: {type(e).__name__}: {e}", tag="debug")
             except Exception:
                 pass
 
@@ -150,18 +150,18 @@ class TravelService:
             f"Traveled to {city.name}, {city.country}. "
             f"Travel fee charged: ${travel_fee} for route {origin_city.name} → {destination_city.name}"
         )
-        self.messenger.info(msg, tag="travel")
+        self.messenger_service.info(msg, tag="travel")
 
         # Log each event to messenger as a concise line
         try:
             for ev_msg, ev_type in (events_list or []):
                 summary = (ev_msg or "").splitlines()[0]
                 if ev_type == "loss":
-                    self.messenger.warn(summary, tag="event")
+                    self.messenger_service.warn(summary, tag="event")
                 elif ev_type == "gain":
-                    self.messenger.info(summary, tag="event")
+                    self.messenger_service.info(summary, tag="event")
                 else:
-                    self.messenger.debug(summary, tag="event")
+                    self.messenger_service.debug(summary, tag="event")
         except Exception:
             pass
 

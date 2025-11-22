@@ -40,7 +40,7 @@ class SavegameService:
         asset_prices: Dict[str, int],
         previous_asset_prices: Dict[str, int],
         bank_service: "BankService",
-        messenger: "MessengerService",
+        messenger_service: "MessengerService",
     ):
         # Core state and services (injected to avoid engine dependency)
         self.state = state
@@ -49,7 +49,7 @@ class SavegameService:
         self.asset_prices = asset_prices
         self.previous_asset_prices = previous_asset_prices
         self.bank_service = bank_service
-        self.messenger = messenger
+        self.messenger_service = messenger_service
 
     # ---------- Public API (service methods) ----------
     @staticmethod
@@ -90,7 +90,7 @@ class SavegameService:
 
             # Persist messages from messenger/state only under state.messages
             try:
-                msgs = self.messenger.get_entries(limit=int(SETTINGS.saveui.messages_save_limit))
+                msgs = self.messenger_service.get_entries(limit=int(SETTINGS.saveui.messages_save_limit))
             except Exception:
                 msgs = getattr(state, 'messages', []) or []
 
@@ -360,7 +360,7 @@ class SavegameService:
             # Restore messages under state
             try:
                 msgs = s.get("messages") or []
-                self.messenger.set_entries(msgs)
+                self.messenger_service.set_entries(msgs)
             except Exception:
                 pass
 

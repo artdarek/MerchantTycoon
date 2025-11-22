@@ -17,15 +17,15 @@ class MessengerService:
     Only "ts" and "text" are mandatory.
     """
 
-    def __init__(self, state: "GameState", clock: "ClockService"):
+    def __init__(self, state: "GameState", clock_service: "ClockService"):
         self.state = state
-        self.clock = clock
+        self.clock_service = clock_service
         if not hasattr(self.state, "messages") or self.state.messages is None:
             self.state.messages = []
 
     # --- Public API ---
     def append(self, text: str, level: str = "info", tag: Optional[str] = None, ctx: Optional[Dict] = None) -> None:
-        ts_iso = self.clock.now().isoformat(timespec="seconds")
+        ts_iso = self.clock_service.now().isoformat(timespec="seconds")
         entry = {"ts": ts_iso, 
                  "text": str(text),
                  "level": str(level or "info"),

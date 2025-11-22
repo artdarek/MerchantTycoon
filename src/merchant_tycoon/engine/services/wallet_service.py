@@ -22,7 +22,7 @@ class WalletService:
         self,
         state: "GameState",
         clock_service: "ClockService",
-        messenger: Optional["MessengerService"] = None
+        messenger_service: Optional["MessengerService"] = None
     ):
         """Initialize WalletService.
 
@@ -32,8 +32,8 @@ class WalletService:
             messenger: Optional messenger service for debug logging
         """
         self.state = state
-        self.clock = clock_service
-        self.messenger = messenger
+        self.clock_service = clock_service
+        self.messenger_service = messenger_service
 
     def get_balance(self) -> int:
         """Get current cash balance.

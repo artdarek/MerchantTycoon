@@ -16,11 +16,11 @@ if TYPE_CHECKING:
 class BankService:
     """Service for handling banking operations and loans"""
 
-    def __init__(self, state: "GameState", clock_service: "ClockService", messenger: "MessengerService", wallet_service: "WalletService"):
+    def __init__(self, state: "GameState", clock_service: "ClockService", messenger_service: "MessengerService", wallet_service: "WalletService"):
         self.state = state
-        self.clock = clock_service
-        self.messenger = messenger
-        self.wallet = wallet_service
+        self.clock_service = clock_service
+        self.messenger_service = messenger_service
+        self.wallet_service = wallet_service
         # Loan interest (offer of the day) — APR for new loans
         self.loan_apr_today = float(SETTINGS.bank.loan_default_apr)
 
@@ -55,13 +55,13 @@ class BankService:
         """Deposit cash to bank account."""
         if amount <= 0:
             return False, "Amount must be positive"
-        if not self.wallet.can_afford(amount):
-            return False, f"Not enough cash! Have ${self.wallet.get_balance():,}"
-        if not self.wallet.spend(amount):
+        if not self.wallet_service.can_afford(amount):
+            return False, f"Not enough cash! Have ${self.wallet_service.get_balance():,}"
+        if not self.wallet_service.spend(amount):
             return False, "Payment failed"
         bank = self.state.bank
         bank.balance += amount
-        ts = self.clock.now().isoformat(timespec="seconds")
+        ts = self.clock_service.now().isoformat(timespec="seconds")
         bank.transactions.append(
             BankTransaction(
                 tx_type="deposit",
@@ -72,7 +72,7 @@ class BankService:
                 ts=ts,
             )
         )
-        self.messenger.info(f"Deposited ${amount:,} to bank", tag="bank")
+        self.messenger_service.info(f"Deposited ${amount:,} to bank", tag="bank")
         return True, f"Deposited ${amount:,} to bank"
 
     def withdraw_from_bank(self, amount: int, *, title: str = "Personal withdrawal", credit_wallet: bool = True) -> tuple[bool, str]:
@@ -90,8 +90,8 @@ class BankService:
             return False, f"Not enough bank balance! Have ${bank.balance:,}"
         bank.balance -= amount
         if credit_wallet:
-            self.wallet.earn(amount)
-        ts = self.clock.now().isoformat(timespec="seconds")
+            self.wallet_service.earn(amount)
+        ts = self.clock_service.now().isoformat(timespec="seconds")
         bank.transactions.append(
             BankTransaction(
                 tx_type="withdraw",
@@ -103,10 +103,10 @@ class BankService:
             )
         )
         if credit_wallet:
-            self.messenger.info(f"Withdrew ${amount:,} from bank", tag="bank")
+            self.messenger_service.info(f"Withdrew ${amount:,} from bank", tag="bank")
             return True, f"Withdrew ${amount:,} from bank"
         else:
-            self.messenger.warn(f"Bank reduced by ${amount:,}: {title}", tag="bank")
+            self.messenger_service.warn(f"Bank reduced by ${amount:,}: {title}", tag="bank")
             return True, f"Bank reduced by ${amount:,}: {title}"
 
     def accrue_bank_interest(self) -> None:
@@ -135,11 +135,11 @@ class BankService:
                         balance_after=bank.balance,
                         day=bank.last_interest_day + i + 1,
                         title="Daily interest",
-                        ts=self.clock.now().isoformat(timespec="seconds")
+                        ts=self.clock_service.now().isoformat(timespec="seconds")
                 )
             )
         if credit > 0:
-            self.messenger.info(f"Daily interest credited: ${credit:,}", tag="bank")
+            self.messenger_service.info(f"Daily interest credited: ${credit:,}", tag="bank")
         bank.last_interest_day = current_day
 
     def take_loan(self, amount: int) -> tuple[bool, str]:
@@ -185,14 +185,14 @@ class BankService:
             day_taken=self.state.day,
             rate_annual=apr,
             accrued_interest=0.0,
-            ts=self.clock.now().isoformat(timespec="seconds"),
+            ts=self.clock_service.now().isoformat(timespec="seconds"),
         )
         self.state.loans.append(loan)
 
         # Apply funds to cash and sync aggregate debt
-        self.wallet.earn(amount)
+        self.wallet_service.earn(amount)
         self._sync_total_debt()
-        self.messenger.info(
+        self.messenger_service.info(
             f"Loan approved: ${amount:,} (fee ${fee:,}, total repay ${total_to_repay:,}, APR {apr*100:.2f}%)",
             tag="bank",
         )
@@ -291,8 +291,8 @@ class BankService:
         # Basic validations
         if amount <= 0:
             return False, "Invalid amount"
-        if not self.wallet.can_afford(amount):
-            return False, f"Not enough cash! Have ${self.wallet.get_balance():,}"
+        if not self.wallet_service.can_afford(amount):
+            return False, f"Not enough cash! Have ${self.wallet_service.get_balance():,}"
         # Find loan
         loan = next((ln for ln in self.state.loans if ln.loan_id == loan_id), None)
         if loan is None:
@@ -304,14 +304,14 @@ class BankService:
         if pay <= 0:
             return False, "Nothing to repay"
         # Apply repayment
-        if not self.wallet.spend(pay):
+        if not self.wallet_service.spend(pay):
             return False, "Payment failed"
         loan.remaining -= pay
         loan.repaid += pay
         # Sync aggregate debt
         self._sync_total_debt()
         msg_suffix = " (fully repaid)" if loan.remaining == 0 else ""
-        self.messenger.info(
+        self.messenger_service.info(
             f"Paid ${pay:,} towards Loan #{loan.loan_id}. Remaining: ${loan.remaining:,}",
             tag="bank",
         )
@@ -323,8 +323,8 @@ class BankService:
         """
         if amount <= 0:
             return False, "Invalid amount"
-        if not self.wallet.can_afford(amount):
-            return False, f"Not enough cash! Have ${self.wallet.get_balance():,}"
+        if not self.wallet_service.can_afford(amount):
+            return False, f"Not enough cash! Have ${self.wallet_service.get_balance():,}"
         if self.state.debt <= 0:
             return False, "No debt to repay"
         # Pick oldest active loan
@@ -405,6 +405,6 @@ class BankService:
                 balance_after=bank.balance,
                 day=self.state.day,
                 title=title or ("Interest" if tx_type == "interest" else "Dividend" if tx_type == "dividend" else ""),
-                ts=self.clock.now().isoformat(timespec="seconds")
+                ts=self.clock_service.now().isoformat(timespec="seconds")
             )
         )

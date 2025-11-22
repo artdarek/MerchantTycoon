@@ -25,7 +25,7 @@ class InvestmentsService:
         previous_asset_prices: Dict[str, int],
         assets_repository: "AssetsRepository",
         clock_service: "ClockService",
-        messenger: "MessengerService",
+        messenger_service: "MessengerService",
         bank_service: "BankService",
         wallet_service: "WalletService"
     ):
@@ -33,10 +33,10 @@ class InvestmentsService:
         self.asset_prices = asset_prices
         self.previous_asset_prices = previous_asset_prices
         self.assets_repo = assets_repository
-        self.clock = clock_service
-        self.messenger = messenger
+        self.clock_service = clock_service
+        self.messenger_service = messenger_service
         self.bank_service = bank_service
-        self.wallet = wallet_service
+        self.wallet_service = wallet_service
 
     def generate_asset_prices(self) -> None:
         """Generate random prices for stocks and commodities"""
@@ -86,10 +86,10 @@ class InvestmentsService:
         fee = max(min_fee, int(math.ceil(base_cost * rate)))
         total_cost = base_cost + fee
 
-        if not self.wallet.can_afford(total_cost):
-            return False, f"Not enough cash! Need ${total_cost:,} (incl. fee ${fee:,}), have ${self.wallet.get_balance():,}"
+        if not self.wallet_service.can_afford(total_cost):
+            return False, f"Not enough cash! Need ${total_cost:,} (incl. fee ${fee:,}), have ${self.wallet_service.get_balance():,}"
 
-        if not self.wallet.spend(total_cost):
+        if not self.wallet_service.spend(total_cost):
             return False, "Payment failed"
         self.state.portfolio[symbol] = self.state.portfolio.get(symbol, 0) + quantity
 
@@ -99,11 +99,11 @@ class InvestmentsService:
             quantity=quantity,
             purchase_price=price,
             day=self.state.day,
-            ts=self.clock.now().isoformat(timespec="seconds"),
+            ts=self.clock_service.now().isoformat(timespec="seconds"),
         )
         self.state.investment_lots.append(lot)
 
-        self.messenger.info(
+        self.messenger_service.info(
             f"Bought {quantity}x {symbol} for ${base_cost:,} (fee ${fee:,}, total ${total_cost:,})",
             tag="investments",
         )
@@ -143,12 +143,12 @@ class InvestmentsService:
         for i in reversed(lots_to_remove):
             self.state.investment_lots.pop(i)
 
-        self.wallet.earn(proceeds)
+        self.wallet_service.earn(proceeds)
         self.state.portfolio[symbol] -= quantity
         if self.state.portfolio[symbol] == 0:
             del self.state.portfolio[symbol]
 
-        self.messenger.info(
+        self.messenger_service.info(
             f"Sold {quantity}x {symbol} for ${total_value:,} (fee ${fee:,}, received ${proceeds:,})",
             tag="investments",
         )
@@ -177,7 +177,7 @@ class InvestmentsService:
             quantity=quantity,
             purchase_price=0,  # granted for free
             day=self.state.day,
-            ts=self.clock.now().isoformat(timespec="seconds"),
+            ts=self.clock_service.now().isoformat(timespec="seconds"),
         )
         self.state.investment_lots.append(lot)
 
@@ -185,7 +185,7 @@ class InvestmentsService:
             msg = f"Granted {quantity}x {symbol} (free)"
             if note:
                 msg += f" — {note}"
-            self.messenger.info(msg, tag="investments")
+            self.messenger_service.info(msg, tag="investments")
         except Exception:
             pass
 
@@ -235,7 +235,7 @@ class InvestmentsService:
             msg = f"Removed {removed}x {symbol} (no cash)"
             if note:
                 msg += f" — {note}"
-            self.messenger.info(msg, tag="investments")
+            self.messenger_service.info(msg, tag="investments")
         except Exception:
             pass
 
@@ -286,9 +286,9 @@ class InvestmentsService:
         self.state.portfolio[symbol] = have - quantity
         if self.state.portfolio[symbol] <= 0:
             del self.state.portfolio[symbol]
-        self.wallet.earn(proceeds)
+        self.wallet_service.earn(proceeds)
 
-        self.messenger.info(
+        self.messenger_service.info(
             f"Sold {quantity}x {symbol} (selected lot) for ${total_value:,} (fee ${fee:,}, received ${proceeds:,})",
             tag="investments",
         )
@@ -427,7 +427,7 @@ class InvestmentsService:
 
         # Log to messenger immediately
         symbols_list = ", ".join([symbol for symbol, _, _ in dividend_details])
-        self.messenger.info(
+        self.messenger_service.info(
             f"💰 Dividend payout ${total_payout:,} for {symbols_list}",
             tag="investments"
         )

@@ -11,7 +11,6 @@ if TYPE_CHECKING:
     from merchant_tycoon.engine.services.messenger_service import MessengerService
     from merchant_tycoon.engine.services.goods_cargo_service import GoodsCargoService
     from merchant_tycoon.engine.services.wallet_service import WalletService
-    from merchant_tycoon.domain.model.good import Good
     from merchant_tycoon.repositories import GoodsRepository, CitiesRepository
 
 
@@ -36,7 +35,7 @@ class GoodsService:
         goods_repository: "GoodsRepository",
         cities_repository: "CitiesRepository",
         clock_service: "ClockService",
-        messenger: "MessengerService",
+        messenger_service: "MessengerService",
         cargo_service: "GoodsCargoService",
         wallet_service: "WalletService"
     ):
@@ -45,10 +44,10 @@ class GoodsService:
         self.previous_prices = previous_prices
         self.goods_repo = goods_repository
         self.cities_repo = cities_repository
-        self.clock = clock_service
-        self.messenger = messenger
+        self.clock_service = clock_service
+        self.messenger_service = messenger_service
         self.cargo_service = cargo_service
-        self.wallet = wallet_service
+        self.wallet_service = wallet_service
 
     def generate_prices(self) -> None:
         """Generate random prices for current city"""
@@ -112,8 +111,8 @@ class GoodsService:
         total_cost = price * quantity
 
         # Check if player can afford
-        if not self.wallet.can_afford(total_cost):
-            return False, f"Not enough cash! Need ${total_cost:,}, have ${self.wallet.get_balance():,}"
+        if not self.wallet_service.can_afford(total_cost):
+            return False, f"Not enough cash! Need ${total_cost:,}, have ${self.wallet_service.get_balance():,}"
 
         # Check cargo capacity (size-aware)
         if self.cargo_service:
@@ -131,7 +130,7 @@ class GoodsService:
             return False, f"Not enough space! Only {available} slots available"
 
         # Spend cash for purchase
-        if not self.wallet.spend(total_cost):
+        if not self.wallet_service.spend(total_cost):
             return False, "Payment failed"
         self.state.inventory[good_name] = self.state.inventory.get(good_name, 0) + quantity
 
@@ -143,7 +142,7 @@ class GoodsService:
             purchase_price=price,
             day=self.state.day,
             city=city_name,
-            ts=(self.clock.now().isoformat(timespec="seconds") if self.clock else ""),
+            ts=(self.clock_service.now().isoformat(timespec="seconds") if getattr(self, 'clock_service', None) else ""),
             initial_quantity=quantity,
             lost_quantity=0,
         )
@@ -158,12 +157,12 @@ class GoodsService:
             total_value=total_cost,
             day=self.state.day,
             city=city_name,
-            ts=(self.clock.now().isoformat(timespec="seconds") if self.clock else ""),
+            ts=(self.clock_service.now().isoformat(timespec="seconds") if getattr(self, 'clock_service', None) else ""),
         )
         self.state.transaction_history.append(transaction)
         try:
-            if self.messenger:
-                self.messenger.info(f"Bought {quantity}x {good_name} for ${total_cost:,}", tag="goods")
+            if self.messenger_service:
+                self.messenger_service.info(f"Bought {quantity}x {good_name} for ${total_cost:,}", tag="goods")
         except Exception:
             pass
 
@@ -198,7 +197,7 @@ class GoodsService:
             self.state.purchase_lots.pop(i)
 
         # Earn cash from sale
-        self.wallet.earn(total_value)
+        self.wallet_service.earn(total_value)
         self.state.inventory[good_name] -= quantity
         if self.state.inventory[good_name] == 0:
             del self.state.inventory[good_name]
@@ -213,12 +212,12 @@ class GoodsService:
             total_value=total_value,
             day=self.state.day,
             city=city_name,
-            ts=(self.clock.now().isoformat(timespec="seconds") if self.clock else ""),
+            ts=(self.clock_service.now().isoformat(timespec="seconds") if getattr(self, 'clock_service', None) else ""),
         )
         self.state.transaction_history.append(transaction)
         try:
-            if self.messenger:
-                self.messenger.info(f"Sold {quantity}x {good_name} for ${total_value:,}", tag="goods")
+            if self.messenger_service:
+                self.messenger_service.info(f"Sold {quantity}x {good_name} for ${total_value:,}", tag="goods")
         except Exception:
             pass
         
@@ -266,7 +265,7 @@ class GoodsService:
             purchase_price=0,  # granted for free
             day=self.state.day,
             city=city_name,
-            ts=(self.clock.now().isoformat(timespec="seconds") if self.clock else ""),
+            ts=(self.clock_service.now().isoformat(timespec="seconds") if getattr(self, 'clock_service', None) else ""),
             initial_quantity=quantity,
             lost_quantity=0,
         )
@@ -285,15 +284,15 @@ class GoodsService:
             total_value=0,
             day=self.state.day,
             city=city_name,
-            ts=(self.clock.now().isoformat(timespec="seconds") if self.clock else ""),
+            ts=(self.clock_service.now().isoformat(timespec="seconds") if getattr(self, 'clock_service', None) else ""),
         )
         self.state.transaction_history.append(transaction)
         try:
-            if self.messenger:
+            if self.messenger_service:
                 msg = f"Granted {quantity}x {good_name} (free)"
                 if note:
                     msg += f" — {note}"
-                self.messenger.info(msg, tag="goods")
+                self.messenger_service.info(msg, tag="goods")
         except Exception:
             pass
 
@@ -341,15 +340,15 @@ class GoodsService:
             total_value=0,
             day=self.state.day,
             city=city_name,
-            ts=(self.clock.now().isoformat(timespec="seconds") if self.clock else ""),
+            ts=(self.clock_service.now().isoformat(timespec="seconds") if getattr(self, 'clock_service', None) else ""),
         )
         self.state.transaction_history.append(transaction)
         try:
-            if self.messenger:
+            if self.messenger_service:
                 msg = f"Removed {removed}x {good_name} (no cash)"
                 if note:
                     msg += f" — {note}"
-                self.messenger.info(msg, tag="goods")
+                self.messenger_service.info(msg, tag="goods")
         except Exception:
             pass
 
@@ -395,7 +394,7 @@ class GoodsService:
             del self.state.inventory[good_name]
 
         # Earn cash from sale
-        self.wallet.earn(total_value)
+        self.wallet_service.earn(total_value)
 
         # Record transaction
         city_name = self.cities_repo.get_by_index(self.state.current_city).name
@@ -407,12 +406,12 @@ class GoodsService:
             total_value=total_value,
             day=self.state.day,
             city=city_name,
-            ts=(self.clock.now().isoformat(timespec="seconds") if self.clock else ""),
+            ts=(self.clock_service.now().isoformat(timespec="seconds") if getattr(self, 'clock_service', None) else ""),
         )
         self.state.transaction_history.append(tx)
         try:
-            if self.messenger:
-                self.messenger.info(f"Sold lot: {qty}x {good_name} for ${total_value:,}", tag="goods")
+            if self.messenger_service:
+                self.messenger_service.info(f"Sold lot: {qty}x {good_name} for ${total_value:,}", tag="goods")
         except Exception:
             pass
 
@@ -460,7 +459,7 @@ class GoodsService:
             del self.state.inventory[good_name]
 
         # Earn salvage value
-        self.wallet.earn(total_value)
+        self.wallet_service.earn(total_value)
 
         # Record transaction
         city_name = self.cities_repo.get_by_index(self.state.current_city).name
@@ -472,12 +471,12 @@ class GoodsService:
             total_value=total_value,
             day=self.state.day,
             city=city_name,
-            ts=(self.clock.now().isoformat(timespec="seconds") if self.clock else ""),
+            ts=(self.clock_service.now().isoformat(timespec="seconds") if getattr(self, 'clock_service', None) else ""),
         )
         self.state.transaction_history.append(tx)
         try:
-            if self.messenger:
-                self.messenger.info(f"Sold {quantity}x {good_name} for ${total_value:,}", tag="goods")
+            if self.messenger_service:
+                self.messenger_service.info(f"Sold {quantity}x {good_name} for ${total_value:,}", tag="goods")
         except Exception:
             pass
         
@@ -489,7 +488,7 @@ class GoodsService:
         try:
             from merchant_tycoon.domain.model.transaction import Transaction
             city_name = self.cities_repo.get_by_index(self.state.current_city).name
-            ts = (self.clock.now().isoformat(timespec="seconds") if self.clock else "")
+            ts = (self.clock_service.now().isoformat(timespec="seconds") if getattr(self, 'clock_service', None) else "")
             tx = Transaction(
                 transaction_type="loss",
                 good_name=good_name,

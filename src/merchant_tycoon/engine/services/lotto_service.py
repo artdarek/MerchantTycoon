@@ -29,8 +29,8 @@ class LottoService:
     def __init__(
         self,
         state: "GameState",
-        messenger: "MessengerService",
-        wallet: "WalletService",
+        messenger_service: "MessengerService",
+        wallet_service: "WalletService",
         modal_queue_service: "ModalQueueService"
     ):
         """Initialize LottoService.
@@ -42,8 +42,8 @@ class LottoService:
             modal_queue: Modal queue for adding lotto winner modals
         """
         self.state = state
-        self.messenger = messenger
-        self.wallet = wallet
+        self.messenger_service = messenger_service
+        self.wallet_service = wallet_service
         self.modal_queue_service = modal_queue_service
 
     def buy_ticket(self, numbers: List[int]) -> Tuple[bool, str]:
@@ -71,11 +71,11 @@ class LottoService:
                 return False, f"Maximum {SETTINGS.lotto.max_tickets} tickets allowed"
 
         # Check if player can afford
-        if not self.wallet.can_afford(SETTINGS.lotto.ticket_price):
+        if not self.wallet_service.can_afford(SETTINGS.lotto.ticket_price):
             return False, f"Not enough cash! Need ${SETTINGS.lotto.ticket_price:,}"
 
         # Charge player
-        if not self.wallet.spend(SETTINGS.lotto.ticket_price):
+        if not self.wallet_service.spend(SETTINGS.lotto.ticket_price):
             return False, "Payment failed"
         # Track today's cost (purchase)
         try:
@@ -93,7 +93,7 @@ class LottoService:
         )
         self.state.lotto_tickets.append(ticket)
 
-        self.messenger.info(
+        self.messenger_service.info(
             f"Bought lotto ticket: {sorted(numbers)} for ${SETTINGS.lotto.ticket_price:,}",
             tag="lotto"
         )
@@ -115,7 +115,7 @@ class LottoService:
         ticket = self.state.lotto_tickets[ticket_index]
         self.state.lotto_tickets.pop(ticket_index)
 
-        self.messenger.info(
+        self.messenger_service.info(
             f"Removed lotto ticket: {ticket.numbers}",
             tag="lotto"
         )
@@ -138,7 +138,7 @@ class LottoService:
         ticket.active = not ticket.active
 
         status = "activated" if ticket.active else "deactivated"
-        self.messenger.info(
+        self.messenger_service.info(
             f"Ticket {ticket.numbers} {status}",
             tag="lotto"
         )
@@ -173,7 +173,7 @@ class LottoService:
         except Exception:
             pass
 
-        self.messenger.info(
+        self.messenger_service.info(
             f"Daily lotto draw: {sorted(numbers)}",
             tag="lotto"
         )
@@ -196,8 +196,8 @@ class LottoService:
                 continue
 
             # Try to charge renewal fee
-            if self.wallet.can_afford(SETTINGS.lotto.ticket_renewal_cost):
-                if self.wallet.spend(SETTINGS.lotto.ticket_renewal_cost):
+            if self.wallet_service.can_afford(SETTINGS.lotto.ticket_renewal_cost):
+                if self.wallet_service.spend(SETTINGS.lotto.ticket_renewal_cost):
                     renewed_count += 1
                     # Track cost actually paid for this specific ticket
                     try:
@@ -220,13 +220,13 @@ class LottoService:
 
         if renewed_count > 0:
             total_cost = renewed_count * SETTINGS.lotto.ticket_renewal_cost
-            self.messenger.info(
+            self.messenger_service.info(
                 f"Renewed {renewed_count} lotto ticket(s) for ${total_cost:,}",
                 tag="lotto"
             )
 
         if deactivated_count > 0:
-            self.messenger.warn(
+            self.messenger_service.warn(
                 f"Deactivated {deactivated_count} ticket(s) - insufficient funds for renewal",
                 tag="lotto"
             )
@@ -256,7 +256,7 @@ class LottoService:
                 payout = SETTINGS.lotto.payouts[matched]
 
                 # Award payout
-                self.wallet.earn(payout)
+                self.wallet_service.earn(payout)
                 # Track total reward on the ticket
                 try:
                     ticket.total_reward = int(getattr(ticket, "total_reward", 0)) + int(payout)
@@ -283,7 +283,7 @@ class LottoService:
                     "payout": payout
                 })
 
-                self.messenger.info(
+                self.messenger_service.info(
                     f"Lotto win! Matched {matched} numbers: {ticket.numbers} - Won ${payout:,}",
                     tag="lotto"
                 )

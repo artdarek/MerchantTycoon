@@ -3,7 +3,6 @@ from textual.widgets import Static, Label, Button
 
 from merchant_tycoon.engine import GameEngine
 from merchant_tycoon.config import SETTINGS
-from merchant_tycoon.ui.lotto.modals import BuyTicketModal
 
 
 class BuyTicketPanel(Static):

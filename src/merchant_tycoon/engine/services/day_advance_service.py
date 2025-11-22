@@ -19,12 +19,12 @@ class DayAdvanceService:
 
     def __init__(
         self,
-        clock: "ClockService",
+        clock_service: "ClockService",
         bank_service: "BankService",
         investments_service: "InvestmentsService",
         goods_service: "GoodsService",
     ) -> None:
-        self.clock = clock
+        self.clock_service = clock_service
         self.bank_service = bank_service
         self.investments_service = investments_service
         self.goods_service = goods_service
@@ -32,7 +32,7 @@ class DayAdvanceService:
     def advance_day(self) -> None:
         """Advance the in-game day and update dependent systems."""
         # Advance calendar/day
-        self.clock.advance_day()
+        self.clock_service.advance_day()
 
         # Randomize daily loan APR offer
         try:
@@ -65,4 +65,3 @@ class DayAdvanceService:
             self.investments_service.generate_asset_prices()
         except Exception:
             pass
-
