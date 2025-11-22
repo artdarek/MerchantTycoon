@@ -21,5 +21,5 @@ class InvestmentsSettings:
     dividend_min_holding_days: int = 10
     # Minimum total wealth required to unlock investment trading (0 = no limit, always unlocked)
     # Wealth = cash + bank_balance + portfolio_value (gross, excluding debt)
-    min_wealth_to_unlock_trading: int = 60000
+    min_wealth_to_unlock_trading: int = 1000000
 
