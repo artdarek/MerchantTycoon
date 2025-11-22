@@ -159,7 +159,10 @@ class ExchangePricesPanel(Static):
 
         if not unlocked:
             # Show locked alert modal
-            current_wealth = self.engine.calculate_total_wealth()
+            try:
+                current_wealth = self.engine.state.calculate_total_wealth(self.engine.asset_prices)
+            except Exception:
+                current_wealth = 0
             peak_wealth = int(getattr(self.engine.state, "peak_wealth", 0))
             progress_pct = (peak_wealth / threshold * 100) if threshold > 0 else 0
 

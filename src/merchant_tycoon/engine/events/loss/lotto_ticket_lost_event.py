@@ -53,8 +53,8 @@ class LottoTicketLostEventHandler(BaseEventHandler):
 
         # Messenger entry (separate from event modal log)
         try:
-            if context.messenger is not None:
-                context.messenger.warn(f"Lotto ticket lost: {numbers}", tag="lotto")
+            # Messenger logging handled centrally in TravelService
+            pass
         except Exception:
             pass
 
@@ -64,4 +64,3 @@ class LottoTicketLostEventHandler(BaseEventHandler):
             f"The following ticket disappeared:\n{bullets}"
         )
         return message, "loss"
-

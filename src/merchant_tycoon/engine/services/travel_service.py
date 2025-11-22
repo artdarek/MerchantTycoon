@@ -12,7 +12,7 @@ if TYPE_CHECKING:
     from merchant_tycoon.engine.services.day_advance_service import DayAdvanceService
     from merchant_tycoon.engine.services.messenger_service import MessengerService
     from merchant_tycoon.engine.services.wallet_service import WalletService
-    from merchant_tycoon.engine.services.lotto_service import LottoService
+    from merchant_tycoon.engine.modal_queue import ModalQueue
     from merchant_tycoon.repositories import CitiesRepository
 
 
@@ -31,6 +31,7 @@ class TravelService:
         messenger_service: "MessengerService",
         cargo_service: "GoodsCargoService",
         wallet_service: "WalletService",
+        modal_queue: "ModalQueue",
     ):
         self.state = state
         self.bank_service = bank_service
@@ -42,25 +43,25 @@ class TravelService:
         self.messenger = messenger_service
         self.cargo_service = cargo_service
         self.wallet = wallet_service
+        self.modal_queue = modal_queue
 
     def _calculate_travel_fee(self) -> int:
         """Calculate travel fee based on cargo space used."""
         cargo_units = self.cargo_service.get_used_slots()
         return int(SETTINGS.travel.base_fee) + int(SETTINGS.travel.fee_per_cargo_unit) * cargo_units
 
-    def travel(self, city_index: int) -> tuple[bool, str, list, Optional[str], Optional[str]]:
+    def travel(self, city_index: int) -> tuple[bool, str]:
         """Travel to a new city.
 
+        Modals are added directly to engine.modal_queue during travel.
+
         Returns:
-            tuple: (success, message, events_list, dividend_modal, investments_unlock_modal)
+            tuple: (success, message)
             - success: bool - whether travel succeeded
             - message: str - status message
-            - events_list: list of (event_msg, event_type) tuples
-            - dividend_modal: Optional[str] - dividend modal message if any
-            - investments_unlock_modal: Optional[str] - investments unlock message if just unlocked
         """
         if city_index == self.state.current_city:
-            return False, "Already in this city!", [], None, None
+            return False, "Already in this city!"
 
         origin_city = self.cities_repo.get_by_index(self.state.current_city)
         destination_city = self.cities_repo.get_by_index(city_index)
@@ -71,11 +72,11 @@ class TravelService:
             return False, (
                 f"Not enough cash to travel! Travel fee from {origin_city.name} to {destination_city.name} is ${travel_fee:,}. "
                 f"You have ${self.wallet.get_balance():,}."
-            ), [], None, None
+            )
 
         # Deduct travel fee
         if not self.wallet.spend(travel_fee):
-            return False, "Payment failed", [], None, None
+            return False, "Payment failed"
 
         # Proceed with travel: change city
         self.state.current_city = city_index
@@ -87,25 +88,11 @@ class TravelService:
         investments_unlock_modal = None
         try:
             from merchant_tycoon.config import SETTINGS
-            # Calculate current wealth (cash + bank + portfolio)
-            cash = int(getattr(self.state, "cash", 0))
-            bank_balance = int(getattr(self.state.bank, "balance", 0))
-            portfolio_value = 0
-            try:
-                portfolio = getattr(self.state, "portfolio", {}) or {}
-                asset_prices = getattr(self.investments_service, "asset_prices", {})
-                for symbol, qty in portfolio.items():
-                    price = int(asset_prices.get(symbol, 0))
-                    portfolio_value += qty * price
-            except Exception:
-                pass
-            current_wealth = cash + bank_balance + portfolio_value
-
+            asset_prices = getattr(self.investments_service, "asset_prices", {})
+            current_wealth = self.state.calculate_total_wealth(asset_prices)
             # Get threshold and check unlock
             threshold = int(getattr(SETTINGS.investments, "min_wealth_to_unlock_trading", 0))
             just_unlocked = self.state.check_and_update_peak_wealth(current_wealth, threshold)
-
-            # Prepare modal message if just unlocked
             if just_unlocked:
                 investments_unlock_modal = (
                     f"Congratulations! You've reached ${self.state.peak_wealth:,} total wealth.\n\n"
@@ -158,7 +145,29 @@ class TravelService:
         )
         self.messenger.info(msg, tag="travel")
 
-        # Return travel result with optional modals
-        # dividend_modal is None if no dividend, or modal message string if dividend paid
-        # investments_unlock_modal is None if not unlocked, or message string if just unlocked
-        return True, msg, events_list, dividend_modal, investments_unlock_modal
+        # Log each event to messenger as a concise line
+        try:
+            for ev_msg, ev_type in (events_list or []):
+                summary = (ev_msg or "").splitlines()[0]
+                if ev_type == "loss":
+                    self.messenger.warn(summary, tag="event")
+                elif ev_type == "gain":
+                    self.messenger.info(summary, tag="event")
+                else:
+                    self.messenger.debug(summary, tag="event")
+        except Exception:
+            pass
+
+        # Add modals to queue (modal_queue is required)
+        try:
+            if investments_unlock_modal:
+                self.modal_queue.add(investments_unlock_modal, "gain")
+            if dividend_modal:
+                self.modal_queue.add(dividend_modal, "gain")
+            if events_list:
+                # events_list is a list of (message, type)
+                self.modal_queue.add(events_list, "neutral")
+        except Exception:
+            pass
+
+        return True, msg

@@ -27,6 +27,7 @@ from merchant_tycoon.repositories import (
     DifficultyRepository,
     WordleRepository,
 )
+from merchant_tycoon.engine.modal_queue import ModalQueue
 
 
 class GameEngine:
@@ -56,6 +57,9 @@ class GameEngine:
         self.previous_prices: Dict[str, int] = {}
         self.asset_prices: Dict[str, int] = {}
         self.previous_asset_prices: Dict[str, int] = {}
+
+        # Initialize modal queue for coordinating UI modals
+        self.modal_queue = ModalQueue()
 
         # Initialize services
         self.clock_service = ClockService(self.state)
@@ -93,7 +97,8 @@ class GameEngine:
         self.lotto_service = LottoService(
             self.state,
             self.messenger,
-            self.wallet_service
+            self.wallet_service,
+            modal_queue=self.modal_queue
         )
         # Phone service
         self.phone_service = PhoneService()
@@ -170,6 +175,7 @@ class GameEngine:
             self.messenger,
             self.cargo_service,
             self.wallet_service,
+            modal_queue=self.modal_queue,
         )
         # Savegame service (persistence) – inject exact dependencies
         self.savegame_service = SavegameService(
@@ -290,6 +296,12 @@ class GameEngine:
             self.asset_prices = {}
             self.previous_asset_prices = {}
 
+        # Clear modal queue on reset
+        try:
+            self.modal_queue.clear()
+        except Exception:
+            self.modal_queue = ModalQueue()
+
         # Initialize bank last interest day to current day
         if getattr(self.state.bank, "last_interest_day", 0) == 0:
             self.state.bank.last_interest_day = self.state.day
@@ -332,57 +344,4 @@ class GameEngine:
         except Exception:
             pass
 
-    # ---------- Investments unlock system ----------
-
-    def calculate_total_wealth(self) -> int:
-        """Calculate total wealth (gross, excluding debt).
-
-        Wealth = cash + bank_balance + portfolio_value
-
-        Returns:
-            Total wealth in currency units
-        """
-        cash = int(getattr(self.state, "cash", 0))
-        bank_balance = int(getattr(self.state.bank, "balance", 0))
-
-        # Calculate portfolio value
-        portfolio_value = 0
-        try:
-            portfolio = getattr(self.state, "portfolio", {}) or {}
-            for symbol, qty in portfolio.items():
-                price = int(self.asset_prices.get(symbol, 0))
-                portfolio_value += qty * price
-        except Exception:
-            pass
-
-        return cash + bank_balance + portfolio_value
-
-    def check_and_unlock_investments(self) -> bool:
-        """Check if player has reached wealth threshold to unlock investments.
-
-        Updates peak_wealth and investments_unlocked if threshold is reached.
-        Shows congratulatory message when unlocking for the first time.
-
-        Returns:
-            True if investments were just unlocked (transition from locked to unlocked)
-        """
-        # Calculate current wealth
-        current_wealth = self.calculate_total_wealth()
-
-        # Get threshold from settings
-        threshold = int(getattr(SETTINGS.investments, "min_wealth_to_unlock_trading", 0))
-
-        # Delegate to GameState method for unlock logic
-        just_unlocked = self.state.check_and_update_peak_wealth(current_wealth, threshold)
-
-        # Show congratulatory message if just unlocked
-        if just_unlocked:
-            try:
-                self.messenger.add_message(
-                    f"🎉 INVESTMENTS UNLOCKED! You've reached ${self.state.peak_wealth:,} wealth and can now trade stocks, commodities, and crypto!",
-                    "success"
-                )
-            except Exception:
-                pass
-
-        return just_unlocked
+    # ---------- Investments helpers ----------

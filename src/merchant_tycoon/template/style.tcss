@@ -292,7 +292,7 @@ MessangerPanel {
 InputModal, TravelModal, BuyModal, SellModal, SellLotModal,
 BuyAssetModal, SellAssetModal, SellAssetLotModal, LoanRepayModal, HelpModal,
 ConfirmModal, AboutModal, CargoExtendModal, NewGameModal, NewspaperModal,
-BuyTicketModal, TicketActionsModal, WinnerModal {
+BuyTicketModal, TicketActionsModal {
     align: center middle;
     background: transparent;
 }

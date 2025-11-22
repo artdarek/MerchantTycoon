@@ -9,6 +9,7 @@ from merchant_tycoon.domain.model.loan import Loan
 from merchant_tycoon.domain.model.lotto_ticket import LottoTicket
 from merchant_tycoon.domain.model.lotto_draw import LottoDraw
 from merchant_tycoon.domain.model.lotto_win_history import LottoWinHistory
+from typing import Optional, Dict
 
 
 @dataclass
@@ -92,3 +93,30 @@ class GameState:
             return True  # Just unlocked!
 
         return False
+
+    # ---- Wealth helpers ----
+    def calculate_total_wealth(self, asset_prices: Optional[Dict[str, int]] = None) -> int:
+        """Calculate total wealth (gross, excluding debt).
+
+        Wealth = cash + bank_balance + portfolio_value
+
+        Args:
+            asset_prices: Optional price map for assets used to value the portfolio.
+
+        Returns:
+            Total wealth in currency units
+        """
+        cash = int(getattr(self, "cash", 0))
+        bank_balance = int(getattr(self.bank, "balance", 0))
+
+        portfolio_value = 0
+        try:
+            portfolio = getattr(self, "portfolio", {}) or {}
+            prices = asset_prices or {}
+            for symbol, qty in portfolio.items():
+                price = int(prices.get(symbol, 0))
+                portfolio_value += int(qty) * price
+        except Exception:
+            pass
+
+        return cash + bank_balance + portfolio_value

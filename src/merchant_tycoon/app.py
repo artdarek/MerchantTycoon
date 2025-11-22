@@ -69,7 +69,6 @@ from merchant_tycoon.ui.lotto.panels import (
     OwnedTicketsSummaryPanel,
     LottoDrawStripPanel,
 )
-from merchant_tycoon.ui.lotto.modals import WinnerModal
 from merchant_tycoon.ui.phone.panels.phone_panel import PhonePanel
 from merchant_tycoon.ui.phone.panels.applets.whatsup_panel import WhatsUpPanel
 
@@ -318,12 +317,14 @@ class MerchantTycoon(App):
             self.current_tab = "bank-tab"
         except Exception:
             pass
+
     def action_go_lotto_tab(self) -> None:
         try:
             self.query_one(TabbedContent).active = "lotto-tab"
             self.current_tab = "lotto-tab"
         except Exception:
             pass
+
     def action_go_phone_tab(self) -> None:
         try:
             self.query_one(TabbedContent).active = "phone-tab"
@@ -332,7 +333,6 @@ class MerchantTycoon(App):
             pass
 
     def refresh_all(self):
-
         if self.stats_panel:
             self.stats_panel.update_stats()
         if self.market_panel:
@@ -528,44 +528,24 @@ class MerchantTycoon(App):
 
     def _handle_travel(self, city_index: int):
         """Handle travel to new city"""
-        success, msg, events_list, dividend_modal, investments_unlock_modal = self.engine.travel_service.travel(city_index)
+        success, msg = self.engine.travel_service.travel(city_index)
 
         if not success:
             self.engine.messenger.warn(msg, tag="travel")
             self.refresh_all()
             return
 
-        # Log travel events to messenger
-        for event_msg, event_type in events_list:
-            if event_type == "gain":
-                self.engine.messenger.warn(event_msg, tag="events")
-            elif event_type == "loss":
-                self.engine.messenger.error(event_msg, tag="events")
-            else:  # neutral
-                self.engine.messenger.info(event_msg, tag="events")
-
-        # Process daily lotto after successful travel
+        # Process daily lotto after successful travel (adds lotto winners to modal queue)
         try:
-            draw, wins = self.engine.lotto_service.process_daily_lotto()
+            self.engine.lotto_service.process_daily_lotto()
         except Exception:
-            draw, wins = (None, [])
-
-        # Store pending wins to present after other modals
-        self._pending_lotto_wins = list(wins or [])
+            pass
 
         # Refresh to reflect travel results and lotto changes
         self.refresh_all()
 
-        # Show modals in order: investments unlock -> dividend -> travel events -> lotto
-        if investments_unlock_modal:
-            self._show_investments_unlock_modal(investments_unlock_modal, dividend_modal, events_list)
-        elif dividend_modal:
-            self._show_dividend_modal(dividend_modal, events_list)
-        elif events_list:
-            self._show_travel_events(events_list)
-        else:
-            # No travel modals; maybe show lotto winners immediately
-            self._show_lotto_winners_if_any()
+        # Process modal queue from engine (TravelService and LottoService already added modals)
+        self.engine.modal_queue.process(self)
 
     def _show_travel_events(self, events_list: list) -> None:
         """Show multiple travel events sequentially with blocking modals."""
@@ -596,48 +576,72 @@ class MerchantTycoon(App):
         self.push_screen(modal)
 
     def _show_lotto_winners_if_any(self) -> None:
-        """Show lotto winners modal if there are pending wins; otherwise just refresh."""
-        wins = getattr(self, "_pending_lotto_wins", []) or []
-        if wins:
-            # After closing winners modal, clear and refresh
-            def _after_close():
+        """Default hook after finishing events. Now just refreshes UI."""
+        self.refresh_all()
+
+    def _show_next_modal_in_queue(self, queue: list) -> None:
+        """Show next modal from queue in sequence: unlock -> dividend -> events -> simple."""
+        if not queue:
+            self._show_lotto_winners_if_any()
+            return
+
+        modal_type, data = queue.pop(0)
+
+        if modal_type == "unlock":
+            # Show investments unlock modal (use EventModal to support callback chaining)
+            def after_unlock():
+                self._show_next_modal_in_queue(queue)
+
+            modal = EventModal("🎉 Investments Unlocked", data, "gain", after_unlock)
+            self.push_screen(modal)
+
+        elif modal_type == "dividend":
+            # Show dividend modal
+            def after_dividend():
+                self._show_next_modal_in_queue(queue)
+
+            modal = EventModal("💰 Dividend Payout!", data, "gain", after_dividend)
+            self.push_screen(modal)
+
+        elif modal_type == "events":
+            # Show travel events sequence
+            self._pending_events = list(data)
+
+            # Capture original hook and restore only after the sequence completes
+            original_show_lotto = self._show_lotto_winners_if_any
+
+            def after_events():
+                # Restore original lotto hook, then continue the queue
                 try:
-                    self._pending_lotto_wins = []
+                    self._show_lotto_winners_if_any = original_show_lotto
                 except Exception:
                     pass
-                self.refresh_all()
+                self._show_next_modal_in_queue(queue)
 
-            self.push_screen(WinnerModal(wins, on_close=_after_close))
-        else:
-            self.refresh_all()
+            # Override _show_lotto_winners_if_any so when events finish we chain continuation
+            self._show_lotto_winners_if_any = after_events
+            self._show_next_event()
 
-    def _show_investments_unlock_modal(self, unlock_msg: str, dividend_modal: str = None, events_list: list = None) -> None:
-        """Show investments unlock modal, then dividend, then travel events if any."""
-        def after_unlock():
-            if dividend_modal:
-                self._show_dividend_modal(dividend_modal, events_list)
-            elif events_list:
-                self._show_travel_events(events_list)
-            else:
-                self._show_lotto_winners_if_any()
+        # No dedicated lotto branch: lotto wins are summarized as a simple gain modal
 
-        modal = AlertModal("🎉 Investments Unlocked", unlock_msg, is_positive=True)
-        # Push modal with callback after dismiss
-        def _on_unlock_dismiss(result=None):
-            after_unlock()
+        elif modal_type == "simple":
+            # Simple message with explicit event type
+            def after_simple():
+                self._show_next_modal_in_queue(queue)
 
-        self.push_screen(modal, callback=_on_unlock_dismiss)
-
-    def _show_dividend_modal(self, dividend_msg: str, events_list: list = None) -> None:
-        """Show dividend modal, then travel events if any."""
-        def after_dividend():
-            if events_list:
-                self._show_travel_events(events_list)
-            else:
-                self._show_lotto_winners_if_any()
-
-        modal = EventModal("💰 Dividend Payout!", dividend_msg, "gain", after_dividend)
-        self.push_screen(modal)
+            try:
+                event_type = data.get("event_type", "neutral")
+                message = data.get("message", "")
+                provided_title = data.get("title")
+            except Exception:
+                event_type, message, provided_title = "neutral", str(data), None
+            # Title mapping based on type
+            title = provided_title if provided_title else {
+                "gain": "✨ Good News!",
+                "loss": "⚠️ Bad News!",
+            }.get(event_type, "ℹ️ Update")
+            modal = EventModal(title, message, event_type, after_simple)
+            self.push_screen(modal)
 
     def action_loan(self):
         """Take a loan"""
