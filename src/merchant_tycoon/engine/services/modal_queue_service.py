@@ -1,15 +1,19 @@
-"""Modal queue manager for showing sequential modals after travel and other events."""
+"""Modal queue manager for showing sequential modals after travel and other events.
 
-from typing import Optional, Callable, Any
+Renamed from ModalQueue to ModalQueueService and moved under engine/services
+to better reflect its role as engine-side presentation orchestration used by
+multiple services (travel/day advance, lotto, unlocks).
+"""
+
+from typing import Any
 
 
-class ModalQueue:
+class ModalQueueService:
     """Manages a queue of modals to be shown sequentially.
 
     Usage:
-        queue = ModalQueue()
+        queue = ModalQueueService()
         queue.add("Congratulations! Unlocked!", "gain")
-        queue.add("Received $500 dividend", "gain")
         queue.add([("Good news!", "gain"), ("Bad news!", "loss")], "neutral")
         queue.add("You had 1 winning ticket...", "gain")
         queue.process(app)  # Start showing modals
@@ -19,7 +23,7 @@ class ModalQueue:
         self._queue: list[tuple[str, Any]] = []
 
     # --- Unified API ---
-    def add(self, message: Any, modal_type: str = "neutral", title: str | None = None) -> "ModalQueue":
+    def add(self, message: Any, modal_type: str = "neutral", title: str | None = None) -> "ModalQueueService":
         """Add an item to the modal queue using a unified API.
 
         Args:
@@ -51,6 +55,8 @@ class ModalQueue:
                     self._queue.append(("events", message))
                 return self
 
+            # (no other list types handled here; callers should format message text)
+
         # Default: simple event modal
         self._queue.append(("simple", {"message": message, "event_type": t, "title": title}))
         return self
@@ -74,3 +80,4 @@ class ModalQueue:
         """Clear the queue."""
         self._queue.clear()
         # no callbacks kept anymore
+

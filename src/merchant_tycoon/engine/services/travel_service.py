@@ -12,7 +12,7 @@ if TYPE_CHECKING:
     from merchant_tycoon.engine.services.day_advance_service import DayAdvanceService
     from merchant_tycoon.engine.services.messenger_service import MessengerService
     from merchant_tycoon.engine.services.wallet_service import WalletService
-    from merchant_tycoon.engine.modal_queue import ModalQueue
+    from merchant_tycoon.engine.services.modal_queue_service import ModalQueueService
     from merchant_tycoon.repositories import CitiesRepository
 
 
@@ -31,7 +31,7 @@ class TravelService:
         messenger_service: "MessengerService",
         cargo_service: "GoodsCargoService",
         wallet_service: "WalletService",
-        modal_queue: "ModalQueue",
+        modal_queue_service: "ModalQueueService",
     ):
         self.state = state
         self.bank_service = bank_service
@@ -43,7 +43,7 @@ class TravelService:
         self.messenger = messenger_service
         self.cargo_service = cargo_service
         self.wallet = wallet_service
-        self.modal_queue = modal_queue
+        self.modal_queue_service = modal_queue_service
 
     def _calculate_travel_fee(self) -> int:
         """Calculate travel fee based on cargo space used."""
@@ -165,15 +165,15 @@ class TravelService:
         except Exception:
             pass
 
-        # Add modals to queue (modal_queue is required)
+        # Add modals to queue (modal_queue_service is required)
         try:
             if investments_unlock_modal:
-                self.modal_queue.add(investments_unlock_modal, "gain")
+                self.modal_queue_service.add(investments_unlock_modal, "gain")
             if dividend_modal:
-                self.modal_queue.add(dividend_modal, "gain")
+                self.modal_queue_service.add(dividend_modal, "gain")
             if events_list:
                 # events_list is a list of (message, type)
-                self.modal_queue.add(events_list, "neutral")
+                self.modal_queue_service.add(events_list, "neutral")
         except Exception:
             pass
 

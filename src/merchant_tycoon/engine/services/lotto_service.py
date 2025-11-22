@@ -12,7 +12,7 @@ if TYPE_CHECKING:
     from merchant_tycoon.engine.game_state import GameState
     from merchant_tycoon.engine.services.messenger_service import MessengerService
     from merchant_tycoon.engine.services.wallet_service import WalletService
-    from merchant_tycoon.engine.modal_queue import ModalQueue
+    from merchant_tycoon.engine.services.modal_queue_service import ModalQueueService
 
 
 class LottoService:
@@ -31,7 +31,7 @@ class LottoService:
         state: "GameState",
         messenger: "MessengerService",
         wallet: "WalletService",
-        modal_queue: "ModalQueue"
+        modal_queue_service: "ModalQueueService"
     ):
         """Initialize LottoService.
 
@@ -44,7 +44,7 @@ class LottoService:
         self.state = state
         self.messenger = messenger
         self.wallet = wallet
-        self.modal_queue = modal_queue
+        self.modal_queue_service = modal_queue_service
 
     def buy_ticket(self, numbers: List[int]) -> Tuple[bool, str]:
         """Purchase a new lottery ticket.
@@ -326,7 +326,7 @@ class LottoService:
                     payout = int(win.get("payout", 0))
                     lines.append(f"#{i}: [{numbers_str}] - {matched} matches → ${payout:,}")
                 message = summary + "\n".join(lines)
-                self.modal_queue.add(message, "gain")
+                self.modal_queue_service.add(message, "gain")
             except Exception:
                 pass
 

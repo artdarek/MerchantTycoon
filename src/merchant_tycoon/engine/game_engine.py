@@ -27,7 +27,7 @@ from merchant_tycoon.repositories import (
     DifficultyRepository,
     WordleRepository,
 )
-from merchant_tycoon.engine.modal_queue import ModalQueue
+from merchant_tycoon.engine.services.modal_queue_service import ModalQueueService
 
 
 class GameEngine:
@@ -59,7 +59,7 @@ class GameEngine:
         self.previous_asset_prices: Dict[str, int] = {}
 
         # Initialize modal queue for coordinating UI modals
-        self.modal_queue = ModalQueue()
+        self.modal_queue = ModalQueueService()
 
         # Initialize services
         self.clock_service = ClockService(self.state)
@@ -98,7 +98,7 @@ class GameEngine:
             self.state,
             self.messenger,
             self.wallet_service,
-            modal_queue=self.modal_queue
+            modal_queue_service=self.modal_queue
         )
         # Phone service
         self.phone_service = PhoneService()
@@ -175,7 +175,7 @@ class GameEngine:
             self.messenger,
             self.cargo_service,
             self.wallet_service,
-            modal_queue=self.modal_queue,
+            modal_queue_service=self.modal_queue,
         )
         # Savegame service (persistence) – inject exact dependencies
         self.savegame_service = SavegameService(
@@ -300,7 +300,7 @@ class GameEngine:
         try:
             self.modal_queue.clear()
         except Exception:
-            self.modal_queue = ModalQueue()
+            self.modal_queue = ModalQueueService()
 
         # Initialize bank last interest day to current day
         if getattr(self.state.bank, "last_interest_day", 0) == 0:
