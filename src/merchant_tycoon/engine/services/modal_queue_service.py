@@ -49,13 +49,11 @@ class ModalQueueService:
 
         # Auto-detect structured payloads
         if isinstance(message, list):
-            # Events list: list of (msg, type) tuples
+            # Events list: list of (msg, type) tuples → expand into simple items
             if message and isinstance(message[0], (tuple, list)) and len(message[0]) == 2:
-                if message:
-                    self._queue.append(("events", message))
+                for (msg, etype) in message:
+                    self._queue.append(("simple", {"message": msg, "event_type": (etype or t), "title": title}))
                 return self
-
-            # (no other list types handled here; callers should format message text)
 
         # Default: simple event modal
         self._queue.append(("simple", {"message": message, "event_type": t, "title": title}))
@@ -67,17 +65,19 @@ class ModalQueueService:
         """Check if queue is empty."""
         return len(self._queue) == 0
 
-    def process(self, app) -> None:
-        """Start processing the modal queue.
+    def process(self) -> list[tuple[str, Any]]:
+        """Return the current queue for the UI to consume and clear internal state.
 
-        Args:
-            app: MerchantTycoon app instance with _show_next_modal_in_queue method
+        The UI should call its own sequencing method with the returned list,
+        e.g., `app._show_next_modal_in_queue(queue)`.
         """
-        if self._queue:
-            app._show_next_modal_in_queue(self._queue)
+        if not self._queue:
+            return []
+        queue = self._queue
+        self._queue = []
+        return queue
 
     def clear(self) -> None:
         """Clear the queue."""
         self._queue.clear()
         # no callbacks kept anymore
-

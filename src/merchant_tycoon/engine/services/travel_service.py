@@ -168,9 +168,9 @@ class TravelService:
         # Add modals to queue (modal_queue_service is required)
         try:
             if investments_unlock_modal:
-                self.modal_queue_service.add(investments_unlock_modal, "gain")
+                self.modal_queue_service.add(investments_unlock_modal, "gain", title="🎉 Investments Unlocked")
             if dividend_modal:
-                self.modal_queue_service.add(dividend_modal, "gain")
+                self.modal_queue_service.add(dividend_modal, "gain", title="💰 Dividend Payout!")
             if events_list:
                 # events_list is a list of (message, type)
                 self.modal_queue_service.add(events_list, "neutral")
