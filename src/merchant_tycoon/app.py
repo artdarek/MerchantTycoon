@@ -544,103 +544,36 @@ class MerchantTycoon(App):
         self.refresh_all()
 
         # Process modal queue from engine (TravelService and LottoService already added modals)
-        self.engine.modal_queue.process(self)
+        try:
+            queue = self.engine.modal_queue.process()
+        except Exception:
+            queue = []
+        if queue:
+            self._show_next_modal_in_queue(queue)
 
-    def _show_travel_events(self, events_list: list) -> None:
-        """Show multiple travel events sequentially with blocking modals."""
-        if not events_list:
-            return
+    # No dedicated travel-events stepper needed (events expanded into simple modals)
 
-        self._pending_events = list(events_list)
-        self._show_next_event()
-
-    def _show_next_event(self) -> None:
-        """Show the next event from pending events queue."""
-        if not hasattr(self, '_pending_events') or not self._pending_events:
-            # After events are done, show lotto winners if any
-            self._show_lotto_winners_if_any()
-            return
-
-        event_msg, event_type = self._pending_events.pop(0)
-
-        # Map event type to title
-        if event_type == "gain":
-            title = "✨ Good News!"
-        elif event_type == "loss":
-            title = "⚠️ Bad News!"
-        else:  # neutral
-            title = "ℹ️ Market Update"
-
-        modal = EventModal(title, event_msg, event_type, self._show_next_event)
-        self.push_screen(modal)
-
-    def _show_lotto_winners_if_any(self) -> None:
-        """Default hook after finishing events. Now just refreshes UI."""
-        self.refresh_all()
 
     def _show_next_modal_in_queue(self, queue: list) -> None:
         """Show next modal from queue in sequence: unlock -> dividend -> events -> simple."""
         if not queue:
-            self._show_lotto_winners_if_any()
+            self.refresh_all()
             return
 
-        modal_type, data = queue.pop(0)
-
-        if modal_type == "unlock":
-            # Show investments unlock modal (use EventModal to support callback chaining)
-            def after_unlock():
-                self._show_next_modal_in_queue(queue)
-
-            modal = EventModal("🎉 Investments Unlocked", data, "gain", after_unlock)
-            self.push_screen(modal)
-
-        elif modal_type == "dividend":
-            # Show dividend modal
-            def after_dividend():
-                self._show_next_modal_in_queue(queue)
-
-            modal = EventModal("💰 Dividend Payout!", data, "gain", after_dividend)
-            self.push_screen(modal)
-
-        elif modal_type == "events":
-            # Show travel events sequence
-            self._pending_events = list(data)
-
-            # Capture original hook and restore only after the sequence completes
-            original_show_lotto = self._show_lotto_winners_if_any
-
-            def after_events():
-                # Restore original lotto hook, then continue the queue
-                try:
-                    self._show_lotto_winners_if_any = original_show_lotto
-                except Exception:
-                    pass
-                self._show_next_modal_in_queue(queue)
-
-            # Override _show_lotto_winners_if_any so when events finish we chain continuation
-            self._show_lotto_winners_if_any = after_events
-            self._show_next_event()
-
-        # No dedicated lotto branch: lotto wins are summarized as a simple gain modal
-
-        elif modal_type == "simple":
-            # Simple message with explicit event type
-            def after_simple():
-                self._show_next_modal_in_queue(queue)
-
-            try:
-                event_type = data.get("event_type", "neutral")
-                message = data.get("message", "")
-                provided_title = data.get("title")
-            except Exception:
-                event_type, message, provided_title = "neutral", str(data), None
-            # Title mapping based on type
-            title = provided_title if provided_title else {
-                "gain": "✨ Good News!",
-                "loss": "⚠️ Bad News!",
-            }.get(event_type, "ℹ️ Update")
-            modal = EventModal(title, message, event_type, after_simple)
-            self.push_screen(modal)
+        _modal_type, data = queue.pop(0)
+        try:
+            event_type = data.get("event_type", "neutral")
+            message = data.get("message", "")
+            provided_title = data.get("title")
+        except Exception:
+            event_type, message, provided_title = "neutral", str(data), None
+        # Title mapping based on type
+        title = provided_title if provided_title else {
+            "gain": "✨ Good News!",
+            "loss": "⚠️ Bad News!",
+        }.get(event_type, "ℹ️ Update")
+        modal = EventModal(title, message, event_type, self._show_next_modal_in_queue(queue))
+        self.push_screen(modal)
 
     def action_loan(self):
         """Take a loan"""
