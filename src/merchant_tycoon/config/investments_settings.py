@@ -19,4 +19,7 @@ class InvestmentsSettings:
     dividend_interval_days: int = 11
     # Minimum holding period in days to qualify for dividends
     dividend_min_holding_days: int = 10
+    # Minimum total wealth required to unlock investment trading (0 = no limit, always unlocked)
+    # Wealth = cash + bank_balance + portfolio_value (gross, excluding debt)
+    min_wealth_to_unlock_trading: int = 60000
 

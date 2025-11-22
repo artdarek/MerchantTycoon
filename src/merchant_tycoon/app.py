@@ -528,7 +528,7 @@ class MerchantTycoon(App):
 
     def _handle_travel(self, city_index: int):
         """Handle travel to new city"""
-        success, msg, events_list, dividend_modal = self.engine.travel_service.travel(city_index)
+        success, msg, events_list, dividend_modal, investments_unlock_modal = self.engine.travel_service.travel(city_index)
 
         if not success:
             self.engine.messenger.warn(msg, tag="travel")
@@ -556,8 +556,10 @@ class MerchantTycoon(App):
         # Refresh to reflect travel results and lotto changes
         self.refresh_all()
 
-        # Show dividend modal first (if any), then travel events
-        if dividend_modal:
+        # Show modals in order: investments unlock -> dividend -> travel events -> lotto
+        if investments_unlock_modal:
+            self._show_investments_unlock_modal(investments_unlock_modal, dividend_modal, events_list)
+        elif dividend_modal:
             self._show_dividend_modal(dividend_modal, events_list)
         elif events_list:
             self._show_travel_events(events_list)
@@ -609,13 +611,30 @@ class MerchantTycoon(App):
         else:
             self.refresh_all()
 
+    def _show_investments_unlock_modal(self, unlock_msg: str, dividend_modal: str = None, events_list: list = None) -> None:
+        """Show investments unlock modal, then dividend, then travel events if any."""
+        def after_unlock():
+            if dividend_modal:
+                self._show_dividend_modal(dividend_modal, events_list)
+            elif events_list:
+                self._show_travel_events(events_list)
+            else:
+                self._show_lotto_winners_if_any()
+
+        modal = AlertModal("🎉 Investments Unlocked", unlock_msg, is_positive=True)
+        # Push modal with callback after dismiss
+        def _on_unlock_dismiss(result=None):
+            after_unlock()
+
+        self.push_screen(modal, callback=_on_unlock_dismiss)
+
     def _show_dividend_modal(self, dividend_msg: str, events_list: list = None) -> None:
         """Show dividend modal, then travel events if any."""
         def after_dividend():
             if events_list:
                 self._show_travel_events(events_list)
             else:
-                self.refresh_all()
+                self._show_lotto_winners_if_any()
 
         modal = EventModal("💰 Dividend Payout!", dividend_msg, "gain", after_dividend)
         self.push_screen(modal)

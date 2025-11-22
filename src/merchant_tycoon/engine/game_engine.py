@@ -331,3 +331,58 @@ class GameEngine:
             self.investments_service.generate_asset_prices()
         except Exception:
             pass
+
+    # ---------- Investments unlock system ----------
+
+    def calculate_total_wealth(self) -> int:
+        """Calculate total wealth (gross, excluding debt).
+
+        Wealth = cash + bank_balance + portfolio_value
+
+        Returns:
+            Total wealth in currency units
+        """
+        cash = int(getattr(self.state, "cash", 0))
+        bank_balance = int(getattr(self.state.bank, "balance", 0))
+
+        # Calculate portfolio value
+        portfolio_value = 0
+        try:
+            portfolio = getattr(self.state, "portfolio", {}) or {}
+            for symbol, qty in portfolio.items():
+                price = int(self.asset_prices.get(symbol, 0))
+                portfolio_value += qty * price
+        except Exception:
+            pass
+
+        return cash + bank_balance + portfolio_value
+
+    def check_and_unlock_investments(self) -> bool:
+        """Check if player has reached wealth threshold to unlock investments.
+
+        Updates peak_wealth and investments_unlocked if threshold is reached.
+        Shows congratulatory message when unlocking for the first time.
+
+        Returns:
+            True if investments were just unlocked (transition from locked to unlocked)
+        """
+        # Calculate current wealth
+        current_wealth = self.calculate_total_wealth()
+
+        # Get threshold from settings
+        threshold = int(getattr(SETTINGS.investments, "min_wealth_to_unlock_trading", 0))
+
+        # Delegate to GameState method for unlock logic
+        just_unlocked = self.state.check_and_update_peak_wealth(current_wealth, threshold)
+
+        # Show congratulatory message if just unlocked
+        if just_unlocked:
+            try:
+                self.messenger.add_message(
+                    f"🎉 INVESTMENTS UNLOCKED! You've reached ${self.state.peak_wealth:,} wealth and can now trade stocks, commodities, and crypto!",
+                    "success"
+                )
+            except Exception:
+                pass
+
+        return just_unlocked
