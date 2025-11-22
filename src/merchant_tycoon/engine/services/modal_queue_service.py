@@ -23,43 +23,38 @@ class ModalQueueService:
         self._queue: list[tuple[str, Any]] = []
 
     # --- Unified API ---
-    def add(self, message: Any, modal_type: str = "neutral", title: str | None = None) -> "ModalQueueService":
-        """Add an item to the modal queue using a unified API.
+    def add(self, message: str, modal_type: str = "neutral", title: str | None = None) -> "ModalQueueService":
+        """Add a single item to the modal queue.
 
         Args:
-            message: Content to display. Can be:
-                - str: a simple message shown via EventModal
-                - list[tuple[str, str]]: events sequence as (message, type)
-              Note: other list types are not handled here; build a summary string in the service and pass it as str.
-            modal_type: Visual type for simple messages. Accepts synonyms:
+            message: Single message string to display (str only)
+            modal_type: Visual type for this message. Accepts synonyms:
                 - success/gain, error/loss, info/neutral
-            title: Optional explicit title for simple messages. If None, the UI uses a default based on modal_type.
+            title: Optional explicit title for the message. If None, the UI uses a default based on modal_type.
 
         Returns:
             Self for chaining
         """
-        # Normalize type synonyms
-        t = (modal_type or "neutral").lower()
-        if t in ("success", "ok", "positive"):
-            t = "gain"
-        elif t in ("error", "fail", "negative"):
-            t = "loss"
-        elif t in ("info", "information"):
-            t = "neutral"
-
-        # Auto-detect structured payloads
-        if isinstance(message, list):
-            # Events list: list of (msg, type) tuples → expand into simple items
-            if message and isinstance(message[0], (tuple, list)) and len(message[0]) == 2:
-                for (msg, etype) in message:
-                    self._queue.append(("simple", {"message": msg, "event_type": (etype or t), "title": title}))
-                return self
+        # Expect proper type passed: "gain", "loss", or "neutral"
+        modal_type = (modal_type or "neutral").lower()
 
         # Default: simple event modal
-        self._queue.append(("simple", {"message": message, "event_type": t, "title": title}))
+        self._queue.append(("simple", {"message": message, "event_type": modal_type, "title": title}))
         return self
 
-    # Legacy add_* methods removed; use add(message, modal_type) only.
+    def add_bulk(self, items: list[tuple[str, str]]) -> "ModalQueueService":
+        """Add multiple items to the queue.
+
+        Args:
+            items: List of (message, event_type) tuples
+
+        Returns:
+            Self for chaining
+        """
+        for item in items or []:
+            msg, et = item
+            self._queue.append(("simple", {"message": msg, "event_type": et}))
+        return self
 
     def is_empty(self) -> bool:
         """Check if queue is empty."""

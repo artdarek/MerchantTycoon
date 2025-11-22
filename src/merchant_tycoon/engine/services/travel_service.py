@@ -173,7 +173,7 @@ class TravelService:
                 self.modal_queue_service.add(dividend_modal, "gain", title="💰 Dividend Payout!")
             if events_list:
                 # events_list is a list of (message, type)
-                self.modal_queue_service.add(events_list, "neutral")
+                self.modal_queue_service.add_bulk(events_list)
         except Exception:
             pass
 
