@@ -89,6 +89,15 @@ class StatsPanel(Static):
             if symbol in self.engine.asset_prices:
                 portfolio_value += quantity * self.engine.asset_prices[symbol]
 
+        # Calculate current value of owned goods (inventory)
+        goods_value = 0
+        try:
+            for good_name, qty in (state.inventory or {}).items():
+                price = int(self.engine.prices.get(good_name, 0)) if hasattr(self.engine, 'prices') else 0
+                goods_value += int(qty) * price
+        except Exception:
+            goods_value = 0
+
         # Bank balance (added to header after Cash)
         bank_balance = state.bank.balance if hasattr(state, "bank") and state.bank is not None else 0
 
@@ -96,7 +105,8 @@ class StatsPanel(Static):
             f"💰 Cash → ${state.cash:,}  •  "
             f"🏦 Bank → ${bank_balance:,}  •  "
             f"📈 Assets → ${portfolio_value:,}  •  "
-            f"💳 Debt → ${state.debt:,}"
+            f"💳 Debt → ${state.debt:,}  •  "
+            f"🛒 Goods → ${goods_value:,}"
         )
 
         # Create cargo text with visual progress bar
