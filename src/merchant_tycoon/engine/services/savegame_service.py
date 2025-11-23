@@ -107,6 +107,8 @@ class SavegameService:
                     # Investments unlock tracking
                     "investments_unlocked": bool(getattr(state, "investments_unlocked", False)),
                     "peak_wealth": int(getattr(state, "peak_wealth", 0)),
+                    # Optional per-day metrics store
+                    "daily_metrics": {int(k): {str(ik): int(iv) for ik, iv in (v or {}).items()} for k, v in (getattr(state, "daily_metrics", {}) or {}).items()},
                     "purchase_lots": self._lots_to_dicts(state.purchase_lots),
                     "transaction_history": self._tx_to_dicts(state.transaction_history),
                     "portfolio": dict(state.portfolio),
@@ -198,6 +200,31 @@ class SavegameService:
                 pass
             try:
                 state.peak_wealth = int(s.get("peak_wealth", getattr(state, "peak_wealth", 0)))
+            except Exception:
+                pass
+            # Daily metrics (optional)
+            try:
+                dm = s.get("daily_metrics") or {}
+                if isinstance(dm, dict):
+                    parsed = {}
+                    for dk, dv in dm.items():
+                        try:
+                            day_key = int(dk)
+                        except Exception:
+                            # Skip non-integer day keys
+                            continue
+                        metrics: Dict[str, int] = {}
+                        try:
+                            items = (dv or {}).items()
+                        except Exception:
+                            items = []
+                        for mk, mv in items:
+                            try:
+                                metrics[str(mk)] = int(mv)
+                            except Exception:
+                                continue
+                        parsed[day_key] = metrics
+                    state.daily_metrics = parsed
             except Exception:
                 pass
             # Inventory and capacities

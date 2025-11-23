@@ -47,6 +47,8 @@ class GameState:
     # Investment trading unlock tracking
     investments_unlocked: bool = False  # Once unlocked, stays unlocked forever
     peak_wealth: int = 0  # Highest wealth ever achieved (cash + bank + goods + portfolio − debt)
+    # Generic per-day metrics store: {day: {metric_name: value}}
+    daily_metrics: Dict[int, Dict[str, int]] = field(default_factory=dict)
 
     def get_inventory_count(self) -> int:
         return sum(self.inventory.values())
@@ -140,3 +142,23 @@ class GameState:
         debt = int(getattr(self, "debt", 0))
 
         return cash + bank_balance + goods_value + portfolio_value - debt
+
+    # ---- Daily metrics helpers ----
+    def record_daily_value(self, key: str, value: int, day: Optional[int] = None) -> None:
+        """Record a single metric value for the given day (defaults to current day)."""
+        try:
+            d = int(day) if day is not None else int(getattr(self, "day", 0))
+        except Exception:
+            d = getattr(self, "day", 0)
+        try:
+            v = int(value)
+        except Exception:
+            # Skip non-integer values in this simple store
+            return
+        bucket = self.daily_metrics.get(d)
+        if bucket is None:
+            bucket = {}
+            self.daily_metrics[d] = bucket
+        bucket[str(key)] = v
+
+    # Note: daily metrics snapshots are computed by MetricsService

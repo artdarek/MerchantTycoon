@@ -7,6 +7,7 @@ if TYPE_CHECKING:
     from merchant_tycoon.engine.services.bank_service import BankService
     from merchant_tycoon.engine.services.investments_service import InvestmentsService
     from merchant_tycoon.engine.services.goods_service import GoodsService
+    from merchant_tycoon.engine.services.metrics_service import MetricsService
 
 
 class DayAdvanceService:
@@ -23,11 +24,13 @@ class DayAdvanceService:
         bank_service: "BankService",
         investments_service: "InvestmentsService",
         goods_service: "GoodsService",
+        metrics_service: "MetricsService",
     ) -> None:
         self.clock_service = clock_service
         self.bank_service = bank_service
         self.investments_service = investments_service
         self.goods_service = goods_service
+        self.metrics_service = metrics_service
 
     def advance_day(self) -> None:
         """Advance the in-game day and update dependent systems."""
@@ -63,5 +66,15 @@ class DayAdvanceService:
             pass
         try:
             self.investments_service.generate_asset_prices()
+        except Exception:
+            pass
+
+        # Snapshot daily metrics (wealth breakdown) after prices and interest are updated
+        try:
+            state = getattr(self.clock_service, "state", None)
+            if state is not None:
+                asset_prices = getattr(self.investments_service, "asset_prices", {})
+                goods_prices = getattr(self.goods_service, "prices", {})
+                self.metrics_service.snapshot_daily(state, goods_prices, asset_prices)
         except Exception:
             pass
