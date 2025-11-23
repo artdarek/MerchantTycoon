@@ -46,7 +46,7 @@ class GameState:
     lotto_today_payout: int = 0
     # Investment trading unlock tracking
     investments_unlocked: bool = False  # Once unlocked, stays unlocked forever
-    peak_wealth: int = 0  # Highest wealth ever achieved (cash + bank + portfolio value)
+    peak_wealth: int = 0  # Highest wealth ever achieved (cash + bank + goods + portfolio − debt)
 
     def get_inventory_count(self) -> int:
         return sum(self.inventory.values())
@@ -68,7 +68,7 @@ class GameState:
         Updates peak_wealth and investments_unlocked if threshold is reached.
 
         Args:
-            current_wealth: Current total wealth (cash + bank + portfolio)
+            current_wealth: Current total wealth (cash + bank + goods + portfolio − debt)
             threshold: Minimum wealth required to unlock (0 = disabled)
 
         Returns:
@@ -95,20 +95,26 @@ class GameState:
         return False
 
     # ---- Wealth helpers ----
-    def calculate_total_wealth(self, asset_prices: Optional[Dict[str, int]] = None) -> int:
-        """Calculate total wealth (gross, excluding debt).
+    def calculate_total_wealth(
+        self,
+        asset_prices: Optional[Dict[str, int]] = None,
+        goods_prices: Optional[Dict[str, int]] = None,
+    ) -> int:
+        """Calculate total wealth (including goods value and debt).
 
-        Wealth = cash + bank_balance + portfolio_value
+        Wealth = cash + bank_balance + goods_value + portfolio_value − debt
 
         Args:
             asset_prices: Optional price map for assets used to value the portfolio.
+            goods_prices: Optional price map for goods used to value current inventory.
 
         Returns:
-            Total wealth in currency units
+            Total wealth in currency units (can be negative if debt exceeds assets)
         """
         cash = int(getattr(self, "cash", 0))
         bank_balance = int(getattr(self.bank, "balance", 0))
 
+        # Portfolio (investments) value
         portfolio_value = 0
         try:
             portfolio = getattr(self, "portfolio", {}) or {}
@@ -119,4 +125,18 @@ class GameState:
         except Exception:
             pass
 
-        return cash + bank_balance + portfolio_value
+        # Goods (inventory) current value at today's prices
+        goods_value = 0
+        try:
+            inv = getattr(self, "inventory", {}) or {}
+            gprices = goods_prices or {}
+            for name, qty in inv.items():
+                price = int(gprices.get(name, 0))
+                goods_value += int(qty) * price
+        except Exception:
+            pass
+
+        # Outstanding debt
+        debt = int(getattr(self, "debt", 0))
+
+        return cash + bank_balance + goods_value + portfolio_value - debt

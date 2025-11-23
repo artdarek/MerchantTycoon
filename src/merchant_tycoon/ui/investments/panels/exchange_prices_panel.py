@@ -158,30 +158,10 @@ class ExchangePricesPanel(Static):
             unlocked = True
 
         if not unlocked:
-            # Show locked alert modal
-            try:
-                current_wealth = self.engine.state.calculate_total_wealth(self.engine.asset_prices)
-            except Exception:
-                current_wealth = 0
-            peak_wealth = int(getattr(self.engine.state, "peak_wealth", 0))
-            progress_pct = (peak_wealth / threshold * 100) if threshold > 0 else 0
-
-            message = (
-                f"Investment trading is currently locked.\n\n"
-                f"Required wealth: ${threshold:,}\n"
-                f"Current wealth: ${current_wealth:,}\n"
-                f"Peak wealth: ${peak_wealth:,}\n"
-                f"Progress: {progress_pct:.1f}%\n\n"
-                f"💡 Trade goods to build your wealth!\n"
-                f"Wealth = cash + bank + portfolio value"
-            )
-
+            # Show locked alert modal (modal computes its own content)
             try:
                 from merchant_tycoon.ui.investments.modals import InvestmentsLockedModal
-                self.app.push_screen(InvestmentsLockedModal(
-                    title="🔒 Investments Locked",
-                    message=message,
-                ))
+                self.app.push_screen(InvestmentsLockedModal(self.engine))
             except Exception:
                 pass
             return

@@ -89,7 +89,8 @@ class TravelService:
         try:
             from merchant_tycoon.config import SETTINGS
             asset_prices = getattr(self.investments_service, "asset_prices", {})
-            current_wealth = self.state.calculate_total_wealth(asset_prices)
+            goods_prices = getattr(self.goods_service, "prices", {})
+            current_wealth = self.state.calculate_total_wealth(asset_prices, goods_prices)
             # Get threshold and check unlock
             threshold = int(getattr(SETTINGS.investments, "min_wealth_to_unlock_trading", 0))
             just_unlocked = self.state.check_and_update_peak_wealth(current_wealth, threshold)
