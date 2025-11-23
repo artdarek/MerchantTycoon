@@ -70,6 +70,9 @@ from merchant_tycoon.ui.lotto.panels import (
 )
 from merchant_tycoon.ui.phone.panels.phone_panel import PhonePanel
 from merchant_tycoon.ui.phone.panels.applets.whatsup_panel import WhatsUpPanel
+from merchant_tycoon.ui.phone.panels.applets.stats_panel import (
+    StatsPanel as PhoneStatsPanel,
+)
 
 
 class MerchantTycoon(App):
@@ -392,6 +395,13 @@ class MerchantTycoon(App):
             whatsup = self.query_one(WhatsUpPanel)
             if whatsup:
                 whatsup.refresh_messages()
+        except Exception:
+            pass
+        # If Phone's Stats applet is mounted, refresh its charts as state changed
+        try:
+            phone_stats = self.query_one(PhoneStatsPanel)
+            if phone_stats:
+                phone_stats.refresh_chart()
         except Exception:
             pass
 
