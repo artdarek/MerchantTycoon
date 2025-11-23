@@ -688,7 +688,18 @@ PhonePanel {
 }
 
 #whatsup-content { height: 1fr; }
+#stats-content { height: 1fr; }
 #closeai-chat { height: 1fr; }
+
+/* Spacing between each stats chart section */
+#stats-legend-wealth,
+#stats-legend-cash,
+#stats-legend-bank,
+#stats-legend-debt,
+#stats-legend-goods,
+#stats-legend-assets {
+    margin-bottom: 2;
+}
 #closeai-controls { height: auto; content-align: left middle; }
 #closeai-controls Input { width: 1fr; }
 #closeai-controls Button { margin-left: 1; height: 3; padding: 0 1; }

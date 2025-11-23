@@ -25,6 +25,7 @@ class PhoneService:
             ("home", "Home"),
             ("whatsup", "WhatsUp"),
             ("closeai", "CloseAI"),
+            ("stats", "Stats"),
             ("camera", "Camera"),
             ("wordle", "Wordle"),
             ("snake", "Snake"),

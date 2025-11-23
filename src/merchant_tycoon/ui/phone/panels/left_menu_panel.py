@@ -19,6 +19,7 @@ class LeftMenuPanel(Static):
             "home": "🏠",
             "whatsup": "📨",
             "closeai": "💬",
+            "stats": "📊",
             "wordle": "🧩",
             "camera": "📷",
             "snake": "🐍",

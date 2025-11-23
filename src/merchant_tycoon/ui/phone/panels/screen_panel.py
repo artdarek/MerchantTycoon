@@ -9,6 +9,7 @@ from merchant_tycoon.ui.phone.panels.applets.snake_game_panel import SnakeGamePa
 from merchant_tycoon.ui.phone.panels.applets.camera_panel import CameraPanel
 from merchant_tycoon.ui.phone.panels.applets.home_panel import HomePanel
 from merchant_tycoon.ui.phone.panels.applets.close_ai_chat_panel import CloseAIChatPanel
+from merchant_tycoon.ui.phone.panels.applets.stats_panel import StatsPanel
 
 
 class ScreenPanel(Static):
@@ -48,6 +49,13 @@ class ScreenPanel(Static):
         elif active == "closeai":
             panel = CloseAIChatPanel()
             container.mount(panel)
+        elif active == "stats":
+            panel = StatsPanel()
+            container.mount(panel)
+            try:
+                panel.refresh_chart()
+            except Exception:
+                pass
         elif active == "camera":
             panel = CameraPanel()
             container.mount(panel)
